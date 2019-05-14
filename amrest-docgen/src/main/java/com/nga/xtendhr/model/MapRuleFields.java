@@ -44,6 +44,39 @@ public class MapRuleFields {
 	@JoinColumn(name = "\"FIELD.ID\"", referencedColumnName = "\"ID\"", insertable = false, updatable = false)
 	private Fields field;
 
+	@Column(name = "\"KEY\"", columnDefinition = "VARCHAR(32)")
+	private String key;
+
+	@Column(name = "\"URL\"", columnDefinition = "VARCHAR(320)")
+	private String url;
+
+	@Column(name = "\"VALUE_FROM_PATH\"", columnDefinition = "VARCHAR(128)")
+	private String valueFromPath;
+
+	public String getValueFromPath() {
+		return valueFromPath;
+	}
+
+	public void setValueFromPath(String valueFromPath) {
+		this.valueFromPath = valueFromPath;
+	}
+
+	public String getKey() {
+		return key;
+	}
+
+	public void setKey(String key) {
+		this.key = key;
+	}
+
+	public String getUrl() {
+		return url;
+	}
+
+	public void setUrl(String url) {
+		this.url = url;
+	}
+
 	public String getId() {
 		return id;
 	}

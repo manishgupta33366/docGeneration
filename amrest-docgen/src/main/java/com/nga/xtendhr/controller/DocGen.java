@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -26,6 +25,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -43,6 +44,7 @@ import com.nga.xtendhr.service.FieldsService;
 import com.nga.xtendhr.service.MapCountryCompanyGroupService;
 import com.nga.xtendhr.service.MapGroupTemplatesService;
 import com.nga.xtendhr.service.MapRuleFieldsService;
+import com.nga.xtendhr.service.RulesService;
 import com.nga.xtendhr.service.TemplateCriteriaGenerationService;
 import com.nga.xtendhr.service.TemplateService;
 
@@ -83,6 +85,9 @@ public class DocGen {
 	@Autowired
 	MapRuleFieldsService mapRuleFieldsService;
 
+	@Autowired
+	RulesService rulesService;
+
 	@GetMapping(value = "/login")
 	public ResponseEntity<?> login(HttpServletRequest request) {
 		try {
@@ -113,41 +118,186 @@ public class DocGen {
 		}
 	}
 
-	@GetMapping(value = "/getTemplates")
-	public ResponseEntity<?> getTemplates(@RequestParam(name = "groupID") String groupId, HttpServletRequest request) {
+	@PostMapping(value = "/executeRule")
+	public ResponseEntity<?> executePostRule(@RequestParam(name = "ruleID") String ruleID, HttpServletRequest request,
+			@RequestBody String requestData) {
 		try {
-			HttpSession session = request.getSession(false); // false is not create new session and use the existing
-																// session
-			if (session == null) {
+			HttpSession session = request.getSession(false);// false is not create new session and use the existing
+															// session
+			if (session.getAttribute("loginStatus") == null) {
 				return new ResponseEntity<>("Session timeout! Please Login again!", HttpStatus.INTERNAL_SERVER_ERROR);
 			}
-			// get all the templates assigned to the group
-			List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupId);
-
-			// Now Iterating for each template assigned to the provided group
-			Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
-			String generatedCriteria;
-			String templateID;
-			List<Templates> template;
-			Templates tempTemplate;
-			List<Templates> response = new ArrayList<Templates>();
-			while (iterator.hasNext()) {
-				templateID = iterator.next().getTemplateID();
-				// Generating criteria for each template
-				generatedCriteria = generateCriteria(templateID, session);
-				template = templateService.findByIdAndCriteria(templateID, generatedCriteria);
-				tempTemplate = template.size() > 0 ? template.get(0) : null;
-				if (tempTemplate != null) {
-					response.add(tempTemplate);
-				}
-			}
-			return ResponseEntity.ok().body(response);
+			logger.debug("ruleID: " + ruleID + " ::: requestData:" + requestData);
+			session.setAttribute("requestData", requestData);
+			String ruleName = rulesService.findByRuleID(ruleID).get(0).getName();
+			// Calling function dynamically
+			// more Info here: https://www.baeldung.com/java-method-reflection
+			Method method = this.getClass().getDeclaredMethod(ruleName, String.class, HttpSession.class);
+			return ResponseEntity.ok().body((String) method.invoke(this, ruleID, session));
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
+	/*
+	 *** GET Rules Start***
+	 */
+	String checkIfManager(String ruleID, HttpSession session) throws BatchException, ClientProtocolException,
+			UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException,
+			IllegalArgumentException, InvocationTargetException, NamingException, URISyntaxException, IOException {
+		// Rule in DB required to check if current loggenIn user is a manager
+		MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
+		JSONArray directReports = new JSONArray(getFieldValue(mapRuleField.getField(), session));
+		String isManager = directReports.length() > 0 ? "true" : "false";
+		return isManager;
+	}
+
+	String getGroups(String ruleID, HttpSession session) throws BatchException, ClientProtocolException,
+			UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException,
+			IllegalArgumentException, InvocationTargetException, NamingException, URISyntaxException, IOException {
+		// Rule in DB required to get Groups of current loggenIn user
+		JSONObject ruleData = getRuleData(ruleID, session);
+		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+		String countryID = ruleData.getString(mapRuleField.get(0).getField().getTechnicalName());
+		String companyID = ruleData.getString(mapRuleField.get(1).getField().getTechnicalName());
+		Boolean isManager = Boolean.parseBoolean(ruleData.getString(mapRuleField.get(2).getField().getTechnicalName()));
+		Iterator<MapCountryCompanyGroup> iterator = mapCountryCompanyGroupService
+				.findByCountryCompany(countryID, companyID, isManager).iterator();
+		JSONArray response = new JSONArray();
+		while (iterator.hasNext()) {
+			response.put(iterator.next().toString());
+		}
+		return response.toString();
+	}
+
+	String isDirectReport(String ruleID, HttpSession session) throws BatchException, ClientProtocolException,
+			UnsupportedOperationException, NamingException, URISyntaxException, IOException {
+		// Rule in DB to check if the logged in user is exactly a manager of the user
+		// provided
+		JSONObject requestObj = new JSONObject((String) session.getAttribute("requestData"));
+		String directReportUserID = requestObj.getString("userID");// userID passed from UI
+
+		// Checking if data is already fetched for a particular UserID
+		if (session.getAttribute("directReportData-" + directReportUserID) != null) {
+			// If yes then its already checked data required for future calls is already
+			// present in session
+			return ("true");
+		}
+		String isDirectReport;
+		MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
+		logger.debug((String) session.getAttribute("requestData"));
+
+		String url = "";
+		String loggedInUser = (String) session.getAttribute("loggedInUser");
+		loggedInUser = loggedInUser.equals("S0014379281") || loggedInUser.equals("S0018269301")
+				|| loggedInUser.equalsIgnoreCase("S0019013022") ? "E00001047" : loggedInUser;
+		url = mapRuleField.getUrl();// URL saved at required Data
+		url = url.replaceFirst("<>", directReportUserID);// UserId passed from UI
+		url = url.replaceFirst("<>", loggedInUser);
+		JSONArray responseArray = new JSONArray(callSFSingle(mapRuleField.getKey(), url));// Entity name saved in KEY
+																							// column
+		// a unique Id for each UserID sent from the UI, In order to fetch data in
+		// future
+		session.setAttribute("directReportData-" + directReportUserID, responseArray.get(0).toString());
+		isDirectReport = responseArray.length() > 0 ? "true" : "false";
+		return isDirectReport;
+	}
+
+	String getDirectReportCountry(String ruleID, HttpSession session) {
+		// Rule in DB to get country of direct Report
+		// Before this rule isDirectReport must be mapped in order to check if usedID
+		// provided in post body is exactly a direct Report of loggedIn user and to set
+		// its data in session
+		JSONObject requestObj = new JSONObject((String) session.getAttribute("requestData"));
+		String directReportUserID = requestObj.getString("userID");
+		MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
+		JSONObject directReportData = new JSONObject(
+				(String) session.getAttribute("directReportData-" + directReportUserID));
+		return getValueFromPath(mapRuleField.getValueFromPath(), directReportData);
+	}
+
+	String getDirectReportCompany(String ruleID, HttpSession session) {
+		// Rule in DB to get company of direct Report
+		// Before this rule isDirectReport must be mapped in order to check if usedID
+		// provided in post body is exactly a direct Report of loggedIn user and to set
+		// its data in session
+		JSONObject requestObj = new JSONObject((String) session.getAttribute("requestData"));
+		String directReportUserID = requestObj.getString("userID");
+		MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
+		JSONObject directReportData = new JSONObject(
+				(String) session.getAttribute("directReportData-" + directReportUserID));
+		return getValueFromPath(mapRuleField.getValueFromPath(), directReportData);
+	}
+
+	/*
+	 *** GET Rules END***
+	 */
+
+	/*
+	 *** POST Rules Start***
+	 */
+	String getGroupsOfDirectReport(String ruleID, HttpSession session) throws BatchException, ClientProtocolException,
+			UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException,
+			IllegalArgumentException, InvocationTargetException, NamingException, URISyntaxException, IOException {
+		// Rule in DB to get direct reports of a direct report
+		JSONObject ruleData = getRuleData(ruleID, session);
+		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+		Boolean isManager = Boolean.parseBoolean(ruleData.getString(mapRuleField.get(0).getField().getTechnicalName()));
+		Boolean isDirectReport = Boolean
+				.parseBoolean(ruleData.getString(mapRuleField.get(1).getField().getTechnicalName()));
+		String loggerInUser = (String) session.getAttribute("loggedInUser");
+		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
+		if (isManager == false || isDirectReport == false) {
+			logger.debug("Tried unauthorized access User: " + loggerInUser + " Tried accessing groups of user: "
+					+ requestData.getString("userID"));// userID passed from UI
+			return "You are not authorized to access this data! This event has been logged!";
+		}
+		String countryID = ruleData.getString(mapRuleField.get(2).getField().getTechnicalName());
+		String companyID = ruleData.getString(mapRuleField.get(3).getField().getTechnicalName());
+		Iterator<MapCountryCompanyGroup> iterator = mapCountryCompanyGroupService
+				.findByCountryCompany(countryID, companyID, isManager).iterator();
+		JSONArray response = new JSONArray();
+		while (iterator.hasNext()) {
+			response.put(iterator.next().toString());
+		}
+		return response.toString();
+	}
+
+	String getTemplates(String ruleID, HttpSession session) throws BatchException, ClientProtocolException,
+			UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException,
+			IllegalArgumentException, InvocationTargetException, NamingException, URISyntaxException, IOException {
+
+		JSONObject requestObj = new JSONObject((String) session.getAttribute("requestData"));
+		String groupID = requestObj.getString("groupID");// userID passed from UI
+		List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupID);
+		// Now Iterating for each template assigned to the provided group
+		Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
+		String generatedCriteria;
+		String templateID;
+		List<Templates> template;
+		Templates tempTemplate;
+		JSONArray response = new JSONArray();
+		while (iterator.hasNext()) {
+			templateID = iterator.next().getTemplateID();
+			// Generating criteria for each template
+			generatedCriteria = generateCriteria(templateID, session);
+			template = templateService.findByIdAndCriteria(templateID, generatedCriteria);
+			tempTemplate = template.size() > 0 ? template.get(0) : null;
+			if (tempTemplate != null) {
+				response.put(tempTemplate.toString());
+			}
+		}
+		return response.toString();
+	}
+
+	/*
+	 *** POST Rules END***
+	 */
+
+	/*
+	 *** Helper functions Start***
+	 */
 	private String generateCriteria(String templateID, HttpSession session)
 			throws NamingException, BatchException, ClientProtocolException, UnsupportedOperationException,
 			URISyntaxException, IOException, NoSuchMethodException, SecurityException, IllegalAccessException,
@@ -314,7 +464,7 @@ public class DocGen {
 		return value;
 	}
 
-	JSONObject getRuleData(String ruleID, HttpSession session) throws BatchException, ClientProtocolException,
+	private JSONObject getRuleData(String ruleID, HttpSession session) throws BatchException, ClientProtocolException,
 			UnsupportedOperationException, NamingException, URISyntaxException, IOException, NoSuchMethodException,
 			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		// This function will create jsonObject for a particular rule
@@ -331,29 +481,30 @@ public class DocGen {
 		return responseObj;
 	}
 
-	String checkIfManager(String ruleID, HttpSession session) throws BatchException, ClientProtocolException,
-			UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException, NamingException, URISyntaxException, IOException {
-		// Rule in DB
-		MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
-		return new JSONArray(getFieldValue(mapRuleField.getField(), session)).length() > 0 ? "true" : "false";
-	}
-
-	String getGroups(String ruleID, HttpSession session) throws BatchException, ClientProtocolException,
-			UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException, NamingException, URISyntaxException, IOException {
-		// Rule in DB
-		JSONObject ruleData = getRuleData(ruleID, session);
-		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
-		String countryID = ruleData.getString(mapRuleField.get(0).getField().getTechnicalName());
-		String companyID = ruleData.getString(mapRuleField.get(1).getField().getTechnicalName());
-		Boolean isManager = Boolean.parseBoolean(ruleData.getString(mapRuleField.get(2).getField().getTechnicalName()));
-		Iterator<MapCountryCompanyGroup> iterator = mapCountryCompanyGroupService
-				.findByCountryCompany(countryID, companyID, isManager).iterator();
-		JSONArray response = new JSONArray();
-		while (iterator.hasNext()) {
-			response.put(iterator.next().toString());
+	private String callSFSingle(String entityName, String url) throws NamingException, BatchException,
+			ClientProtocolException, UnsupportedOperationException, URISyntaxException, IOException {
+		// function used to make single calls to SF that are required to get dynamic
+		// data
+		Map<String, String> entityMap = new HashMap<String, String>();
+		BatchRequest batchRequest = new BatchRequest();
+		batchRequest.configureDestination(sfDestination);
+		entityMap.put(entityName, url);
+		logger.debug("Generated URL for single call: " + entityName + url);
+		// adding request to Batch
+		for (Map.Entry<String, String> entityM : entityMap.entrySet()) {
+			batchRequest.createQueryPart("/" + entityM.getKey() + entityM.getValue(), entityM.getKey());
 		}
-		return response.toString();
+		batchRequest.callBatchPOST("/$batch", "");// Executing Batch request
+		List<BatchSingleResponse> batchResponses = batchRequest.getResponses();
+
+		JSONArray responseArray = new JSONObject(batchResponses.get(0).getBody()).getJSONObject("d")
+				.getJSONArray("results");// Note the complete results array is returned not the object inside results
+											// array
+		String response = responseArray.toString();
+		logger.debug("Response from single request: " + response);
+		return response;
 	}
+	/*
+	 *** Helper functions END***
+	 */
 }
