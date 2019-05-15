@@ -454,7 +454,7 @@ public class DocGen {
 				value = key.substring(key.length() - 4, key.length() - 3).equals("*") // Checking if complete array is
 																						// required in output
 						? currentObject.getJSONArray(key.substring(0, key.length() - 5)).toString()
-						: currentObject.get(key.substring(0, key.length() - 2)) == null ? "null"
+						: currentObject.get(key.substring(0, key.length() - 2)).toString().equals("null") ? "null"
 								: currentObject.getString(key.substring(0, key.length() - 2));
 			} else if (key.endsWith("]")) { // in case of array
 				currentObject = currentObject.getJSONArray(key.substring(0, key.length() - 2)).getJSONObject(0);
