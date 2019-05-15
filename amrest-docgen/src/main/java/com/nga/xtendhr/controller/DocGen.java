@@ -267,6 +267,7 @@ public class DocGen {
 	String getTemplates(String ruleID, HttpSession session) throws BatchException, ClientProtocolException,
 			UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, NamingException, URISyntaxException, IOException {
+		// Rule in DB to get templates of a Group of loggedIn user
 
 		JSONObject requestObj = new JSONObject((String) session.getAttribute("requestData"));
 		String groupID = requestObj.getString("groupID");// userID passed from UI
@@ -453,7 +454,8 @@ public class DocGen {
 				value = key.substring(key.length() - 4, key.length() - 3).equals("*") // Checking if complete array is
 																						// required in output
 						? currentObject.getJSONArray(key.substring(0, key.length() - 5)).toString()
-						: currentObject.getString(key.substring(0, key.length() - 2));
+						: currentObject.get(key.substring(0, key.length() - 2)) == null ? "null"
+								: currentObject.getString(key.substring(0, key.length() - 2));
 			} else if (key.endsWith("]")) { // in case of array
 				currentObject = currentObject.getJSONArray(key.substring(0, key.length() - 2)).getJSONObject(0);
 			} else {// in case of Obj

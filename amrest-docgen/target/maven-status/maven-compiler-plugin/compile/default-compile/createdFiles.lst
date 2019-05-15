@@ -14,6 +14,7 @@ com\nga\xtendhr\service\EntitiesService.class
 com\nga\xtendhr\connection\BatchRequest.class
 com\nga\xtendhr\service\CountryServiceImp.class
 com\nga\xtendhr\model\MapGroupTemplates.class
+com\nga\xtendhr\service\RulesServiceImp.class
 com\nga\xtendhr\model\Fields.class
 com\nga\xtendhr\service\CountryService.class
 com\nga\xtendhr\utility\GetDestinationClient.class
@@ -34,3 +35,4 @@ com\nga\xtendhr\service\TemplateCriteriaGenerationService.class
 com\nga\xtendhr\service\FieldsService.class
 com\nga\xtendhr\connection\DestinationClient.class
 com\nga\xtendhr\service\MapCountryCompanyGroupServiceImp.class
+com\nga\xtendhr\service\RulesService.class
