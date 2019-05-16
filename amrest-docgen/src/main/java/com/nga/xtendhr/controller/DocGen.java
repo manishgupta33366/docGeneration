@@ -110,7 +110,7 @@ public class DocGen {
 															// session
 			logger.debug("Session: " + session);
 			return session.getAttribute("loginStatus") != null
-					? ResponseEntity.ok().body(getRuleData(ruleID, session).toString())
+					? ResponseEntity.ok().body(getRuleData(ruleID, session, false).toString()) // forDirectReport false
 					: new ResponseEntity<>("Session timeout! Please Login again!", HttpStatus.INTERNAL_SERVER_ERROR);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -143,21 +143,23 @@ public class DocGen {
 	/*
 	 *** GET Rules Start***
 	 */
-	String checkIfManager(String ruleID, HttpSession session) throws BatchException, ClientProtocolException,
-			UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException, NamingException, URISyntaxException, IOException {
+	String checkIfManager(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
 		// Rule in DB required to check if current loggenIn user is a manager
 		MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
-		JSONArray directReports = new JSONArray(getFieldValue(mapRuleField.getField(), session));
+		JSONArray directReports = new JSONArray(getFieldValue(mapRuleField.getField(), session, forDirectReport));
 		String isManager = directReports.length() > 0 ? "true" : "false";
 		return isManager;
 	}
 
-	String getGroups(String ruleID, HttpSession session) throws BatchException, ClientProtocolException,
-			UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException, NamingException, URISyntaxException, IOException {
+	String getGroups(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
 		// Rule in DB required to get Groups of current loggenIn user
-		JSONObject ruleData = getRuleData(ruleID, session);
+		JSONObject ruleData = getRuleData(ruleID, session, forDirectReport);
 		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
 		String countryID = ruleData.getString(mapRuleField.get(0).getField().getTechnicalName());
 		String companyID = ruleData.getString(mapRuleField.get(1).getField().getTechnicalName());
@@ -171,8 +173,8 @@ public class DocGen {
 		return response.toString();
 	}
 
-	String isDirectReport(String ruleID, HttpSession session) throws BatchException, ClientProtocolException,
-			UnsupportedOperationException, NamingException, URISyntaxException, IOException {
+	String isDirectReport(String ruleID, HttpSession session, Boolean forDirectReport) throws BatchException,
+			ClientProtocolException, UnsupportedOperationException, NamingException, URISyntaxException, IOException {
 		// Rule in DB to check if the logged in user is exactly a manager of the user
 		// provided
 		JSONObject requestObj = new JSONObject((String) session.getAttribute("requestData"));
@@ -204,7 +206,7 @@ public class DocGen {
 		return isDirectReport;
 	}
 
-	String getDirectReportCountry(String ruleID, HttpSession session) {
+	String getDirectReportCountry(String ruleID, HttpSession session, Boolean forDirectReport) {
 		// Rule in DB to get country of direct Report
 		// Before this rule isDirectReport must be mapped in order to check if usedID
 		// provided in post body is exactly a direct Report of loggedIn user and to set
@@ -217,7 +219,7 @@ public class DocGen {
 		return getValueFromPath(mapRuleField.getValueFromPath(), directReportData);
 	}
 
-	String getDirectReportCompany(String ruleID, HttpSession session) {
+	String getDirectReportCompany(String ruleID, HttpSession session, Boolean forDirectReport) {
 		// Rule in DB to get company of direct Report
 		// Before this rule isDirectReport must be mapped in order to check if usedID
 		// provided in post body is exactly a direct Report of loggedIn user and to set
@@ -240,8 +242,8 @@ public class DocGen {
 	String getGroupsOfDirectReport(String ruleID, HttpSession session) throws BatchException, ClientProtocolException,
 			UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, NamingException, URISyntaxException, IOException {
-		// Rule in DB to get direct reports of a direct report
-		JSONObject ruleData = getRuleData(ruleID, session);
+		// Rule in DB to get groups of a direct report
+		JSONObject ruleData = getRuleData(ruleID, session, false); // forDirectReport false
 		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
 		Boolean isManager = Boolean.parseBoolean(ruleData.getString(mapRuleField.get(0).getField().getTechnicalName()));
 		Boolean isDirectReport = Boolean
@@ -270,7 +272,7 @@ public class DocGen {
 		// Rule in DB to get templates of a Group of loggedIn user
 
 		JSONObject requestObj = new JSONObject((String) session.getAttribute("requestData"));
-		String groupID = requestObj.getString("groupID");// userID passed from UI
+		String groupID = requestObj.getString("groupID");// groupID passed from UI
 		List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupID);
 		// Now Iterating for each template assigned to the provided group
 		Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
@@ -282,7 +284,7 @@ public class DocGen {
 		while (iterator.hasNext()) {
 			templateID = iterator.next().getTemplateID();
 			// Generating criteria for each template
-			generatedCriteria = generateCriteria(templateID, session);
+			generatedCriteria = generateCriteria(templateID, session, false); // forDirectReport false
 			template = templateService.findByIdAndCriteria(templateID, generatedCriteria);
 			tempTemplate = template.size() > 0 ? template.get(0) : null;
 			if (tempTemplate != null) {
@@ -292,6 +294,49 @@ public class DocGen {
 		return response.toString();
 	}
 
+	String getTemplatesOfDirectReports(String ruleID, HttpSession session)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
+		// Rule in DB to get templates of a direct report
+
+		JSONObject ruleData = getRuleData(ruleID, session, false); // forDirectReport false
+		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+		Boolean isManager = Boolean.parseBoolean(ruleData.getString(mapRuleField.get(0).getField().getTechnicalName()));
+		Boolean isDirectReport = Boolean
+				.parseBoolean(ruleData.getString(mapRuleField.get(1).getField().getTechnicalName()));
+
+		String loggerInUser = (String) session.getAttribute("loggedInUser");
+		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
+		if (isManager == false || isDirectReport == false) {
+			logger.debug("Tried unauthorized access User: " + loggerInUser + " Tried accessing groups of user: "
+					+ requestData.getString("userID"));// userID passed from UI
+			return "You are not authorized to access this data! This event has been logged!";
+		}
+
+		// Now getting templates those are available for the userID provided from UI
+		String groupID = requestData.getString("groupID");// groupID passed from UI
+		List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupID);
+
+		// Now Iterating for each template assigned to the provided group
+		Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
+		String generatedCriteria;
+		String templateID;
+		List<Templates> template;
+		Templates tempTemplate;
+		JSONArray response = new JSONArray();
+		while (iterator.hasNext()) {
+			templateID = iterator.next().getTemplateID();
+			// Generating criteria for each template
+			generatedCriteria = generateCriteria(templateID, session, true);// forDirectReport true
+			template = templateService.findByIdAndCriteria(templateID, generatedCriteria);
+			tempTemplate = template.size() > 0 ? template.get(0) : null;
+			if (tempTemplate != null) {
+				response.put(tempTemplate.toString());
+			}
+		}
+		return response.toString();
+	}
 	/*
 	 *** POST Rules END***
 	 */
@@ -299,7 +344,7 @@ public class DocGen {
 	/*
 	 *** Helper functions Start***
 	 */
-	private String generateCriteria(String templateID, HttpSession session)
+	private String generateCriteria(String templateID, HttpSession session, Boolean forDirectReport)
 			throws NamingException, BatchException, ClientProtocolException, UnsupportedOperationException,
 			URISyntaxException, IOException, NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException {
@@ -310,33 +355,38 @@ public class DocGen {
 		Iterator<TemplateCriteriaGeneration> iterator = templateCriteriaGeneration.iterator();
 		String criteria = "";
 		while (iterator.hasNext()) {
-			criteria = criteria + getFieldValue(iterator.next().getField(), session) + "|";
+			criteria = criteria + getFieldValue(iterator.next().getField(), session, forDirectReport) + "|";
 		}
 		criteria = criteria.length() > 0 ? criteria.substring(0, criteria.length() - 1) : "";
-		logger.debug("criteria: " + criteria + " for  templateID: " + templateID);
+		logger.debug("criteria: " + criteria + " for  templateID: " + templateID + " ::: forDirectReport: "
+				+ forDirectReport);
 		return criteria;
 	}
 
-	private String getFieldValue(Fields field, HttpSession session) throws BatchException, ClientProtocolException,
-			UnsupportedOperationException, NamingException, URISyntaxException, IOException, NoSuchMethodException,
-			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+	private String getFieldValue(Fields field, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NamingException,
+			URISyntaxException, IOException, NoSuchMethodException, SecurityException, IllegalAccessException,
+			IllegalArgumentException, InvocationTargetException {
 
-		logger.debug("Getting value for Field: " + field.getTechnicalName() + " ... RuleID: " + field.getRuleID());
+		logger.debug("Getting value for Field: " + field.getTechnicalName() + "  ::: RuleID: " + field.getRuleID()
+				+ " ::: forDirectReport: " + forDirectReport);
 		if (field.getRuleID() == null) {
 			JSONObject entityData;
 			Entities entity = field.getEntity();
 			logger.debug("EntityName: " + entity.getName() + " For GetFieldValue Field: " + field.getTechnicalName());
-			entity = checkForDependantEntity(entity); // Check for root entity and get root entity if current entity is
+			entity = checkForDependantEntity(entity); // Check for root entity and get root entity if current entity
+														// is
 														// dependent on some other entity
 			// now entity variable will be having the root entity from which will get the
 			// data of our field
-			entityData = getEntityData(entity, session);
+			entityData = getEntityData(entity, session, forDirectReport);
 			return getValueFromPath(field.getValueFromPath(), entityData);
 		}
 		// Calling function dynamically
 		// more Info here: https://www.baeldung.com/java-method-reflection
-		Method method = this.getClass().getDeclaredMethod(field.getRule().getName(), String.class, HttpSession.class);
-		return (String) method.invoke(this, field.getRuleID(), session);
+		Method method = this.getClass().getDeclaredMethod(field.getRule().getName(), String.class, HttpSession.class,
+				Boolean.class);
+		return (String) method.invoke(this, field.getRuleID(), session, forDirectReport);
 	}
 
 	private Entities checkForDependantEntity(Entities entity) { // function to get the root entity
@@ -348,27 +398,46 @@ public class DocGen {
 		return checkForDependantEntity(entity.getDependantOnEntity());
 	}
 
-	private JSONObject getEntityData(Entities entity, HttpSession session) throws NamingException, BatchException,
-			ClientProtocolException, UnsupportedOperationException, URISyntaxException, IOException {
+	private JSONObject getEntityData(Entities entity, HttpSession session, Boolean forDirectReport)
+			throws NamingException, BatchException, ClientProtocolException, UnsupportedOperationException,
+			URISyntaxException, IOException {
 		// function to get data of the root entity
 		JSONObject entityData;
 		String entityName = entity.getName();
-		if (session.getAttribute(entityName) != null) { // Check if entity data is present in the Session
-			entityData = new JSONObject((String) session.getAttribute(entityName));
-			logger.debug("Data fetched from session for Entity: " + entityName);
+		if (!forDirectReport) {// if false then data needs to get for the loggedIn user
+			if (session.getAttribute(entityName) != null) { // Check if entity data is present in the Session
+				entityData = new JSONObject((String) session.getAttribute(entityName));
+				logger.debug("Data fetched from session for Entity: " + entityName);
+				return entityData;
+			} // else retrieve data from SF
+			entityData = fetchDataFromSF(entity, session, forDirectReport);
+			logger.debug(
+					"Data fetched from SF for entity: " + entityName + " ::: For Direct report: " + forDirectReport);
+			return entityData;
+		}
+		// Else retrieve data for direct report
+		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
+		String directReportUserID = requestData.getString("userID");
+		if (session.getAttribute("directReportEntities-" + directReportUserID + entityName) != null) {
+			entityData = new JSONObject(
+					(String) session.getAttribute("directReportEntities-" + directReportUserID + entityName));
+			logger.debug("Data fetched from session for directReport Entity: " + entityName
+					+ " ::: directReportUserID: " + directReportUserID);
 			return entityData;
 		} // else retrieve data from SF
-		entityData = fetchDataFromSF(entity, session);
-		logger.debug("Data fetched from SF for entity: " + entityName);
+		entityData = fetchDataFromSF(entity, session, forDirectReport);
+		logger.debug("Data fetched from SF for direct report entity: " + entityName + " ::: For Direct report: "
+				+ forDirectReport);
 		return entityData;
 	}
 
-	private JSONObject fetchDataFromSF(Entities entity, HttpSession session) throws NamingException, BatchException,
-			ClientProtocolException, UnsupportedOperationException, URISyntaxException, IOException {
+	private JSONObject fetchDataFromSF(Entities entity, HttpSession session, Boolean forDirectReport)
+			throws NamingException, BatchException, ClientProtocolException, UnsupportedOperationException,
+			URISyntaxException, IOException {
 		// Calling SF URL to fetch Entity data
 		String loggedInUser = (String) session.getAttribute("loggedInUser");
 		String entityName = entity.getName();
-
+		String directReportUserID = null;
 		loggedInUser = loggedInUser.equals("S0014379281") || loggedInUser.equals("S0018269301")
 				|| loggedInUser.equalsIgnoreCase("S0019013022") ? "E00001047" : loggedInUser;
 		Map<String, String> entityMap = new HashMap<String, String>();
@@ -397,8 +466,17 @@ public class DocGen {
 		logger.debug("Generated expand path: " + expandPath + "...for entity: " + entityName);
 		logger.debug("Generated select path: " + selectPath + "...for entity: " + entityName);
 
-		entityMap.put(entity.getName(), "?$filter=" + entity.getFilter() + " eq '" + loggedInUser
-				+ "'&$format=json&$expand=" + expandPath + "&$select=" + selectPath);
+		if (!forDirectReport)
+			entityMap.put(entity.getName(), "?$filter=" + entity.getFilter() + " eq '" + loggedInUser
+					+ "'&$format=json&$expand=" + expandPath + "&$select=" + selectPath);
+		else {
+			// Else retrieve data for direct report
+			JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
+			directReportUserID = requestData.getString("userID");
+			entityMap.put(entity.getName(), "?$filter=" + entity.getFilter() + " eq '" + directReportUserID
+					+ "'&$format=json&$expand=" + expandPath + "&$select=" + selectPath);
+		}
+
 		logger.debug("Generated URL: " + entity.getName() + "/" + "?$filter=" + entity.getFilter() + " eq '"
 				+ loggedInUser + "'&$format=json&$expand=" + expandPath + "&$select=" + selectPath);
 
@@ -418,7 +496,10 @@ public class DocGen {
 					.getJSONObject(0);
 			response = responseObj.toString();
 			entityResponseMap.put(entityName, responseObj);
-			session.setAttribute(entityName, response);
+			if (!forDirectReport)
+				session.setAttribute(entityName, response);
+			else
+				session.setAttribute("directReportEntities-" + directReportUserID + entityName, response);
 			// logger.debug(entityName + " Response: " + response);
 		}
 		return entityResponseMap.get(entityName);
@@ -466,9 +547,10 @@ public class DocGen {
 		return value;
 	}
 
-	private JSONObject getRuleData(String ruleID, HttpSession session) throws BatchException, ClientProtocolException,
-			UnsupportedOperationException, NamingException, URISyntaxException, IOException, NoSuchMethodException,
-			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+	private JSONObject getRuleData(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NamingException,
+			URISyntaxException, IOException, NoSuchMethodException, SecurityException, IllegalAccessException,
+			IllegalArgumentException, InvocationTargetException {
 		// This function will create jsonObject for a particular rule
 		List<MapRuleFields> mapRuleFields = mapRuleFieldsService.findByRuleID(ruleID);
 		MapRuleFields mapRuleField;
@@ -478,7 +560,7 @@ public class DocGen {
 		while (iterator.hasNext()) {
 			mapRuleField = iterator.next();
 			field = mapRuleField.getField();
-			responseObj.put(field.getTechnicalName(), getFieldValue(field, session));
+			responseObj.put(field.getTechnicalName(), getFieldValue(field, session, forDirectReport));
 		}
 		return responseObj;
 	}
