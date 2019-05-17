@@ -29,7 +29,9 @@ import com.nga.xtendhr.config.DBConfiguration;
 @Table(name = DBConfiguration.MAP_COUNTRY_COMPANY_GROUP, schema = DBConfiguration.SCHEMA_NAME)
 @NamedQueries({
 		@NamedQuery(name = "MapCountryCompanyGroup.findByCountryCompany_Manager", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.countryID = :countryID AND MCCG.companyID = :companyID AND MCCG.isMssRelevant = :isMssRelevant"),
-		@NamedQuery(name = "MapCountryCompanyGroup.findByCountryCompany_Employee", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.countryID = :countryID AND MCCG.companyID = :companyID AND MCCG.isEssRelevant = :isEssRelevant") })
+		@NamedQuery(name = "MapCountryCompanyGroup.findByCountryCompany_Employee", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.countryID = :countryID AND MCCG.companyID = :companyID AND MCCG.isEssRelevant = :isEssRelevant"),
+		@NamedQuery(name = "MapCountryCompanyGroup.findByGroupCountryCompany_Manager", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.groupID = :groupID AND MCCG.countryID = :countryID AND MCCG.companyID = :companyID AND MCCG.isMssRelevant = :isMssRelevant"),
+		@NamedQuery(name = "MapCountryCompanyGroup.findByGroupCountryCompany_Employee", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.groupID = :groupID AND MCCG.countryID = :countryID AND MCCG.companyID = :companyID AND MCCG.isEssRelevant = :isEssRelevant") })
 
 public class MapCountryCompanyGroup {
 	@Id

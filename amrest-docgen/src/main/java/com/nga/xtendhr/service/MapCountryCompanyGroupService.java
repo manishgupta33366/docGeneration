@@ -12,6 +12,8 @@ public interface MapCountryCompanyGroupService {
 
 	public void delete(MapCountryCompanyGroup item);
 
-	public List<MapCountryCompanyGroup> findByCountryCompany(String country, String company, Boolean isManager);
+	public List<MapCountryCompanyGroup> findByCountryCompany(String countryID, String companyID, Boolean isManager);
 
+	public List<MapCountryCompanyGroup> findByGroupCountryCompany(String groupID, String countryID, String companyID,
+			Boolean isManager);
 }
