@@ -257,7 +257,7 @@ public class DocGen {
 				.parseBoolean(ruleData.getString(mapRuleField.get(1).getField().getTechnicalName()));
 		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
 		if (isManager == false || isDirectReport == false) {
-			logger.error("Tried unauthorized access User: " + (String) session.getAttribute("loggedInUser")
+			logger.error("Unauthorized access User: " + (String) session.getAttribute("loggedInUser")
 					+ " Tried accessing groups of user: " + requestData.getString("userID"));// userID passed from UI
 			return "You are not authorized to access this data! This event has been logged!";
 		}
@@ -314,7 +314,7 @@ public class DocGen {
 			}
 			return response.toString();
 		}
-		logger.error("Tried unauthorized access User: " + (String) session.getAttribute("loggedInUser")
+		logger.error("Unauthorized access User: " + (String) session.getAttribute("loggedInUser")
 				+ " Tried accessing templates of group that is not available for this user. groupID: " + groupID);
 		return "You are not authorized to access this data! This event has been logged!";
 	}
@@ -341,7 +341,7 @@ public class DocGen {
 		String loggerInUser = (String) session.getAttribute("loggedInUser");
 		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
 		if (isManager == false || isDirectReport == false) {
-			logger.error("Tried unauthorized access User: " + loggerInUser + " Tried accessing groups of user: "
+			logger.error("Unauthorized access User: " + loggerInUser + " Tried accessing groups of user: "
 					+ requestData.getString("userID"));// userID passed from UI
 			return "You are not authorized to access this data! This event has been logged!";
 		}
@@ -377,7 +377,7 @@ public class DocGen {
 			}
 			return response.toString();
 		}
-		logger.error("Tried unauthorized access User: " + loggerInUser
+		logger.error("Unauthorized access User: " + loggerInUser
 				+ " Tried accessing templates of group that is not available for user provided from UI userID:"
 				+ requestData.getString("userID") + " groupID: " + groupID);
 		return "You are not authorized to access this data! This event has been logged!";
