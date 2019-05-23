@@ -196,12 +196,14 @@ public class DocGen {
 				|| loggedInUser.equalsIgnoreCase("S0019013022") ? "E00000882" : loggedInUser;
 		url = mapRuleField.getUrl();// URL saved at required Data
 		url = url.replaceFirst("<>", directReportUserID);// UserId passed from UI
-		url = url.replaceFirst("<>", loggedInUser);
+		url = url.replaceFirst("<>", loggedInUser);// for direct Manager
+		url = url.replaceFirst("<>", loggedInUser);// for 2nd level manager
 		JSONArray responseArray = new JSONArray(callSFSingle(mapRuleField.getKey(), url));// Entity name saved in KEY
 																							// column
 
 		isDirectReport = responseArray.length() > 0 ? "true" : "false";
-		// a unique Id for each UserID sent from the UI, In order to fetch data in
+		// generating a unique Id for each UserID sent from the UI, In order to fetch
+		// data in
 		// future
 		if (Boolean.parseBoolean(isDirectReport))
 			session.setAttribute("directReportData-" + directReportUserID, responseArray.get(0).toString());
@@ -232,6 +234,37 @@ public class DocGen {
 		JSONObject directReportData = new JSONObject(
 				(String) session.getAttribute("directReportData-" + directReportUserID));
 		return getValueFromPath(mapRuleField.getValueFromPath(), directReportData);
+	}
+
+	String getDirectReports(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, JSONException, ClientProtocolException, UnsupportedOperationException,
+			NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException, NamingException, URISyntaxException, IOException {
+		// Rule in DB to get direct report (2 levels) of the loggedIn User
+
+		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+		// getting the Parent/root array containing directReports
+		JSONArray parentDirectReportArray = new JSONArray(
+				getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport));
+		JSONArray responseDirectReports = new JSONArray();
+		JSONArray tempHoldChildDirectReports = new JSONArray();
+		String childDirectReportsPath = mapRuleField.get(1).getValueFromPath();// Path to fetch Child Direct Reports
+		String keyToRemoveObj = childDirectReportsPath.split("/")[0];// String to remove object from object before
+																		// copying
+		for (int i = 0; i < parentDirectReportArray.length(); i++) {
+			tempHoldChildDirectReports = new JSONArray(
+					getValueFromPath(childDirectReportsPath, parentDirectReportArray.getJSONObject(i)));
+			for (int j = 0; j < tempHoldChildDirectReports.length(); j++) {
+				tempHoldChildDirectReports.getJSONObject(i).remove(keyToRemoveObj); // Removing object just make is look
+																					// similar as of main obj
+				responseDirectReports.put(tempHoldChildDirectReports.get(j));
+			}
+			// removing child directReports from Parent as those are already added to
+			// response
+			parentDirectReportArray.getJSONObject(i).remove(keyToRemoveObj);
+			responseDirectReports.put(parentDirectReportArray.getJSONObject(i));
+		}
+		return responseDirectReports.toString();
 	}
 
 	/*

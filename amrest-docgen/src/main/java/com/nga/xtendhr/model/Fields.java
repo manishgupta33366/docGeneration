@@ -37,7 +37,7 @@ public class Fields {
 	@Column(name = "\"ENTITY.ID\"", columnDefinition = "VARCHAR(32)")
 	private String entityID;
 
-	@Column(name = "\"SELECT_OPTION\"", columnDefinition = "VARCHAR(128)")
+	@Column(name = "\"SELECT_OPTION\"", columnDefinition = "VARCHAR(480)")
 	private String selectOption;
 
 	@Column(name = "\"VALUE_FROM_PATH\"", columnDefinition = "VARCHAR(128)")
