@@ -91,7 +91,11 @@ public class DocGen {
 	@GetMapping(value = "/login")
 	public ResponseEntity<?> login(HttpServletRequest request) {
 		try {
-			HttpSession session = request.getSession(true);
+			HttpSession session = request.getSession(false);
+			if (session != null) {
+				session.invalidate();
+			}
+			session = request.getSession(true);
 			session.setAttribute("loginStatus", "Success");
 			session.setAttribute("loggedInUser", request.getUserPrincipal().getName());
 			return ResponseEntity.ok().body("Login Success!");// True to create a new session for the logged-in user as
@@ -108,7 +112,6 @@ public class DocGen {
 		try {
 			HttpSession session = request.getSession(false);// false is not create new session and use the existing
 															// session
-			logger.debug("Session: " + session);
 			return session.getAttribute("loginStatus") != null
 					? ResponseEntity.ok().body(getRuleData(ruleID, session, false).toString()) // forDirectReport false
 					: new ResponseEntity<>("Session timeout! Please Login again!", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -193,18 +196,16 @@ public class DocGen {
 		String url = "";
 		String loggedInUser = (String) session.getAttribute("loggedInUser");
 		loggedInUser = loggedInUser.equals("S0014379281") || loggedInUser.equals("S0018269301")
-				|| loggedInUser.equalsIgnoreCase("S0019013022") ? "E00000882" : loggedInUser;
+				|| loggedInUser.equalsIgnoreCase("S0019013022") ? "E00000815" : loggedInUser;
 		url = mapRuleField.getUrl();// URL saved at required Data
 		url = url.replaceFirst("<>", directReportUserID);// UserId passed from UI
-		url = url.replaceFirst("<>", loggedInUser);// for direct Manager
-		url = url.replaceFirst("<>", loggedInUser);// for 2nd level manager
+		url = url.replaceAll("<>", loggedInUser);// for direct Manager and for 2nd level manager
+
 		JSONArray responseArray = new JSONArray(callSFSingle(mapRuleField.getKey(), url));// Entity name saved in KEY
 																							// column
-
 		isDirectReport = responseArray.length() > 0 ? "true" : "false";
 		// generating a unique Id for each UserID sent from the UI, In order to fetch
-		// data in
-		// future
+		// data in future
 		if (Boolean.parseBoolean(isDirectReport))
 			session.setAttribute("directReportData-" + directReportUserID, responseArray.get(0).toString());
 		return isDirectReport;
@@ -278,24 +279,34 @@ public class DocGen {
 			UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, NamingException, URISyntaxException, IOException {
 		// Rule in DB to get groups of a direct report
-		JSONObject ruleData = getRuleData(ruleID, session, false); // forDirectReport false
+
+		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
 		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
-		Boolean isManager = Boolean.parseBoolean(ruleData.getString(mapRuleField.get(0).getField().getTechnicalName()));
+		/*
+		 *** Security Check *** Checking if loggedIn user is a manager
+		 *
+		 */
+		Boolean isManager = Boolean.parseBoolean(getFieldValue(mapRuleField.get(0).getField(), session, false));
+		if (!isManager) {
+			logger.error("Unauthorized access User: " + (String) session.getAttribute("loggedInUser")
+					+ " who is not a manager, Tried accessing groups of user: " + requestData.getString("userID"));
+			return "You are not authorized to access this data! This event has been logged!";
+		}
 
 		/*
 		 *** Security Check *** Checking if userID passed from UI is actually a direct
 		 * report of the loggenIn user
 		 */
-		Boolean isDirectReport = Boolean
-				.parseBoolean(ruleData.getString(mapRuleField.get(1).getField().getTechnicalName()));
-		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
-		if (isManager == false || isDirectReport == false) {
+		Boolean isDirectReport = Boolean.parseBoolean(getFieldValue(mapRuleField.get(1).getField(), session, false));
+
+		if (!isDirectReport) {
 			logger.error("Unauthorized access User: " + (String) session.getAttribute("loggedInUser")
-					+ " Tried accessing groups of user: " + requestData.getString("userID"));// userID passed from UI
+					+ " Tried accessing groups of user: " + requestData.getString("userID")
+					+ ", who is not its direct report or level 2");// userID passed from UI
 			return "You are not authorized to access this data! This event has been logged!";
 		}
-		String countryID = ruleData.getString(mapRuleField.get(2).getField().getTechnicalName());
-		String companyID = ruleData.getString(mapRuleField.get(3).getField().getTechnicalName());
+		String countryID = getFieldValue(mapRuleField.get(2).getField(), session, false);// forDirectReport false
+		String companyID = getFieldValue(mapRuleField.get(3).getField(), session, false);// forDirectReport false
 		Iterator<MapCountryCompanyGroup> iterator = mapCountryCompanyGroupService
 				.findByCountryCompany(countryID, companyID, false).iterator();
 		JSONArray response = new JSONArray();
@@ -358,26 +369,38 @@ public class DocGen {
 			NamingException, URISyntaxException, IOException {
 		// Rule in DB to get templates of a direct report
 
-		/*
-		 *** Security Check *** Checking if loggenIn user is a manager and UserID passed
-		 * from UI is actually a directReport of the loggedIn User
-		 */
-		JSONObject ruleData = getRuleData(ruleID, session, false); // forDirectReport false as this rule is for the
-																	// loggedIn user
-		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
-		String directReportCountryID = ruleData.getString(mapRuleField.get(0).getField().getTechnicalName());
-		String directReportCompanyID = ruleData.getString(mapRuleField.get(1).getField().getTechnicalName());
-		Boolean isManager = Boolean.parseBoolean(ruleData.getString(mapRuleField.get(2).getField().getTechnicalName()));
-		Boolean isDirectReport = Boolean
-				.parseBoolean(ruleData.getString(mapRuleField.get(3).getField().getTechnicalName()));
-
-		String loggerInUser = (String) session.getAttribute("loggedInUser");
 		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
-		if (isManager == false || isDirectReport == false) {
-			logger.error("Unauthorized access User: " + loggerInUser + " Tried accessing groups of user: "
-					+ requestData.getString("userID"));// userID passed from UI
+		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+
+		/*
+		 *** Security Check *** Checking if loggedIn user is a manager
+		 *
+		 */
+		Boolean isManager = Boolean.parseBoolean(getFieldValue(mapRuleField.get(0).getField(), session, false));
+		String loggerInUser = (String) session.getAttribute("loggedInUser");
+		if (!isManager) {
+			logger.error("Unauthorized access User: " + loggerInUser
+					+ " who is not a manager, Tried accessing templates of user: " + requestData.getString("userID"));
 			return "You are not authorized to access this data! This event has been logged!";
 		}
+
+		/*
+		 *** Security Check *** Checking if userID passed from UI is actually a direct
+		 * report of the loggenIn user
+		 */
+		Boolean isDirectReport = Boolean.parseBoolean(getFieldValue(mapRuleField.get(1).getField(), session, false));
+
+		if (!isDirectReport) {
+			logger.error("Unauthorized access User: " + loggerInUser + " Tried accessing templates of a user: "
+					+ requestData.getString("userID") + ", who is not its direct report or level 2");// userID passed
+																										// from UI
+			return "You are not authorized to access this data! This event has been logged!";
+		}
+
+		String directReportCountryID = getFieldValue(mapRuleField.get(2).getField(), session, false);// forDirectReport
+																										// false
+		String directReportCompanyID = getFieldValue(mapRuleField.get(3).getField(), session, false);// forDirectReport
+																										// false
 
 		/*
 		 *** Security Check *** Checking if groupID passed from UI is actually available
@@ -388,32 +411,32 @@ public class DocGen {
 				.findByGroupCountryCompany(groupID, directReportCountryID, directReportCompanyID, false).size() == 1
 						? true
 						: false;
-		if (groupAvailableCheck) {
-			// Now getting templates those are available for the userID provided from UI
-			List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupID);
-			// Now Iterating for each template assigned to the provided group
-			Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
-			String generatedCriteria;
-			String templateID;
-			List<Templates> template;
-			Templates tempTemplate;
-			JSONArray response = new JSONArray();
-			while (iterator.hasNext()) {
-				templateID = iterator.next().getTemplateID();
-				// Generating criteria for each template
-				generatedCriteria = generateCriteria(templateID, session, true);// forDirectReport true
-				template = templateService.findByIdAndCriteria(templateID, generatedCriteria);
-				tempTemplate = template.size() > 0 ? template.get(0) : null;
-				if (tempTemplate != null) {
-					response.put(tempTemplate.toString());
-				}
-			}
-			return response.toString();
+		if (!groupAvailableCheck) {
+			logger.error("Unauthorized access User: " + loggerInUser
+					+ " Tried accessing templates of group that is not available for user provided from UI userID:"
+					+ requestData.getString("userID") + " groupID: " + groupID);
+			return "You are not authorized to access this data! This event has been logged!";
 		}
-		logger.error("Unauthorized access User: " + loggerInUser
-				+ " Tried accessing templates of group that is not available for user provided from UI userID:"
-				+ requestData.getString("userID") + " groupID: " + groupID);
-		return "You are not authorized to access this data! This event has been logged!";
+		// Now getting templates those are available for the userID provided from UI
+		List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupID);
+		// Now Iterating for each template assigned to the provided group
+		Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
+		String generatedCriteria;
+		String templateID;
+		List<Templates> template;
+		Templates tempTemplate;
+		JSONArray response = new JSONArray();
+		while (iterator.hasNext()) {
+			templateID = iterator.next().getTemplateID();
+			// Generating criteria for each template
+			generatedCriteria = generateCriteria(templateID, session, true);// forDirectReport true
+			template = templateService.findByIdAndCriteria(templateID, generatedCriteria);
+			tempTemplate = template.size() > 0 ? template.get(0) : null;
+			if (tempTemplate != null) {
+				response.put(tempTemplate.toString());
+			}
+		}
+		return response.toString();
 	}
 	/*
 	 *** POST Rules END***
@@ -451,7 +474,7 @@ public class DocGen {
 		if (field.getRuleID() == null) {
 			JSONObject entityData;
 			Entities entity = field.getEntity();
-			logger.debug("EntityName: " + entity.getName() + " For GetFieldValue Field: " + field.getTechnicalName());
+			logger.debug("EntityName: " + entity.getName() + " For Field: " + field.getTechnicalName());
 			entity = checkForDependantEntity(entity); // Check for root entity and get root entity if current entity
 														// is
 														// dependent on some other entity
@@ -517,7 +540,7 @@ public class DocGen {
 		String entityName = entity.getName();
 		String directReportUserID = null;
 		loggedInUser = loggedInUser.equals("S0014379281") || loggedInUser.equals("S0018269301")
-				|| loggedInUser.equalsIgnoreCase("S0019013022") ? "E00000882" : loggedInUser;
+				|| loggedInUser.equalsIgnoreCase("S0019013022") ? "E00000815" : loggedInUser;
 		Map<String, String> entityMap = new HashMap<String, String>();
 		BatchRequest batchRequest = new BatchRequest();
 		batchRequest.configureDestination(sfDestination);
