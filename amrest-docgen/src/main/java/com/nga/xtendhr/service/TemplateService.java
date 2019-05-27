@@ -12,4 +12,6 @@ public interface TemplateService {
 	public void delete(Templates item);
 
 	public List<Templates> findByIdAndCriteria(String id, String criteria);
+
+	public List<Templates> findById(String id);
 }

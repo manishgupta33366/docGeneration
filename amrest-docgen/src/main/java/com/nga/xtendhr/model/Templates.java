@@ -23,7 +23,8 @@ import com.nga.xtendhr.config.DBConfiguration;
 @Entity
 @Table(name = DBConfiguration.TEMPLATES, schema = DBConfiguration.SCHEMA_NAME)
 @NamedQueries({
-		@NamedQuery(name = "Templates.findByTemplateAndCriteria", query = "SELECT T FROM Templates T WHERE T.id = :id AND T.criteria = :criteria") })
+		@NamedQuery(name = "Templates.findByTemplateAndCriteria", query = "SELECT T FROM Templates T WHERE T.id = :id AND T.criteria = :criteria"),
+		@NamedQuery(name = "Templates.findById", query = "SELECT T FROM Templates T WHERE T.id = :id") })
 public class Templates {
 	@Id
 	@Column(name = "\"ID\"", columnDefinition = "VARCHAR(32)")

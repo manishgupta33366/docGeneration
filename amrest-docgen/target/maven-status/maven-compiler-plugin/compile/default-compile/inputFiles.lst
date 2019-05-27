@@ -4,10 +4,12 @@ C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\Co
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\CountryService.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\MapCountryCompanyGroupServiceImp.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\Fields.java
+C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\MapTemplateFields.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\utility\CommonFunctions.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\CountryServiceImp.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\MapCountryCompanyGroupService.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\EntitiesServiceImp.java
+C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\MapTemplatFieldsServiceImp.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\TemplateCriteriaGenerationServiceImp.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\TemplateCriteriaGenerationService.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\config\AppConfig.java
@@ -15,6 +17,7 @@ C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\config\D
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\controller\Initial_SF_PEX.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\Entities.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\connection\DestinationClient.java
+C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\MapTemplateFieldsService.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\RulesServiceImp.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\controller\ApplicationTest.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\MapGroupTemplates.java

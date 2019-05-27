@@ -18,4 +18,5 @@ public class DBConfiguration {
 	public static final String ENTITIES = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGENC_ENTITIES\"";
 	public static final String RULES = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGENC_RULES\"";
 	public static final String MAP_RULE_FIELDS = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGENC_MAP_RULE_FIELDS\"";
+	public static final String MAP_TEMPLATE_FIELDS = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGEN_MAP_TEMPLATE_FILEDS\"";
 }

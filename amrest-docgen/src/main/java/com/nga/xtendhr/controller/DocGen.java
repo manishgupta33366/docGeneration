@@ -13,7 +13,10 @@ import javax.naming.NamingException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.util.EntityUtils;
 import org.apache.olingo.odata2.api.batch.BatchException;
 import org.apache.olingo.odata2.api.client.batch.BatchSingleResponse;
 import org.json.JSONArray;
@@ -32,11 +35,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nga.xtendhr.connection.BatchRequest;
+import com.nga.xtendhr.connection.DestinationClient;
 import com.nga.xtendhr.model.Entities;
 import com.nga.xtendhr.model.Fields;
 import com.nga.xtendhr.model.MapCountryCompanyGroup;
 import com.nga.xtendhr.model.MapGroupTemplates;
 import com.nga.xtendhr.model.MapRuleFields;
+import com.nga.xtendhr.model.MapTemplateFields;
 import com.nga.xtendhr.model.TemplateCriteriaGeneration;
 import com.nga.xtendhr.model.Templates;
 import com.nga.xtendhr.service.EntitiesService;
@@ -44,6 +49,7 @@ import com.nga.xtendhr.service.FieldsService;
 import com.nga.xtendhr.service.MapCountryCompanyGroupService;
 import com.nga.xtendhr.service.MapGroupTemplatesService;
 import com.nga.xtendhr.service.MapRuleFieldsService;
+import com.nga.xtendhr.service.MapTemplateFieldsService;
 import com.nga.xtendhr.service.RulesService;
 import com.nga.xtendhr.service.TemplateCriteriaGenerationService;
 import com.nga.xtendhr.service.TemplateService;
@@ -63,7 +69,7 @@ public class DocGen {
 
 	Logger logger = LoggerFactory.getLogger(DocGen.class);
 	private static final String sfDestination = "prehiremgrSFTest";
-
+	public static final String docGenDestination = "DocumentGeneration";
 	@Autowired
 	MapCountryCompanyGroupService mapCountryCompanyGroupService;
 
@@ -87,6 +93,9 @@ public class DocGen {
 
 	@Autowired
 	RulesService rulesService;
+
+	@Autowired
+	MapTemplateFieldsService mapTemplateFieldsService;
 
 	@GetMapping(value = "/login")
 	public ResponseEntity<?> login(HttpServletRequest request) {
@@ -196,7 +205,8 @@ public class DocGen {
 		String url = "";
 		String loggedInUser = (String) session.getAttribute("loggedInUser");
 		loggedInUser = loggedInUser.equals("S0014379281") || loggedInUser.equals("S0018269301")
-				|| loggedInUser.equalsIgnoreCase("S0019013022") ? "E00000815" : loggedInUser;
+				|| loggedInUser.equals("S0019013022") || loggedInUser.equals("S0020227452") ? "E00000815"
+						: loggedInUser;
 		url = mapRuleField.getUrl();// URL saved at required Data
 		url = url.replaceFirst("<>", directReportUserID);// UserId passed from UI
 		url = url.replaceAll("<>", loggedInUser);// for direct Manager and for 2nd level manager
@@ -268,6 +278,10 @@ public class DocGen {
 		return responseDirectReports.toString();
 	}
 
+	String getTemplateName(String ruleID, HttpSession session, Boolean forDirectReport) {
+		return templateService.findById((String) session.getAttribute("templateID")).get(0).getName();
+	}
+
 	/*
 	 *** GET Rules END***
 	 */
@@ -337,30 +351,30 @@ public class DocGen {
 
 		Boolean groupAvailableCheck = mapCountryCompanyGroupService
 				.findByGroupCountryCompany(groupID, countryID, companyID, isManager).size() == 1 ? true : false;
-		if (groupAvailableCheck) {
-			List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupID);
-			// Now Iterating for each template assigned to the provided group
-			Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
-			String generatedCriteria;
-			String templateID;
-			List<Templates> template;
-			Templates tempTemplate;
-			JSONArray response = new JSONArray();
-			while (iterator.hasNext()) {
-				templateID = iterator.next().getTemplateID();
-				// Generating criteria for each template
-				generatedCriteria = generateCriteria(templateID, session, false); // forDirectReport false
-				template = templateService.findByIdAndCriteria(templateID, generatedCriteria);
-				tempTemplate = template.size() > 0 ? template.get(0) : null;
-				if (tempTemplate != null) {
-					response.put(tempTemplate.toString());
-				}
-			}
-			return response.toString();
+		if (!groupAvailableCheck) {
+			logger.error("Unauthorized access User: " + (String) session.getAttribute("loggedInUser")
+					+ " Tried accessing templates of group that is not available for this user. groupID: " + groupID);
+			return "You are not authorized to access this data! This event has been logged!";
 		}
-		logger.error("Unauthorized access User: " + (String) session.getAttribute("loggedInUser")
-				+ " Tried accessing templates of group that is not available for this user. groupID: " + groupID);
-		return "You are not authorized to access this data! This event has been logged!";
+
+		List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupID);
+		// Now Iterating for each template assigned to the provided group
+		Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
+		String generatedCriteria;
+		String templateID;
+		List<Templates> template;
+		JSONArray response = new JSONArray();
+		while (iterator.hasNext()) {
+			templateID = iterator.next().getTemplateID();
+			// Generating criteria for each template
+			generatedCriteria = generateCriteria(templateID, session, false); // forDirectReport false
+			template = templateService.findByIdAndCriteria(templateID, generatedCriteria);
+			if (template.size() > 0) {
+				response.put(template.get(0).toString());
+			}
+		}
+		return response.toString();
+
 	}
 
 	String getTemplatesOfDirectReports(String ruleID, HttpSession session)
@@ -438,6 +452,33 @@ public class DocGen {
 		}
 		return response.toString();
 	}
+
+	String docDownload(String ruleID, HttpSession session)
+			throws BatchException, JSONException, ClientProtocolException, UnsupportedOperationException,
+			NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException, NamingException, URISyntaxException, IOException {
+		// Rule in DB to download doc
+
+		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
+		String loggerInUser = (String) session.getAttribute("loggedInUser");
+		String templateID = requestData.getString("templateID");
+
+		/*
+		 *** Security Check *** Checking if templateID passed from UI is actually
+		 * available for the loggedIn user
+		 */
+		if (!templateAvailableCheck(ruleID, session, false)) {
+			logger.error("Unauthorized access User: " + loggerInUser
+					+ " Tried downlaoding document of a template that is not assigned for this user, templateID: "
+					+ templateID);
+			return "You are not authorized to access this data! This event has been logged!";
+		}
+		// Now Generating Object to POST
+		JSONObject docRequestObject = getDocPostObject(templateID, requestData.getString("outputType"), session, false);
+		logger.debug("Doc Generation Request Obj: " + docRequestObject.toString());
+		return getDocFromAPI(docRequestObject);
+	}
+
 	/*
 	 *** POST Rules END***
 	 */
@@ -540,7 +581,8 @@ public class DocGen {
 		String entityName = entity.getName();
 		String directReportUserID = null;
 		loggedInUser = loggedInUser.equals("S0014379281") || loggedInUser.equals("S0018269301")
-				|| loggedInUser.equalsIgnoreCase("S0019013022") ? "E00000815" : loggedInUser;
+				|| loggedInUser.equals("S0019013022") || loggedInUser.equals("S0020227452") ? "E00000815"
+						: loggedInUser;
 		Map<String, String> entityMap = new HashMap<String, String>();
 		BatchRequest batchRequest = new BatchRequest();
 		batchRequest.configureDestination(sfDestination);
@@ -688,6 +730,88 @@ public class DocGen {
 		String response = responseArray.toString();
 		logger.debug("Response from single request: " + response);
 		return response;
+	}
+
+	private Boolean templateAvailableCheck(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, JSONException, ClientProtocolException, UnsupportedOperationException,
+			NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException, NamingException, URISyntaxException, IOException {
+		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
+		JSONArray availableTemplates;
+		JSONArray availableGroups = new JSONArray(
+				getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport));
+		for (int i = 0; i < availableGroups.length(); i++) {
+			requestData.put("groupID", availableGroups.getJSONObject(0).getString("id"));
+			session.setAttribute("requestData", requestData.toString());
+			availableTemplates = new JSONArray(getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport));
+			for (int j = 0; j < availableTemplates.length(); j++) {
+				if (requestData.getString("templateID").equals(availableTemplates.getJSONObject(j).getString("id"))) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private JSONObject getDocPostObject(String templateID, String outputType, HttpSession session,
+			Boolean forDirectReport) throws BatchException, ClientProtocolException, UnsupportedOperationException,
+			NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException, NamingException, URISyntaxException, IOException {
+		// Function to generate POST object for DocGeneration
+
+		JSONObject docPostObject = new JSONObject();
+		MapTemplateFields mapTemplateFields;
+		Iterator<MapTemplateFields> iterator = mapTemplateFieldsService.findByTemplateID(templateID).iterator();
+		while (iterator.hasNext()) {
+			mapTemplateFields = iterator.next();
+			JSONObject objToPlace = new JSONObject();
+			objToPlace.put("Key", mapTemplateFields.getTemplateFieldName());
+			objToPlace.put("Value", getFieldValue(mapTemplateFields.getField(), session, forDirectReport));
+			// To place value at specific location in POST object
+			docPostObject = placeValue(objToPlace, mapTemplateFields.getPlaceFieldAtPath(), docPostObject);
+		}
+		return docPostObject;
+	}
+
+	private JSONObject placeValue(JSONObject objToPlace, String placeAtPath, JSONObject placeAt) {
+		// Function to place value at specific location in POST object
+
+		String[] pathArray = placeAtPath.split("/");
+		for (String key : pathArray) {
+			// Only two cases are handled
+			// 1. If the value needs to be placed inside Parameters array
+			// 2. If the value need to be placed directly in the root object.
+			if (key.endsWith("[\0")) {
+				if (placeAt.has(key.substring(0, key.length() - 2)))
+					placeAt.getJSONArray(key.substring(0, key.length() - 2)).put(objToPlace);
+				else
+					placeAt.put(key.substring(0, key.length() - 2), new JSONArray().put(objToPlace));
+
+			} else if (key.endsWith("\0")) {
+				placeAt.put(objToPlace.getString("Key"), objToPlace.getString("Value"));
+			}
+		}
+		return placeAt;
+	}
+
+	private String getDocFromAPI(JSONObject requestObj)
+			throws URISyntaxException, NamingException, ParseException, IOException {
+		DestinationClient docDestination = new DestinationClient();
+		docDestination.setDestName(docGenDestination);
+		docDestination.setHeaderProvider();
+		docDestination.setConfiguration();
+		docDestination.setDestConfiguration();
+		docDestination.setHeaders(docDestination.getDestProperty("Authentication"));
+
+		HttpResponse docResponse = docDestination.callDestinationPOST("", "", requestObj.toString());
+
+		if (docResponse.getStatusLine().getStatusCode() != 200) {
+			logger.debug("Error while fetching document from API, response from API: "
+					+ EntityUtils.toString(docResponse.getEntity(), "UTF-8"));
+			return "Error while generating Doc";
+		}
+		return EntityUtils.toString(docResponse.getEntity(), "UTF-8");
 	}
 	/*
 	 *** Helper functions END***

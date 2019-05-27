@@ -2,6 +2,7 @@ com\nga\xtendhr\config\DBConfiguration.class
 com\nga\xtendhr\service\TemplateCriteriaGenerationServiceImp.class
 com\nga\xtendhr\controller\Initial_SF_PEX.class
 com\nga\xtendhr\service\EntitiesServiceImp.class
+com\nga\xtendhr\service\MapTemplatFieldsServiceImp.class
 com\nga\xtendhr\service\TemplateService.class
 com\nga\xtendhr\model\Templates.class
 com\nga\xtendhr\model\MapRuleFields.class
@@ -18,6 +19,7 @@ com\nga\xtendhr\service\RulesServiceImp.class
 com\nga\xtendhr\model\Fields.class
 com\nga\xtendhr\service\CountryService.class
 com\nga\xtendhr\utility\GetDestinationClient.class
+com\nga\xtendhr\model\MapTemplateFields.class
 com\nga\xtendhr\model\Countries.class
 com\nga\xtendhr\model\Rules.class
 com\nga\xtendhr\model\Groups.class
@@ -29,6 +31,7 @@ com\nga\xtendhr\model\Entities.class
 com\nga\xtendhr\service\MapGroupTemplatesService.class
 com\nga\xtendhr\controller\DocGen.class
 com\nga\xtendhr\service\FieldsServiceImp.class
+com\nga\xtendhr\service\MapTemplateFieldsService.class
 com\nga\xtendhr\service\MapRuleFieldsService.class
 com\nga\xtendhr\service\MapCountryCompanyGroupService.class
 com\nga\xtendhr\service\TemplateCriteriaGenerationService.class
