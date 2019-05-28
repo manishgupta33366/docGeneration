@@ -144,8 +144,8 @@ public class DocGen {
 			String ruleName = rulesService.findByRuleID(ruleID).get(0).getName();
 			// Calling function dynamically
 			// more Info here: https://www.baeldung.com/java-method-reflection
-			Method method = this.getClass().getDeclaredMethod(ruleName, String.class, HttpSession.class);
-			return ResponseEntity.ok().body((String) method.invoke(this, ruleID, session));
+			Method method = this.getClass().getDeclaredMethod(ruleName, String.class, HttpSession.class, Boolean.class);
+			return ResponseEntity.ok().body((String) method.invoke(this, ruleID, session, false));
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -217,6 +217,8 @@ public class DocGen {
 		// generating a unique Id for each UserID sent from the UI, In order to fetch
 		// data in future
 		if (Boolean.parseBoolean(isDirectReport))
+			// Generating unique ID for each directReport in session -- in Case of future
+			// use
 			session.setAttribute("directReportData-" + directReportUserID, responseArray.get(0).toString());
 		return isDirectReport;
 	}
@@ -279,9 +281,14 @@ public class DocGen {
 	}
 
 	String getTemplateName(String ruleID, HttpSession session, Boolean forDirectReport) {
-		return templateService.findById((String) session.getAttribute("templateID")).get(0).getName();
+		JSONObject rquestData = new JSONObject((String) session.getAttribute("requestData"));
+		return templateService.findById(rquestData.getString("templateID")).get(0).getName();
 	}
 
+	String getFileType(String ruleID, HttpSession session, Boolean forDirectReport) {
+		JSONObject rquestData = new JSONObject((String) session.getAttribute("requestData"));
+		return rquestData.getString("fileType");
+	}
 	/*
 	 *** GET Rules END***
 	 */
@@ -289,9 +296,10 @@ public class DocGen {
 	/*
 	 *** POST Rules Start***
 	 */
-	String getGroupsOfDirectReport(String ruleID, HttpSession session) throws BatchException, ClientProtocolException,
-			UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException, NamingException, URISyntaxException, IOException {
+	String getGroupsOfDirectReport(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
 		// Rule in DB to get groups of a direct report
 
 		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
@@ -330,9 +338,10 @@ public class DocGen {
 		return response.toString();
 	}
 
-	String getTemplates(String ruleID, HttpSession session) throws BatchException, ClientProtocolException,
-			UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException, NamingException, URISyntaxException, IOException {
+	String getTemplates(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
 		// Rule in DB to get templates of a Group of loggedIn user
 
 		/*
@@ -377,7 +386,7 @@ public class DocGen {
 
 	}
 
-	String getTemplatesOfDirectReports(String ruleID, HttpSession session)
+	String getTemplatesOfDirectReports(String ruleID, HttpSession session, Boolean forDirectReport)
 			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
 			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
 			NamingException, URISyntaxException, IOException {
@@ -453,7 +462,7 @@ public class DocGen {
 		return response.toString();
 	}
 
-	String docDownload(String ruleID, HttpSession session)
+	String docDownload(String ruleID, HttpSession session, Boolean forDirectReport)
 			throws BatchException, JSONException, ClientProtocolException, UnsupportedOperationException,
 			NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException, NamingException, URISyntaxException, IOException {
@@ -474,7 +483,7 @@ public class DocGen {
 			return "You are not authorized to access this data! This event has been logged!";
 		}
 		// Now Generating Object to POST
-		JSONObject docRequestObject = getDocPostObject(templateID, requestData.getString("outputType"), session, false);
+		JSONObject docRequestObject = getDocPostObject(templateID, session, false);
 		logger.debug("Doc Generation Request Obj: " + docRequestObject.toString());
 		return getDocFromAPI(docRequestObject);
 	}
@@ -642,6 +651,7 @@ public class DocGen {
 			if (!forDirectReport)
 				session.setAttribute(entityName, response);
 			else
+				// Generating Unique ID pep user and Entity
 				session.setAttribute("directReportEntities-" + directReportUserID + entityName, response);
 			// logger.debug(entityName + " Response: " + response);
 		}
@@ -741,12 +751,19 @@ public class DocGen {
 		JSONArray availableTemplates;
 		JSONArray availableGroups = new JSONArray(
 				getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport));
+		logger.debug("Available Groups:" + availableGroups.toString());
+		String groupID;
 		for (int i = 0; i < availableGroups.length(); i++) {
-			requestData.put("groupID", availableGroups.getJSONObject(0).getString("id"));
+			// saving group ID in Session requestData attribute as its expected in Get
+			// Templates function
+			groupID = new JSONObject(availableGroups.getString(i)).getString("id");
+			requestData.put("groupID", groupID);
 			session.setAttribute("requestData", requestData.toString());
 			availableTemplates = new JSONArray(getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport));
+			logger.debug("Available templates:" + availableTemplates.toString());
 			for (int j = 0; j < availableTemplates.length(); j++) {
-				if (requestData.getString("templateID").equals(availableTemplates.getJSONObject(j).getString("id"))) {
+				if (requestData.getString("templateID")
+						.equals(new JSONObject(availableTemplates.getString(j)).getString("id"))) {
 					return true;
 				}
 			}
@@ -754,22 +771,22 @@ public class DocGen {
 		return false;
 	}
 
-	private JSONObject getDocPostObject(String templateID, String outputType, HttpSession session,
-			Boolean forDirectReport) throws BatchException, ClientProtocolException, UnsupportedOperationException,
-			NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
-			InvocationTargetException, NamingException, URISyntaxException, IOException {
+	private JSONObject getDocPostObject(String templateID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
 		// Function to generate POST object for DocGeneration
 
 		JSONObject docPostObject = new JSONObject();
-		MapTemplateFields mapTemplateFields;
+		MapTemplateFields mapTemplateField;
 		Iterator<MapTemplateFields> iterator = mapTemplateFieldsService.findByTemplateID(templateID).iterator();
 		while (iterator.hasNext()) {
-			mapTemplateFields = iterator.next();
+			mapTemplateField = iterator.next();
 			JSONObject objToPlace = new JSONObject();
-			objToPlace.put("Key", mapTemplateFields.getTemplateFieldName());
-			objToPlace.put("Value", getFieldValue(mapTemplateFields.getField(), session, forDirectReport));
+			objToPlace.put("Key", mapTemplateField.getTemplateFieldName());
+			objToPlace.put("Value", getFieldValue(mapTemplateField.getField(), session, forDirectReport));
 			// To place value at specific location in POST object
-			docPostObject = placeValue(objToPlace, mapTemplateFields.getPlaceFieldAtPath(), docPostObject);
+			docPostObject = placeValue(objToPlace, mapTemplateField.getPlaceFieldAtPath(), docPostObject);
 		}
 		return docPostObject;
 	}
@@ -782,13 +799,14 @@ public class DocGen {
 			// Only two cases are handled
 			// 1. If the value needs to be placed inside Parameters array
 			// 2. If the value need to be placed directly in the root object.
-			if (key.endsWith("[\0")) {
-				if (placeAt.has(key.substring(0, key.length() - 2)))
-					placeAt.getJSONArray(key.substring(0, key.length() - 2)).put(objToPlace);
+			if (key.endsWith("]\\0")) {
+				logger.debug("key.substring(0, key.length() - 5): " + key.substring(0, key.length() - 5));
+				if (placeAt.has(key.substring(0, key.length() - 5)))
+					placeAt.getJSONArray(key.substring(0, key.length() - 5)).put(objToPlace);
 				else
-					placeAt.put(key.substring(0, key.length() - 2), new JSONArray().put(objToPlace));
+					placeAt.put(key.substring(0, key.length() - 5), new JSONArray().put(objToPlace));
 
-			} else if (key.endsWith("\0")) {
+			} else if (key.endsWith("\\0")) {
 				placeAt.put(objToPlace.getString("Key"), objToPlace.getString("Value"));
 			}
 		}

@@ -45,8 +45,8 @@ public class TemplateServiceImp implements TemplateService {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<Templates> findByID(String id) {
-		Query query = em.createNamedQuery("Templates.findById").setParameter("id", id)
+	public List<Templates> findById(String id) {
+		Query query = em.createNamedQuery("Templates.findById").setParameter("id", id);
 		List<Templates> items = query.getResultList();
 		return items;
 	}
