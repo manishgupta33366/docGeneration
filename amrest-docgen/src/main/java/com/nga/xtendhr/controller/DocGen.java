@@ -324,7 +324,7 @@ public class DocGen {
 		if (!isDirectReport) {
 			logger.error("Unauthorized access User: " + (String) session.getAttribute("loggedInUser")
 					+ " Tried accessing groups of user: " + requestData.getString("userID")
-					+ ", who is not its direct report or level 2");// userID passed from UI
+					+ ", which is not its direct report or level 2");// userID passed from UI
 			return "You are not authorized to access this data! This event has been logged!";
 		}
 		String countryID = getFieldValue(mapRuleField.get(2).getField(), session, false);// forDirectReport false
@@ -415,7 +415,7 @@ public class DocGen {
 
 		if (!isDirectReport) {
 			logger.error("Unauthorized access User: " + loggerInUser + " Tried accessing templates of a user: "
-					+ requestData.getString("userID") + ", who is not its direct report or level 2");// userID passed
+					+ requestData.getString("userID") + ", which is not its direct report or level 2");// userID passed
 																										// from UI
 			return "You are not authorized to access this data! This event has been logged!";
 		}
@@ -476,18 +476,67 @@ public class DocGen {
 		 *** Security Check *** Checking if templateID passed from UI is actually
 		 * available for the loggedIn user
 		 */
-		if (!templateAvailableCheck(ruleID, session, false)) {
+		if (!templateAvailableCheck(ruleID, session, false)) { // for DirectReport false
 			logger.error("Unauthorized access User: " + loggerInUser
 					+ " Tried downlaoding document of a template that is not assigned for this user, templateID: "
 					+ templateID);
 			return "You are not authorized to access this data! This event has been logged!";
 		}
 		// Now Generating Object to POST
-		JSONObject docRequestObject = getDocPostObject(templateID, session, false);
+		JSONObject docRequestObject = getDocPostObject(templateID, session, false); // for direct report false
 		logger.debug("Doc Generation Request Obj: " + docRequestObject.toString());
 		return getDocFromAPI(docRequestObject);
 	}
 
+	String docDownloadDirectReport(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
+		// Rule in DB to download doc of Direct report
+
+		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
+		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+		Boolean isManager = Boolean.parseBoolean(getFieldValue(mapRuleField.get(3).getField(), session, false));
+		String loggerInUser = (String) session.getAttribute("loggedInUser");
+		String userID = requestData.getString("userID");
+		String templateID = requestData.getString("templateID");
+
+		/*
+		 *** Security Check *** Checking if loggedIn user is a manager
+		 *
+		 */
+		if (!isManager) {
+			logger.error("Unauthorized access User: " + loggerInUser
+					+ " who is not a manager, Tried downloading doc for user: " + requestData.getString("userID"));
+			return "You are not authorized to access this data! This event has been logged!";
+		}
+
+		/*
+		 *** Security Check *** Checking if userID passed from UI is actually a direct
+		 * report of the loggenIn user
+		 */
+		Boolean isDirectReport = Boolean.parseBoolean(getFieldValue(mapRuleField.get(2).getField(), session, false));
+
+		if (!isDirectReport) {
+			logger.error("Unauthorized access User: " + loggerInUser + " Tried downloading doc of a user: " + userID
+					+ ", which is not its direct report or level 2");// userID passed from UI
+			return "You are not authorized to access this data! This event has been logged!";
+		}
+
+		/*
+		 *** Security Check *** Checking if templateID passed from UI is actually
+		 * available for the userID provided
+		 */
+		if (!templateAvailableCheck(ruleID, session, true)) {// for direct Report true
+			logger.error("Unauthorized access User: " + loggerInUser + " Tried downlaoding doc of the user: " + userID
+					+ " and template: " + templateID + " which is not assigned for this user");
+			return "You are not authorized to access this data! This event has been logged!";
+		}
+		// Now Generating Object to POST
+		JSONObject docRequestObject = getDocPostObject(templateID, session, true);// for direct Report true
+		logger.debug("Doc Generation Request Obj: " + docRequestObject.toString());
+		return getDocFromAPI(docRequestObject);
+	}
 	/*
 	 *** POST Rules END***
 	 */
@@ -522,12 +571,17 @@ public class DocGen {
 		logger.debug("Getting value for Field: " + field.getTechnicalName() + "  ::: RuleID: " + field.getRuleID()
 				+ " ::: forDirectReport: " + forDirectReport);
 		if (field.getRuleID() == null) {
+
+			// checking if a default value is there in field
+			if (field.getDefaultValue() != null)
+				return field.getDefaultValue();
+
 			JSONObject entityData;
 			Entities entity = field.getEntity();
 			logger.debug("EntityName: " + entity.getName() + " For Field: " + field.getTechnicalName());
 			entity = checkForDependantEntity(entity); // Check for root entity and get root entity if current entity
-														// is
-														// dependent on some other entity
+														// is dependent on some other entity
+
 			// now entity variable will be having the root entity from which will get the
 			// data of our field
 			entityData = getEntityData(entity, session, forDirectReport);
@@ -751,7 +805,7 @@ public class DocGen {
 		JSONArray availableTemplates;
 		JSONArray availableGroups = new JSONArray(
 				getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport));
-		logger.debug("Available Groups:" + availableGroups.toString());
+		logger.debug("Available Groups:" + availableGroups.toString() + " ::: forDirectReport" + forDirectReport);
 		String groupID;
 		for (int i = 0; i < availableGroups.length(); i++) {
 			// saving group ID in Session requestData attribute as its expected in Get
@@ -760,7 +814,8 @@ public class DocGen {
 			requestData.put("groupID", groupID);
 			session.setAttribute("requestData", requestData.toString());
 			availableTemplates = new JSONArray(getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport));
-			logger.debug("Available templates:" + availableTemplates.toString());
+			logger.debug(
+					"Available templates:" + availableTemplates.toString() + " ::: forDirectReport" + forDirectReport);
 			for (int j = 0; j < availableTemplates.length(); j++) {
 				if (requestData.getString("templateID")
 						.equals(new JSONObject(availableTemplates.getString(j)).getString("id"))) {
@@ -823,9 +878,9 @@ public class DocGen {
 		docDestination.setHeaders(docDestination.getDestProperty("Authentication"));
 
 		HttpResponse docResponse = docDestination.callDestinationPOST("", "", requestObj.toString());
-
 		if (docResponse.getStatusLine().getStatusCode() != 200) {
-			logger.debug("Error while fetching document from API, response from API: "
+			logger.debug("Error while fetching document from API, response from API: Response Status code: "
+					+ docResponse.getStatusLine().getStatusCode() + " ::: Response: "
 					+ EntityUtils.toString(docResponse.getEntity(), "UTF-8"));
 			return "Error while generating Doc";
 		}

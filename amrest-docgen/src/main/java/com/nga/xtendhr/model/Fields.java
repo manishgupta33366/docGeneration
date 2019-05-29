@@ -43,11 +43,14 @@ public class Fields {
 	@Column(name = "\"VALUE_FROM_PATH\"", columnDefinition = "VARCHAR(128)")
 	private String valueFromPath;
 
-	@Column(name = "\"DESCRIPTION\"", columnDefinition = "VARCHAR(128)")
-	private String description;
-
 	@Column(name = "\"RULE.ID\"", columnDefinition = "VARCHAR(32)")
 	private String ruleID;
+
+	@Column(name = "\"DEFAULT_VALUE\"", columnDefinition = "VARCHAR(32)")
+	private String defaultValue;
+
+	@Column(name = "\"DESCRIPTION\"", columnDefinition = "VARCHAR(128)")
+	private String description;
 
 	@ManyToOne(cascade = CascadeType.ALL)
 	@JoinColumn(name = "\"ENTITY.ID\"", referencedColumnName = "\"ID\"", insertable = false, updatable = false)
@@ -127,6 +130,14 @@ public class Fields {
 
 	public void setRule(Rules rule) {
 		this.rule = rule;
+	}
+
+	public String getDefaultValue() {
+		return defaultValue;
+	}
+
+	public void setDefaultValue(String defaultValue) {
+		this.defaultValue = defaultValue;
 	}
 
 }
