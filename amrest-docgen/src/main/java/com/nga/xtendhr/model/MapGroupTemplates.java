@@ -1,8 +1,11 @@
 package com.nga.xtendhr.model;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
@@ -32,6 +35,10 @@ public class MapGroupTemplates {
 	@Column(name = "\"TEMPLATE.ID\"", columnDefinition = "VARCHAR(32)")
 	private String templateID;
 
+	@ManyToOne(cascade = CascadeType.ALL)
+	@JoinColumn(name = "\"TEMPLATE.ID\"", referencedColumnName = "\"ID\"", insertable = false, updatable = false)
+	private Templates template;
+
 	public String getGroupID() {
 		return groupID;
 	}
@@ -47,4 +54,13 @@ public class MapGroupTemplates {
 	public void setTemplateID(String templateID) {
 		this.templateID = templateID;
 	}
+
+	public Templates getTemplate() {
+		return template;
+	}
+
+	public void setTemplate(Templates template) {
+		this.template = template;
+	}
+
 }

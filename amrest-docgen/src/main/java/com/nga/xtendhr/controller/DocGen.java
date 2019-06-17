@@ -16,6 +16,9 @@ import javax.servlet.http.HttpSession;
 import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.apache.olingo.odata2.api.batch.BatchException;
 import org.apache.olingo.odata2.api.client.batch.BatchSingleResponse;
@@ -25,14 +28,21 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
 import com.nga.xtendhr.connection.BatchRequest;
 import com.nga.xtendhr.connection.DestinationClient;
@@ -109,6 +119,21 @@ public class DocGen {
 			session.setAttribute("loggedInUser", request.getUserPrincipal().getName());
 			return ResponseEntity.ok().body("Login Success!");// True to create a new session for the logged-in user as
 																// its the initial call
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@GetMapping(value = "/test")
+	public ResponseEntity<?> test(@RequestParam(name = "url") String url) {
+		try {
+			JSONObject body = new JSONObject();
+			body.put("Gcc", "AMR");
+			body.put("CompanyCode", "AMR_HU001");
+			body.put("CountryCode", "AMR");
+
+			return ResponseEntity.ok().body(callpostAPI(url, body));
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -289,6 +314,31 @@ public class DocGen {
 		JSONObject rquestData = new JSONObject((String) session.getAttribute("requestData"));
 		return rquestData.getString("fileType");
 	}
+
+	String getTemplatesFromAPI(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
+		JSONObject apiResponse = null;
+		JSONObject ruleData;
+		if ((session.getAttribute("availableTemplatesInAzure") == null && !forDirectReport)
+				|| forDirectReport == true) {
+			ruleData = getRuleData(ruleID, session, forDirectReport);
+			apiResponse = new JSONObject(callpostAPI(ruleData.getString("JAVA_getTemplatesFromAPIURL"), ruleData));
+			Map<String, JSONObject> templatesAvailableInAzureMap = new HashMap<String, JSONObject>();
+			JSONArray availableTemplates = apiResponse.getJSONArray("templates");
+			JSONObject tempTemplateObject;
+			for (int i = 0; i < availableTemplates.length(); i++) {
+				tempTemplateObject = availableTemplates.getJSONObject(i);
+				templatesAvailableInAzureMap.put(tempTemplateObject.getString("templateName"), tempTemplateObject);
+			}
+			if (!forDirectReport)
+				session.setAttribute("availableTemplatesInAzure", templatesAvailableInAzureMap);
+			else
+				session.setAttribute("availableTemplatesForDirectReport", templatesAvailableInAzureMap);
+		}
+		return "";
+	}
 	/*
 	 *** GET Rules END***
 	 */
@@ -365,6 +415,10 @@ public class DocGen {
 					+ " Tried accessing templates of group that is not available for this user. groupID: " + groupID);
 			return "You are not authorized to access this data! This event has been logged!";
 		}
+		// get available Templates in Azure from Session
+		@SuppressWarnings("unchecked")
+		Map<String, JSONObject> templatesAvailableInAzure = (Map<String, JSONObject>) session
+				.getAttribute("availableTemplatesInAzure");
 
 		List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupID);
 		// Now Iterating for each template assigned to the provided group
@@ -373,8 +427,15 @@ public class DocGen {
 		String templateID;
 		List<Templates> template;
 		JSONArray response = new JSONArray();
+		MapGroupTemplates tempMapGroupTemplates;
 		while (iterator.hasNext()) {
-			templateID = iterator.next().getTemplateID();
+			tempMapGroupTemplates = iterator.next();
+			templateID = tempMapGroupTemplates.getTemplateID();
+
+			// check if the template is available in Azure
+			if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplates.getTemplate().getName())) {
+				continue;
+			}
 			// Generating criteria for each template
 			generatedCriteria = generateCriteria(templateID, session, false); // forDirectReport false
 			template = templateService.findByIdAndCriteria(templateID, generatedCriteria);
@@ -382,8 +443,8 @@ public class DocGen {
 				response.put(template.get(0).toString());
 			}
 		}
-		return response.toString();
 
+		return response.toString();
 	}
 
 	String getTemplatesOfDirectReports(String ruleID, HttpSession session, Boolean forDirectReport)
@@ -885,6 +946,27 @@ public class DocGen {
 			return "Error while generating Doc";
 		}
 		return EntityUtils.toString(docResponse.getEntity(), "UTF-8");
+	}
+
+	private String callpostAPI(String url, JSONObject body) {
+		// Function required to call POST API
+		ClientHttpRequestFactory requestFactory = getClientHttpRequestFactory();
+		RestTemplate restTemplate = new RestTemplate(requestFactory);
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
+		HttpEntity<?> entity = new HttpEntity<>(body, headers);
+
+		ResponseEntity<String> restTemplateResponse = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+		return restTemplateResponse.getBody();
+	}
+
+	private ClientHttpRequestFactory getClientHttpRequestFactory() {
+		int timeout = 5000;
+		RequestConfig config = RequestConfig.custom().setConnectTimeout(timeout).setConnectionRequestTimeout(timeout)
+				.setSocketTimeout(timeout).build();
+		CloseableHttpClient client = HttpClientBuilder.create().setDefaultRequestConfig(config).build();
+		return new HttpComponentsClientHttpRequestFactory(client);
 	}
 	/*
 	 *** Helper functions END***
