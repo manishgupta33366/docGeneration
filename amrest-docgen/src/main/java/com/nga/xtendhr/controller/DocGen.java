@@ -1,9 +1,14 @@
 package com.nga.xtendhr.controller;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -16,9 +21,6 @@ import javax.servlet.http.HttpSession;
 import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.apache.olingo.odata2.api.batch.BatchException;
 import org.apache.olingo.odata2.api.client.batch.BatchSingleResponse;
@@ -28,21 +30,14 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.ClientHttpRequestFactory;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
 
 import com.nga.xtendhr.connection.BatchRequest;
 import com.nga.xtendhr.connection.DestinationClient;
@@ -319,12 +314,19 @@ public class DocGen {
 			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
 			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
 			NamingException, URISyntaxException, IOException {
-		JSONObject apiResponse = null;
-		JSONObject ruleData;
 		if ((session.getAttribute("availableTemplatesInAzure") == null && !forDirectReport)
 				|| forDirectReport == true) {
-			ruleData = getRuleData(ruleID, session, forDirectReport);
-			apiResponse = new JSONObject(callpostAPI(ruleData.getString("JAVA_getTemplatesFromAPIURL"), ruleData));
+			List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+			JSONObject requestObj = new JSONObject();
+			requestObj.put(mapRuleField.get(0).getKey(),
+					getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport));
+			requestObj.put(mapRuleField.get(1).getKey(),
+					getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport));
+			requestObj.put(mapRuleField.get(2).getKey(),
+					getFieldValue(mapRuleField.get(2).getField(), session, forDirectReport));
+			JSONObject apiResponse = null;
+			apiResponse = new JSONObject(
+					callpostAPI(getFieldValue(mapRuleField.get(3).getField(), session, forDirectReport), requestObj));
 			Map<String, JSONObject> templatesAvailableInAzureMap = new HashMap<String, JSONObject>();
 			JSONArray availableTemplates = apiResponse.getJSONArray("templates");
 			JSONObject tempTemplateObject;
@@ -419,7 +421,6 @@ public class DocGen {
 		@SuppressWarnings("unchecked")
 		Map<String, JSONObject> templatesAvailableInAzure = (Map<String, JSONObject>) session
 				.getAttribute("availableTemplatesInAzure");
-
 		List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupID);
 		// Now Iterating for each template assigned to the provided group
 		Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
@@ -427,16 +428,17 @@ public class DocGen {
 		String templateID;
 		List<Templates> template;
 		JSONArray response = new JSONArray();
-		MapGroupTemplates tempMapGroupTemplates;
+		MapGroupTemplates tempMapGroupTemplate;
 		while (iterator.hasNext()) {
-			tempMapGroupTemplates = iterator.next();
-			templateID = tempMapGroupTemplates.getTemplateID();
+			tempMapGroupTemplate = iterator.next();
 
 			// check if the template is available in Azure
-			if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplates.getTemplate().getName())) {
+			if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
 				continue;
 			}
-			// Generating criteria for each template
+			// Generating criteria for each template to check if its valid for the loggedIn
+			// user
+			templateID = tempMapGroupTemplate.getTemplateID();
 			generatedCriteria = generateCriteria(templateID, session, false); // forDirectReport false
 			template = templateService.findByIdAndCriteria(templateID, generatedCriteria);
 			if (template.size() > 0) {
@@ -481,10 +483,11 @@ public class DocGen {
 			return "You are not authorized to access this data! This event has been logged!";
 		}
 
-		String directReportCountryID = getFieldValue(mapRuleField.get(2).getField(), session, false);// forDirectReport
-																										// false
-		String directReportCompanyID = getFieldValue(mapRuleField.get(3).getField(), session, false);// forDirectReport
-																										// false
+		String directReportCountryID = getFieldValue(mapRuleField.get(2).getField(), session, true);// forDirectReport
+																									// true
+		String directReportCompanyID = getFieldValue(mapRuleField.get(3).getField(), session, true);// forDirectReport
+																									// true
+		getFieldValue(mapRuleField.get(4).getField(), session, true);// forDirectReport true
 
 		/*
 		 *** Security Check *** Checking if groupID passed from UI is actually available
@@ -501,6 +504,12 @@ public class DocGen {
 					+ requestData.getString("userID") + " groupID: " + groupID);
 			return "You are not authorized to access this data! This event has been logged!";
 		}
+
+		// get available Templates in Azure from Session
+		@SuppressWarnings("unchecked")
+		Map<String, JSONObject> templatesAvailableInAzure = (Map<String, JSONObject>) session
+				.getAttribute("availableTemplatesForDirectReport");
+
 		// Now getting templates those are available for the userID provided from UI
 		List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupID);
 		// Now Iterating for each template assigned to the provided group
@@ -510,8 +519,15 @@ public class DocGen {
 		List<Templates> template;
 		Templates tempTemplate;
 		JSONArray response = new JSONArray();
+		MapGroupTemplates tempMapGroupTemplate;
 		while (iterator.hasNext()) {
-			templateID = iterator.next().getTemplateID();
+			tempMapGroupTemplate = iterator.next();
+
+			// check if the template is available in Azure
+			if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
+				continue;
+			}
+			templateID = tempMapGroupTemplate.getTemplateID();
 			// Generating criteria for each template
 			generatedCriteria = generateCriteria(templateID, session, true);// forDirectReport true
 			template = templateService.findByIdAndCriteria(templateID, generatedCriteria);
@@ -948,26 +964,42 @@ public class DocGen {
 		return EntityUtils.toString(docResponse.getEntity(), "UTF-8");
 	}
 
-	private String callpostAPI(String url, JSONObject body) {
-		// Function required to call POST API
-		ClientHttpRequestFactory requestFactory = getClientHttpRequestFactory();
-		RestTemplate restTemplate = new RestTemplate(requestFactory);
+	private String callpostAPI(String url, JSONObject body) throws IOException {
+		logger.debug("POST Body to send:" + body.toString());
+		URL obj = new URL(url);
+		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+		con.setRequestMethod("POST");
+		con.setRequestProperty("User-Agent", "Mozilla/5.0");
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
-		HttpEntity<?> entity = new HttpEntity<>(body, headers);
+		// For POST only - START
+		con.setDoOutput(true);
+		OutputStream os = con.getOutputStream();
+		os.write(body.toString().getBytes());
+		os.flush();
+		os.close();
+		// For POST only - END
 
-		ResponseEntity<String> restTemplateResponse = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
-		return restTemplateResponse.getBody();
+		int responseCode = con.getResponseCode();
+		System.out.println("POST Response Code :: " + responseCode);
+
+		if (responseCode == HttpURLConnection.HTTP_OK) { // success
+			BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+			String inputLine;
+			StringBuffer response = new StringBuffer();
+
+			while ((inputLine = in.readLine()) != null) {
+				response.append(inputLine);
+			}
+			in.close();
+
+			logger.debug("POST resposne:" + response.toString());
+			return response.toString();
+		} else {
+			logger.debug("Error while retriving Templates from API, ResponseCode: " + responseCode);
+			return new JSONObject().put("templates", new JSONArray()).toString();
+		}
 	}
 
-	private ClientHttpRequestFactory getClientHttpRequestFactory() {
-		int timeout = 5000;
-		RequestConfig config = RequestConfig.custom().setConnectTimeout(timeout).setConnectionRequestTimeout(timeout)
-				.setSocketTimeout(timeout).build();
-		CloseableHttpClient client = HttpClientBuilder.create().setDefaultRequestConfig(config).build();
-		return new HttpComponentsClientHttpRequestFactory(client);
-	}
 	/*
 	 *** Helper functions END***
 	 */
