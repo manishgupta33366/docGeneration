@@ -1,14 +1,9 @@
 package com.nga.xtendhr.controller;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -58,6 +53,7 @@ import com.nga.xtendhr.service.MapTemplateFieldsService;
 import com.nga.xtendhr.service.RulesService;
 import com.nga.xtendhr.service.TemplateCriteriaGenerationService;
 import com.nga.xtendhr.service.TemplateService;
+import com.nga.xtendhr.utility.CommonFunctions;
 
 /*
  * AppName: DocGen
@@ -127,8 +123,8 @@ public class DocGen {
 			body.put("Gcc", "AMR");
 			body.put("CompanyCode", "AMR_HU001");
 			body.put("CountryCode", "AMR");
-
-			return ResponseEntity.ok().body(callpostAPI(url, body));
+			CommonFunctions commonFunctions = new CommonFunctions();
+			return ResponseEntity.ok().body(commonFunctions.callpostAPI(url, body));
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -325,8 +321,9 @@ public class DocGen {
 			requestObj.put(mapRuleField.get(2).getKey(),
 					getFieldValue(mapRuleField.get(2).getField(), session, forDirectReport));
 			JSONObject apiResponse = null;
-			apiResponse = new JSONObject(
-					callpostAPI(getFieldValue(mapRuleField.get(3).getField(), session, forDirectReport), requestObj));
+			CommonFunctions commonFunctions = new CommonFunctions();
+			apiResponse = new JSONObject(commonFunctions
+					.callpostAPI(getFieldValue(mapRuleField.get(3).getField(), session, forDirectReport), requestObj));
 			Map<String, JSONObject> templatesAvailableInAzureMap = new HashMap<String, JSONObject>();
 			JSONArray availableTemplates = apiResponse.getJSONArray("templates");
 			JSONObject tempTemplateObject;
@@ -426,26 +423,29 @@ public class DocGen {
 		Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
 		String generatedCriteria;
 		String templateID;
-		List<Templates> template;
+		List<Templates> tempTemplate;
 		JSONArray response = new JSONArray();
 		MapGroupTemplates tempMapGroupTemplate;
+		JSONObject tempTemplateJsonObject;
 		while (iterator.hasNext()) {
 			tempMapGroupTemplate = iterator.next();
 
-			// check if the template is available in Azure
-			if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
-				continue;
-			}
 			// Generating criteria for each template to check if its valid for the loggedIn
 			// user
 			templateID = tempMapGroupTemplate.getTemplateID();
 			generatedCriteria = generateCriteria(templateID, session, false); // forDirectReport false
-			template = templateService.findByIdAndCriteria(templateID, generatedCriteria);
-			if (template.size() > 0) {
-				response.put(template.get(0).toString());
+			tempTemplate = templateService.findByIdAndCriteria(templateID, generatedCriteria);
+			if (tempTemplate.size() > 0) {
+				// check if the template is available in Azure
+				if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
+					tempTemplateJsonObject = new JSONObject(tempTemplate.get(0).toString());
+					tempTemplateJsonObject.put("availableInAzure", false);
+					response.put(tempTemplateJsonObject.toString());
+					continue;
+				}
+				response.put(tempTemplate.get(0).toString());
 			}
 		}
-
 		return response.toString();
 	}
 
@@ -516,24 +516,27 @@ public class DocGen {
 		Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
 		String generatedCriteria;
 		String templateID;
-		List<Templates> template;
-		Templates tempTemplate;
+		List<Templates> tempTemplate;
 		JSONArray response = new JSONArray();
 		MapGroupTemplates tempMapGroupTemplate;
+		JSONObject tempTemplateJsonObject;
 		while (iterator.hasNext()) {
 			tempMapGroupTemplate = iterator.next();
 
-			// check if the template is available in Azure
-			if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
-				continue;
-			}
+			// Generating criteria for each template to check if its valid for the loggedIn
+			// user
 			templateID = tempMapGroupTemplate.getTemplateID();
-			// Generating criteria for each template
-			generatedCriteria = generateCriteria(templateID, session, true);// forDirectReport true
-			template = templateService.findByIdAndCriteria(templateID, generatedCriteria);
-			tempTemplate = template.size() > 0 ? template.get(0) : null;
-			if (tempTemplate != null) {
-				response.put(tempTemplate.toString());
+			generatedCriteria = generateCriteria(templateID, session, false); // forDirectReport false
+			tempTemplate = templateService.findByIdAndCriteria(templateID, generatedCriteria);
+			if (tempTemplate.size() > 0) {
+				// check if the template is available in Azure
+				if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
+					tempTemplateJsonObject = new JSONObject(tempTemplate.get(0).toString());
+					tempTemplateJsonObject.put("availableInAzure", false);
+					response.put(tempTemplateJsonObject.toString());
+					continue;
+				}
+				response.put(tempTemplate.get(0).toString());
 			}
 		}
 		return response.toString();
@@ -962,42 +965,6 @@ public class DocGen {
 			return "Error while generating Doc";
 		}
 		return EntityUtils.toString(docResponse.getEntity(), "UTF-8");
-	}
-
-	private String callpostAPI(String url, JSONObject body) throws IOException {
-		logger.debug("POST Body to send:" + body.toString());
-		URL obj = new URL(url);
-		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
-		con.setRequestMethod("POST");
-		con.setRequestProperty("User-Agent", "Mozilla/5.0");
-
-		// For POST only - START
-		con.setDoOutput(true);
-		OutputStream os = con.getOutputStream();
-		os.write(body.toString().getBytes());
-		os.flush();
-		os.close();
-		// For POST only - END
-
-		int responseCode = con.getResponseCode();
-		System.out.println("POST Response Code :: " + responseCode);
-
-		if (responseCode == HttpURLConnection.HTTP_OK) { // success
-			BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-			String inputLine;
-			StringBuffer response = new StringBuffer();
-
-			while ((inputLine = in.readLine()) != null) {
-				response.append(inputLine);
-			}
-			in.close();
-
-			logger.debug("POST resposne:" + response.toString());
-			return response.toString();
-		} else {
-			logger.debug("Error while retriving Templates from API, ResponseCode: " + responseCode);
-			return new JSONObject().put("templates", new JSONArray()).toString();
-		}
 	}
 
 	/*
