@@ -7,11 +7,14 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import javax.naming.NamingException;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.nga.xtendhr.connection.DestinationClient;
 import com.nga.xtendhr.controller.DocGen;
 
 /*
@@ -25,6 +28,16 @@ import com.nga.xtendhr.controller.DocGen;
 
 public class CommonFunctions {
 	Logger logger = LoggerFactory.getLogger(DocGen.class);
+
+	public DestinationClient getDestinationCLient(String destinationName) throws NamingException {
+		DestinationClient destClient = new DestinationClient();
+		destClient.setDestName(destinationName);
+		destClient.setHeaderProvider();
+		destClient.setConfiguration();
+		destClient.setDestConfiguration();
+		destClient.setHeaders(destClient.getDestProperty("Authentication"));
+		return destClient;
+	}
 
 	public String callpostAPI(String url, JSONObject body) throws IOException {
 		logger.debug("POST Body to send:" + body.toString());

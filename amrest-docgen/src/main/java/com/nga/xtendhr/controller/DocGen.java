@@ -54,6 +54,7 @@ import com.nga.xtendhr.service.RulesService;
 import com.nga.xtendhr.service.TemplateCriteriaGenerationService;
 import com.nga.xtendhr.service.TemplateService;
 import com.nga.xtendhr.utility.CommonFunctions;
+import com.nga.xtendhr.utility.CommonVariables;
 
 /*
  * AppName: DocGen
@@ -69,8 +70,8 @@ import com.nga.xtendhr.utility.CommonFunctions;
 public class DocGen {
 
 	Logger logger = LoggerFactory.getLogger(DocGen.class);
-	private static final String sfDestination = "prehiremgrSFTest";
-	public static final String docGenDestination = "DocumentGeneration";
+	private final String sfDestination = CommonVariables.sfDestination;
+	private final String docGenDestination = CommonVariables.docGenDestination;
 	@Autowired
 	MapCountryCompanyGroupService mapCountryCompanyGroupService;
 
@@ -359,7 +360,7 @@ public class DocGen {
 		 */
 		Boolean isManager = Boolean.parseBoolean(getFieldValue(mapRuleField.get(0).getField(), session, false));
 		if (!isManager) {
-			logger.error("Unauthorized access User: " + (String) session.getAttribute("loggedInUser")
+			logger.error("Unauthorized access! User: " + (String) session.getAttribute("loggedInUser")
 					+ " who is not a manager, Tried accessing groups of user: " + requestData.getString("userID"));
 			return "You are not authorized to access this data! This event has been logged!";
 		}
@@ -371,7 +372,7 @@ public class DocGen {
 		Boolean isDirectReport = Boolean.parseBoolean(getFieldValue(mapRuleField.get(1).getField(), session, false));
 
 		if (!isDirectReport) {
-			logger.error("Unauthorized access User: " + (String) session.getAttribute("loggedInUser")
+			logger.error("Unauthorized access! User: " + (String) session.getAttribute("loggedInUser")
 					+ " Tried accessing groups of user: " + requestData.getString("userID")
 					+ ", which is not its direct report or level 2");// userID passed from UI
 			return "You are not authorized to access this data! This event has been logged!";
@@ -410,7 +411,7 @@ public class DocGen {
 		Boolean groupAvailableCheck = mapCountryCompanyGroupService
 				.findByGroupCountryCompany(groupID, countryID, companyID, isManager).size() == 1 ? true : false;
 		if (!groupAvailableCheck) {
-			logger.error("Unauthorized access User: " + (String) session.getAttribute("loggedInUser")
+			logger.error("Unauthorized access! User: " + (String) session.getAttribute("loggedInUser")
 					+ " Tried accessing templates of group that is not available for this user. groupID: " + groupID);
 			return "You are not authorized to access this data! This event has been logged!";
 		}
@@ -465,7 +466,7 @@ public class DocGen {
 		Boolean isManager = Boolean.parseBoolean(getFieldValue(mapRuleField.get(0).getField(), session, false));
 		String loggerInUser = (String) session.getAttribute("loggedInUser");
 		if (!isManager) {
-			logger.error("Unauthorized access User: " + loggerInUser
+			logger.error("Unauthorized access! User: " + loggerInUser
 					+ " who is not a manager, Tried accessing templates of user: " + requestData.getString("userID"));
 			return "You are not authorized to access this data! This event has been logged!";
 		}
@@ -477,7 +478,7 @@ public class DocGen {
 		Boolean isDirectReport = Boolean.parseBoolean(getFieldValue(mapRuleField.get(1).getField(), session, false));
 
 		if (!isDirectReport) {
-			logger.error("Unauthorized access User: " + loggerInUser + " Tried accessing templates of a user: "
+			logger.error("Unauthorized access! User: " + loggerInUser + " Tried accessing templates of a user: "
 					+ requestData.getString("userID") + ", which is not its direct report or level 2");// userID passed
 																										// from UI
 			return "You are not authorized to access this data! This event has been logged!";
@@ -499,7 +500,7 @@ public class DocGen {
 						? true
 						: false;
 		if (!groupAvailableCheck) {
-			logger.error("Unauthorized access User: " + loggerInUser
+			logger.error("Unauthorized access! User: " + loggerInUser
 					+ " Tried accessing templates of group that is not available for user provided from UI userID:"
 					+ requestData.getString("userID") + " groupID: " + groupID);
 			return "You are not authorized to access this data! This event has been logged!";
@@ -557,7 +558,7 @@ public class DocGen {
 		 * available for the loggedIn user
 		 */
 		if (!templateAvailableCheck(ruleID, session, false)) { // for DirectReport false
-			logger.error("Unauthorized access User: " + loggerInUser
+			logger.error("Unauthorized access! User: " + loggerInUser
 					+ " Tried downlaoding document of a template that is not assigned for this user, templateID: "
 					+ templateID);
 			return "You are not authorized to access this data! This event has been logged!";
@@ -586,7 +587,7 @@ public class DocGen {
 		 *
 		 */
 		if (!isManager) {
-			logger.error("Unauthorized access User: " + loggerInUser
+			logger.error("Unauthorized access! User: " + loggerInUser
 					+ " who is not a manager, Tried downloading doc for user: " + requestData.getString("userID"));
 			return "You are not authorized to access this data! This event has been logged!";
 		}
@@ -598,7 +599,7 @@ public class DocGen {
 		Boolean isDirectReport = Boolean.parseBoolean(getFieldValue(mapRuleField.get(2).getField(), session, false));
 
 		if (!isDirectReport) {
-			logger.error("Unauthorized access User: " + loggerInUser + " Tried downloading doc of a user: " + userID
+			logger.error("Unauthorized access! User: " + loggerInUser + " Tried downloading doc of a user: " + userID
 					+ ", which is not its direct report or level 2");// userID passed from UI
 			return "You are not authorized to access this data! This event has been logged!";
 		}
@@ -608,7 +609,7 @@ public class DocGen {
 		 * available for the userID provided
 		 */
 		if (!templateAvailableCheck(ruleID, session, true)) {// for direct Report true
-			logger.error("Unauthorized access User: " + loggerInUser + " Tried downlaoding doc of the user: " + userID
+			logger.error("Unauthorized access! User: " + loggerInUser + " Tried downlaoding doc of the user: " + userID
 					+ " and template: " + templateID + " which is not assigned for this user");
 			return "You are not authorized to access this data! This event has been logged!";
 		}
