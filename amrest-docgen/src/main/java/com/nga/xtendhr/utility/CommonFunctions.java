@@ -5,10 +5,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
 import java.net.URL;
 
 import javax.naming.NamingException;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -73,5 +77,38 @@ public class CommonFunctions {
 			logger.debug("Error while retriving Templates from API, ResponseCode: " + responseCode);
 			return new JSONObject().put("templates", new JSONArray()).toString();
 		}
+	}
+
+	public Boolean checkIfAdmin(String loggedInUser, String sfDestination)
+			throws NamingException, ClientProtocolException, IOException, URISyntaxException {
+		CommonFunctions commonFunctionsObj = new CommonFunctions();
+		DestinationClient destClient = commonFunctionsObj.getDestinationCLient(sfDestination);
+
+		// calling users API to get country of the loggedIn user
+		HttpResponse response = destClient.callDestinationGET("/User",
+				"?$filter=userId eq '" + loggedInUser + "'&$format=json&$select=country");
+		String responseJsonString = EntityUtils.toString(response.getEntity(), "UTF-8");
+		JSONObject responseObject = new JSONObject(responseJsonString);
+		responseObject = responseObject.getJSONObject("d").getJSONArray("results").getJSONObject(0);
+
+		// calling DynamicGroup to get GroupID
+		response = destClient.callDestinationGET("/DynamicGroup", "?$format=json&$filter=groupName eq 'CS_HR_ADMIN_"
+				+ responseObject.getString("country") + "' and groupType eq 'permission'&$select=groupID");
+		responseJsonString = EntityUtils.toString(response.getEntity(), "UTF-8");
+		responseObject = new JSONObject(responseJsonString);
+		responseObject = responseObject.getJSONObject("d").getJSONArray("results").getJSONObject(0);
+
+		// calling getUsersByDynamicGroup to check if user trying to logging is an Admin
+		response = destClient.callDestinationGET("/getUsersByDynamicGroup", "?$format=json&$filter=userId eq '"
+				+ loggedInUser + "'&groupId=" + responseObject.getString("groupID") + "L");
+		responseJsonString = EntityUtils.toString(response.getEntity(), "UTF-8");
+		responseObject = new JSONObject(responseJsonString);
+		JSONArray responseArray = responseObject.getJSONArray("d");
+		for (int i = 0; i < responseArray.length(); i++) {
+			if (responseArray.getJSONObject(i).getString("userId").equals(loggedInUser)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

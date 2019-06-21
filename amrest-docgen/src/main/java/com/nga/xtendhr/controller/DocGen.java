@@ -103,12 +103,18 @@ public class DocGen {
 	public ResponseEntity<?> login(HttpServletRequest request) {
 		try {
 			HttpSession session = request.getSession(false);
+			String loggedInUser = request.getUserPrincipal().getName();
+			loggedInUser = loggedInUser.equals("S0014379281") || loggedInUser.equals("S0018269301")
+					|| loggedInUser.equals("S0019013022") || loggedInUser.equals("S0020227452") ? "E00000815"
+							: loggedInUser;
 			if (session != null) {
 				session.invalidate();
 			}
 			session = request.getSession(true);
 			session.setAttribute("loginStatus", "Success");
-			session.setAttribute("loggedInUser", request.getUserPrincipal().getName());
+			session.setAttribute("loggedInUser", loggedInUser);
+			if (new CommonFunctions().checkIfAdmin(loggedInUser, sfDestination))
+				session.setAttribute("adminLoginStatus", "Success");
 			return ResponseEntity.ok().body("Login Success!");// True to create a new session for the logged-in user as
 																// its the initial call
 		} catch (Exception e) {
@@ -183,6 +189,14 @@ public class DocGen {
 		return isManager;
 	}
 
+	String checkIfAdmin(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
+		// Rule in DB required to check if current loggenIn user is an admin
+		return session.getAttribute("adminLoginStatus") != null ? "true" : "false";
+	}
+
 	String getGroups(String ruleID, HttpSession session, Boolean forDirectReport)
 			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
 			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
@@ -221,9 +235,6 @@ public class DocGen {
 
 		String url = "";
 		String loggedInUser = (String) session.getAttribute("loggedInUser");
-		loggedInUser = loggedInUser.equals("S0014379281") || loggedInUser.equals("S0018269301")
-				|| loggedInUser.equals("S0019013022") || loggedInUser.equals("S0020227452") ? "E00000815"
-						: loggedInUser;
 		url = mapRuleField.getUrl();// URL saved at required Data
 		url = url.replaceFirst("<>", directReportUserID);// UserId passed from UI
 		url = url.replaceAll("<>", loggedInUser);// for direct Manager and for 2nd level manager
@@ -724,9 +735,6 @@ public class DocGen {
 		String loggedInUser = (String) session.getAttribute("loggedInUser");
 		String entityName = entity.getName();
 		String directReportUserID = null;
-		loggedInUser = loggedInUser.equals("S0014379281") || loggedInUser.equals("S0018269301")
-				|| loggedInUser.equals("S0019013022") || loggedInUser.equals("S0020227452") ? "E00000815"
-						: loggedInUser;
 		Map<String, String> entityMap = new HashMap<String, String>();
 		BatchRequest batchRequest = new BatchRequest();
 		batchRequest.configureDestination(sfDestination);
