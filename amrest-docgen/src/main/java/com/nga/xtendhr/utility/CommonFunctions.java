@@ -31,9 +31,9 @@ import com.nga.xtendhr.controller.DocGen;
  */
 
 public class CommonFunctions {
-	Logger logger = LoggerFactory.getLogger(DocGen.class);
+	static Logger logger = LoggerFactory.getLogger(DocGen.class);
 
-	public DestinationClient getDestinationCLient(String destinationName) throws NamingException {
+	public static DestinationClient getDestinationCLient(String destinationName) throws NamingException {
 		DestinationClient destClient = new DestinationClient();
 		destClient.setDestName(destinationName);
 		destClient.setHeaderProvider();
@@ -43,7 +43,7 @@ public class CommonFunctions {
 		return destClient;
 	}
 
-	public String callpostAPI(String url, JSONObject body) throws IOException {
+	public static String callpostAPI(String url, JSONObject body) throws IOException {
 		logger.debug("POST Body to send:" + body.toString());
 		URL obj = new URL(url);
 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
@@ -79,10 +79,9 @@ public class CommonFunctions {
 		}
 	}
 
-	public Boolean checkIfAdmin(String loggedInUser, String sfDestination)
+	public static Boolean checkIfAdmin(String loggedInUser, String sfDestination)
 			throws NamingException, ClientProtocolException, IOException, URISyntaxException {
-		CommonFunctions commonFunctionsObj = new CommonFunctions();
-		DestinationClient destClient = commonFunctionsObj.getDestinationCLient(sfDestination);
+		DestinationClient destClient = CommonFunctions.getDestinationCLient(sfDestination);
 
 		// calling users API to get country of the loggedIn user
 		HttpResponse response = destClient.callDestinationGET("/User",

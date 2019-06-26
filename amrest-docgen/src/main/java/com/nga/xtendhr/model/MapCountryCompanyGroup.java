@@ -31,7 +31,8 @@ import com.nga.xtendhr.config.DBConfiguration;
 		@NamedQuery(name = "MapCountryCompanyGroup.findByCountryCompany_Manager", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.countryID = :countryID AND MCCG.companyID = :companyID AND MCCG.isMssRelevant = :isMssRelevant"),
 		@NamedQuery(name = "MapCountryCompanyGroup.findByCountryCompany_Employee", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.countryID = :countryID AND MCCG.companyID = :companyID AND MCCG.isEssRelevant = :isEssRelevant"),
 		@NamedQuery(name = "MapCountryCompanyGroup.findByGroupCountryCompany_Manager", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.groupID = :groupID AND MCCG.countryID = :countryID AND MCCG.companyID = :companyID AND MCCG.isMssRelevant = :isMssRelevant"),
-		@NamedQuery(name = "MapCountryCompanyGroup.findByGroupCountryCompany_Employee", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.groupID = :groupID AND MCCG.countryID = :countryID AND MCCG.companyID = :companyID AND MCCG.isEssRelevant = :isEssRelevant") })
+		@NamedQuery(name = "MapCountryCompanyGroup.findByGroupCountryCompany_Employee", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.groupID = :groupID AND MCCG.countryID = :countryID AND MCCG.companyID = :companyID AND MCCG.isEssRelevant = :isEssRelevant"),
+		@NamedQuery(name = "MapCountryCompanyGroup.findByCountryCompany_Admin", query = "SELECT MCCG FROM MapCountryCompanyGroup MCCG WHERE MCCG.countryID = :countryID AND MCCG.companyID = :companyID") })
 
 public class MapCountryCompanyGroup {
 	@Id

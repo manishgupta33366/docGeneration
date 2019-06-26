@@ -6,7 +6,6 @@ com\nga\xtendhr\service\MapTemplatFieldsServiceImp.class
 com\nga\xtendhr\service\TemplateService.class
 com\nga\xtendhr\model\Templates.class
 com\nga\xtendhr\model\MapRuleFields.class
-com\nga\xtendhr\controller\DocGenAdmin.class
 com\nga\xtendhr\service\MapRuleFieldsServiceImp.class
 com\nga\xtendhr\model\TemplateCriteriaGeneration.class
 com\nga\xtendhr\service\TemplateServiceImp.class

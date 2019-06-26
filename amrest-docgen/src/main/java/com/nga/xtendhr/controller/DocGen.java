@@ -70,8 +70,7 @@ import com.nga.xtendhr.utility.CommonVariables;
 public class DocGen {
 
 	Logger logger = LoggerFactory.getLogger(DocGen.class);
-	private final String sfDestination = CommonVariables.sfDestination;
-	private final String docGenDestination = CommonVariables.docGenDestination;
+
 	@Autowired
 	MapCountryCompanyGroupService mapCountryCompanyGroupService;
 
@@ -113,10 +112,15 @@ public class DocGen {
 			session = request.getSession(true);
 			session.setAttribute("loginStatus", "Success");
 			session.setAttribute("loggedInUser", loggedInUser);
-			if (new CommonFunctions().checkIfAdmin(loggedInUser, sfDestination))
+			JSONObject response = new JSONObject();
+			response.put("login", "success");
+
+			if (CommonFunctions.checkIfAdmin(loggedInUser, CommonVariables.sfDestination)) {
 				session.setAttribute("adminLoginStatus", "Success");
-			return ResponseEntity.ok().body("Login Success!");// True to create a new session for the logged-in user as
-																// its the initial call
+				response.put("isAdmin", true);
+			}
+			return ResponseEntity.ok().body(response.toString());// True to create a new session for the logged-in user
+																	// as its the initial call
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -130,8 +134,7 @@ public class DocGen {
 			body.put("Gcc", "AMR");
 			body.put("CompanyCode", "AMR_HU001");
 			body.put("CountryCode", "AMR");
-			CommonFunctions commonFunctions = new CommonFunctions();
-			return ResponseEntity.ok().body(commonFunctions.callpostAPI(url, body));
+			return ResponseEntity.ok().body(CommonFunctions.callpostAPI(url, body));
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -174,6 +177,277 @@ public class DocGen {
 			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
+
+	/*
+	 *** For Admin Start***
+	 */
+	@GetMapping(value = "/docGenAdmin/searchUser")
+	public ResponseEntity<?> searchUser(@RequestParam(name = "searchString", required = false) String searchString,
+			HttpServletRequest request)
+			throws ClientProtocolException, IOException, URISyntaxException, NamingException {
+		try {
+			HttpSession session = request.getSession(false);// false is not create new session and use the existing
+															// session
+			if (session.getAttribute("loginStatus") == null) {
+				return new ResponseEntity<>("Session timeout! Please Login again!", HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+			/*
+			 *** Security Check *** Checking if user trying to login is exactly an Admin or
+			 * not
+			 *
+			 */
+			else if (session.getAttribute("adminLoginStatus") == null) {
+				logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
+						+ ", which is not an admin in SF, tried to login as admin.");
+				return new ResponseEntity<>(
+						"Error! You are not authorized to access this resource! This event has been logged!",
+						HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+
+			HttpResponse searchResponse;
+			String searchResponseJsonString;
+			JSONObject searchResponseResponseObject;
+			JSONArray searchResponseObjectResultArray;
+			if (searchString == null) {
+				searchResponse = CommonFunctions.getDestinationCLient(CommonVariables.sfDestination).callDestinationGET(
+						"/User",
+						"?$format=json&$select=userId,firstName,lastName&$filter=firstName ne null and lastName ne null");
+			} else {
+				searchString = searchString.toLowerCase();
+				String url = "?$format=json&$select=userId,firstName,lastName&$filter=substringof('<inputParameter>',tolower(firstName)) or substringof('<inputParameter>',tolower(lastName)) or substringof('<inputParameter>',tolower(userId))";
+				url = url.replace("<inputParameter>", searchString);
+				searchResponse = CommonFunctions.getDestinationCLient(CommonVariables.sfDestination)
+						.callDestinationGET("/User", url);
+			}
+			searchResponseJsonString = EntityUtils.toString(searchResponse.getEntity(), "UTF-8");
+			searchResponseResponseObject = new JSONObject(searchResponseJsonString);
+			searchResponseObjectResultArray = searchResponseResponseObject.getJSONObject("d").getJSONArray("results");
+			return ResponseEntity.ok().body(searchResponseObjectResultArray.toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@PostMapping(value = "/docGenAdmin/executePostCallRule")
+	public ResponseEntity<?> executeRule(@RequestParam(name = "ruleID") String ruleID, @RequestBody String requestData,
+			HttpServletRequest request) {
+
+		try {
+			HttpSession session = request.getSession(false);// false is not create new session and use the existing
+															// session
+			if (session.getAttribute("loginStatus") == null) {
+				return new ResponseEntity<>("Session timeout! Please Login again!", HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+			/*
+			 *** Security Check *** Checking if user trying to login is exactly an Admin or
+			 * not
+			 *
+			 */
+			else if (session.getAttribute("adminLoginStatus") == null) {
+				logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
+						+ ", which is not an admin in SF, tried to login as admin.");
+				return new ResponseEntity<>(
+						"Error! You are not authorized to access this resource! This event has been logged!",
+						HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+			MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
+			return ResponseEntity.ok()
+					.body(CommonFunctions.callpostAPI(mapRuleField.getUrl(), new JSONObject(requestData)));
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	String adminGetGroupsOfDirectReport(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
+		// Rule in DB to get groups of a direct report for Admin
+
+		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
+		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+		if (session.getAttribute("loginStatus") == null) {
+			return "Session timeout! Please Login again!";
+		}
+		/*
+		 *** Security Check *** Checking if user trying to login is exactly an Admin or
+		 * not
+		 *
+		 */
+		else if (session.getAttribute("adminLoginStatus") == null) {
+			logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
+					+ ", which is not an admin in SF, tried to access Groups of a user:"
+					+ requestData.getString("userID"));
+			return "Error! You are not authorized to access this resource! This event has been logged!";
+		}
+		getFieldValue(mapRuleField.get(0).getField(), session, true);// get data of direct report
+		String countryID = getFieldValue(mapRuleField.get(1).getField(), session, true);// forDirectReport true
+		String companyID = getFieldValue(mapRuleField.get(2).getField(), session, true);// forDirectReport true
+		Iterator<MapCountryCompanyGroup> iterator = mapCountryCompanyGroupService
+				.findByCountryCompanyAdmin(countryID, companyID).iterator();
+		JSONArray response = new JSONArray();
+		while (iterator.hasNext()) {
+			response.put(iterator.next().toString());
+		}
+		return response.toString();
+	}
+
+	String adminGetTemplatesOfDirectReports(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
+		// Rule in DB to get templates of a direct report for admin
+
+		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
+		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+
+		if (session.getAttribute("loginStatus") == null) {
+			return "Session timeout! Please Login again!";
+		}
+		/*
+		 *** Security Check *** Checking if user trying to login is exactly an Admin or
+		 * not
+		 *
+		 */
+		else if (session.getAttribute("adminLoginStatus") == null) {
+			logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
+					+ ", which is not an admin in SF, tried to access Groups of a user:"
+					+ requestData.getString("userID"));
+			return "Error! You are not authorized to access this resource! This event has been logged!";
+		}
+
+		getFieldValue(mapRuleField.get(0).getField(), session, true);// get data of direct report
+		String directReportCountryID = getFieldValue(mapRuleField.get(1).getField(), session, true);// forDirectReport
+																									// true
+		String directReportCompanyID = getFieldValue(mapRuleField.get(2).getField(), session, true);// forDirectReport
+																									// true
+		getFieldValue(mapRuleField.get(3).getField(), session, true);// forDirectReport true
+
+		/*
+		 *** Security Check *** Checking if groupID passed from UI is actually available
+		 * for the userID provided from the UI
+		 */
+		String groupID = requestData.getString("groupID");// groupID passed from UI
+		String loggerInUser = (String) session.getAttribute("loggedInUser");
+		Boolean groupAvailableCheck = mapCountryCompanyGroupService
+				.findByGroupCountryCompany(groupID, directReportCountryID, directReportCompanyID, false).size() == 1
+						? true
+						: false;
+		if (!groupAvailableCheck) {
+			logger.error("Unauthorized access! User: " + loggerInUser
+					+ " Tried accessing templates of group that is not available for user provided from UI userID:"
+					+ requestData.getString("userID") + " groupID: " + groupID);
+			return "You are not authorized to access this data! This event has been logged!";
+		}
+
+		// get available Templates in Azure from Session
+		@SuppressWarnings("unchecked")
+		Map<String, JSONObject> templatesAvailableInAzure = (Map<String, JSONObject>) session
+				.getAttribute("availableTemplatesForDirectReport");
+
+		// Now getting templates those are available for the userID provided from UI
+		List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupID);
+		// Now Iterating for each template assigned to the provided group
+		Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
+		String generatedCriteria;
+		String templateID;
+		List<Templates> tempTemplate;
+		JSONArray response = new JSONArray();
+		MapGroupTemplates tempMapGroupTemplate;
+		JSONObject tempTemplateJsonObject;
+		while (iterator.hasNext()) {
+			tempMapGroupTemplate = iterator.next();
+
+			// Generating criteria for each template to check if its valid for the loggedIn
+			// user
+			templateID = tempMapGroupTemplate.getTemplateID();
+			generatedCriteria = generateCriteria(templateID, session, false); // forDirectReport false
+			tempTemplate = templateService.findByIdAndCriteria(templateID, generatedCriteria);
+			if (tempTemplate.size() > 0) {
+				// check if the template is available in Azure
+				if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
+					tempTemplateJsonObject = new JSONObject(tempTemplate.get(0).toString());
+					tempTemplateJsonObject.put("availableInAzure", false);
+					response.put(tempTemplateJsonObject.toString());
+					continue;
+				}
+				response.put(tempTemplate.get(0).toString());
+			}
+		}
+		return response.toString();
+	}
+
+	String getGroupsAdmin(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
+
+		/*
+		 *** Security Check *** Checking if user trying to login is exactly an Admin or
+		 * not
+		 *
+		 */
+		if (session.getAttribute("adminLoginStatus") == null) {
+			logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
+					+ ", which is not an admin in SF, tried to access Admin Group endpoint");
+			return "Error! You are not authorized to access this resource! This event has been logged!";
+		}
+
+		// Rule in DB required to get Groups of current loggenIn user
+		JSONObject ruleData = getRuleData(ruleID, session, forDirectReport);
+		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+		String countryID = ruleData.getString(mapRuleField.get(0).getField().getTechnicalName());
+		String companyID = ruleData.getString(mapRuleField.get(1).getField().getTechnicalName());
+		Iterator<MapCountryCompanyGroup> iterator = mapCountryCompanyGroupService
+				.findByCountryCompanyAdmin(countryID, companyID).iterator();
+		JSONArray response = new JSONArray();
+		while (iterator.hasNext()) {
+			response.put(iterator.next().toString());
+		}
+		return response.toString();
+	}
+
+	String getDirectReportData(String ruleID, HttpSession session, Boolean forDirectReport) throws BatchException,
+			ClientProtocolException, UnsupportedOperationException, NamingException, URISyntaxException, IOException {
+		// Rule in DB get Data of a DirectReport for Admin
+
+		/*
+		 *** Security Check *** Checking if user trying to login is exactly an Admin or
+		 * not
+		 *
+		 */
+		if (session.getAttribute("adminLoginStatus") == null) {
+			logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
+					+ ", which is not an admin in SF, tried to access Admin Group endpoint");
+			return "Error! You are not authorized to access this resource! This event has been logged!";
+		}
+
+		JSONObject requestObj = new JSONObject((String) session.getAttribute("requestData"));
+		String directReportUserID = requestObj.getString("userID");// userID passed from UI
+
+		// Checking if data is already fetched for a particular UserID
+		if (session.getAttribute("directReportData-" + directReportUserID) != null) {
+			// If yes then data is already fetched for the given user and is present the in
+			// the session
+			return ("true");
+		}
+		MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
+
+		String url = "";
+		url = mapRuleField.getUrl();// URL saved at required Data
+		url = url.replaceFirst("<>", directReportUserID);// UserId passed from UI
+
+		JSONArray responseArray = new JSONArray(callSFSingle(mapRuleField.getKey(), url));// Entity name saved in KEY
+																							// column
+		session.setAttribute("directReportData-" + directReportUserID, responseArray.get(0).toString());
+		return "true";
+	}
+
+	/*
+	 *** For Admin End***
+	 */
 
 	/*
 	 *** GET Rules Start***
@@ -231,7 +505,6 @@ public class DocGen {
 		}
 		String isDirectReport;
 		MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
-		logger.debug((String) session.getAttribute("requestData"));
 
 		String url = "";
 		String loggedInUser = (String) session.getAttribute("loggedInUser");
@@ -333,8 +606,7 @@ public class DocGen {
 			requestObj.put(mapRuleField.get(2).getKey(),
 					getFieldValue(mapRuleField.get(2).getField(), session, forDirectReport));
 			JSONObject apiResponse = null;
-			CommonFunctions commonFunctions = new CommonFunctions();
-			apiResponse = new JSONObject(commonFunctions
+			apiResponse = new JSONObject(CommonFunctions
 					.callpostAPI(getFieldValue(mapRuleField.get(3).getField(), session, forDirectReport), requestObj));
 			Map<String, JSONObject> templatesAvailableInAzureMap = new HashMap<String, JSONObject>();
 			JSONArray availableTemplates = apiResponse.getJSONArray("templates");
@@ -388,8 +660,8 @@ public class DocGen {
 					+ ", which is not its direct report or level 2");// userID passed from UI
 			return "You are not authorized to access this data! This event has been logged!";
 		}
-		String countryID = getFieldValue(mapRuleField.get(2).getField(), session, false);// forDirectReport false
-		String companyID = getFieldValue(mapRuleField.get(3).getField(), session, false);// forDirectReport false
+		String countryID = getFieldValue(mapRuleField.get(2).getField(), session, true);// forDirectReport true
+		String companyID = getFieldValue(mapRuleField.get(3).getField(), session, true);// forDirectReport true
 		Iterator<MapCountryCompanyGroup> iterator = mapCountryCompanyGroupService
 				.findByCountryCompany(countryID, companyID, false).iterator();
 		JSONArray response = new JSONArray();
@@ -737,7 +1009,7 @@ public class DocGen {
 		String directReportUserID = null;
 		Map<String, String> entityMap = new HashMap<String, String>();
 		BatchRequest batchRequest = new BatchRequest();
-		batchRequest.configureDestination(sfDestination);
+		batchRequest.configureDestination(CommonVariables.sfDestination);
 		String selectPath = createSelectPath(entity); // Create GetPath for all the fields those are dependent on root
 														// entity
 		String expandPath = "";
@@ -867,7 +1139,7 @@ public class DocGen {
 		// data
 		Map<String, String> entityMap = new HashMap<String, String>();
 		BatchRequest batchRequest = new BatchRequest();
-		batchRequest.configureDestination(sfDestination);
+		batchRequest.configureDestination(CommonVariables.sfDestination);
 		entityMap.put(entityName, url);
 		logger.debug("Generated URL for single call: " + entityName + url);
 		// adding request to Batch
@@ -960,7 +1232,7 @@ public class DocGen {
 	private String getDocFromAPI(JSONObject requestObj)
 			throws URISyntaxException, NamingException, ParseException, IOException {
 		DestinationClient docDestination = new DestinationClient();
-		docDestination.setDestName(docGenDestination);
+		docDestination.setDestName(CommonVariables.docGenDestination);
 		docDestination.setHeaderProvider();
 		docDestination.setConfiguration();
 		docDestination.setDestConfiguration();

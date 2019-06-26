@@ -16,4 +16,7 @@ public interface MapCountryCompanyGroupService {
 
 	public List<MapCountryCompanyGroup> findByGroupCountryCompany(String groupID, String countryID, String companyID,
 			Boolean isManager);
+
+	public List<MapCountryCompanyGroup> findByCountryCompanyAdmin(String countryID, String companyID);
+
 }
