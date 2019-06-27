@@ -88,4 +88,16 @@ public class MapCountryCompanyGroupServiceImp implements MapCountryCompanyGroupS
 		return items;
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<MapCountryCompanyGroup> findByGroupCountryCompany(String groupID, String countryID, String companyID) {
+		Query query;
+		List<MapCountryCompanyGroup> items;
+		query = em.createNamedQuery("MapCountryCompanyGroup.findByGroupCountryCompany_Admin")
+				.setParameter("groupID", groupID).setParameter("countryID", countryID)
+				.setParameter("companyID", companyID);
+		items = query.getResultList();
+		return items;
+	}
+
 }

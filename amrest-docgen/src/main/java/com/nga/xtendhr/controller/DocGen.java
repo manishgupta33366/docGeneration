@@ -332,8 +332,7 @@ public class DocGen {
 		String groupID = requestData.getString("groupID");// groupID passed from UI
 		String loggerInUser = (String) session.getAttribute("loggedInUser");
 		Boolean groupAvailableCheck = mapCountryCompanyGroupService
-				.findByGroupCountryCompany(groupID, directReportCountryID, directReportCompanyID, false).size() == 1
-						? true
+				.findByGroupCountryCompany(groupID, directReportCountryID, directReportCompanyID).size() == 1 ? true
 						: false;
 		if (!groupAvailableCheck) {
 			logger.error("Unauthorized access! User: " + loggerInUser
