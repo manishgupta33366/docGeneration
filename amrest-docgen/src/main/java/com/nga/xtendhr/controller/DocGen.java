@@ -323,7 +323,8 @@ public class DocGen {
 																									// true
 		String directReportCompanyID = getFieldValue(mapRuleField.get(2).getField(), session, true);// forDirectReport
 																									// true
-		getFieldValue(mapRuleField.get(3).getField(), session, true);// forDirectReport true
+		getFieldValue(mapRuleField.get(3).getField(), session, true);// get get Templates from Azure and set that in
+																		// session and forDirectReport true
 
 		/*
 		 *** Security Check *** Checking if groupID passed from UI is actually available
@@ -444,6 +445,41 @@ public class DocGen {
 		return "true";
 	}
 
+	String adminDocDownloadDirectReport(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
+		// Rule in DB to download doc of Direct report for Admin
+		/*
+		 *** Security Check *** Checking if user trying to login is exactly an Admin or
+		 * not
+		 *
+		 */
+		if (session.getAttribute("adminLoginStatus") == null) {
+			logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
+					+ ", which is not an admin in SF, tried to access Admin Group endpoint");
+			return "Error! You are not authorized to access this resource! This event has been logged!";
+		}
+		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
+		String loggerInUser = (String) session.getAttribute("loggedInUser");
+		String templateID = requestData.getString("templateID");
+
+		/*
+		 *** Security Check *** Checking if templateID passed from UI is actually
+		 * available for the userID provided
+		 * 
+		 * if (!templateAvailableCheck(ruleID, session, true)) {// for direct Report
+		 * true logger.error("Unauthorized access! User: " + loggerInUser +
+		 * " Tried downlaoding doc of the user: " + requestData.getString("userID") +
+		 * " and template: " + templateID + " which is not assigned for this user");
+		 * return
+		 * "You are not authorized to access this data! This event has been logged!"; }
+		 */
+		// Now Generating Object to POST
+		JSONObject docRequestObject = getDocPostObject(templateID, session, true);// for direct Report true
+		logger.debug("Doc Generation Request Obj: " + docRequestObject.toString());
+		return getDocFromAPI(docRequestObject);
+	}
 	/*
 	 *** For Admin End***
 	 */
