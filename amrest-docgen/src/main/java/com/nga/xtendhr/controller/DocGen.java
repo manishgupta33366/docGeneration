@@ -301,23 +301,19 @@ public class DocGen {
 		// Rule in DB to get templates of a direct report for admin
 
 		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
-		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
-
-		if (session.getAttribute("loginStatus") == null) {
-			return "Session timeout! Please Login again!";
-		}
 		/*
 		 *** Security Check *** Checking if user trying to login is exactly an Admin or
 		 * not
 		 *
 		 */
-		else if (session.getAttribute("adminLoginStatus") == null) {
+		if (session.getAttribute("adminLoginStatus") == null) {
 			logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
 					+ ", which is not an admin in SF, tried to access Groups of a user:"
 					+ requestData.getString("userID"));
 			return "Error! You are not authorized to access this resource! This event has been logged!";
 		}
 
+		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
 		getFieldValue(mapRuleField.get(0).getField(), session, true);// get data of direct report
 		String directReportCountryID = getFieldValue(mapRuleField.get(1).getField(), session, true);// forDirectReport
 																									// true
@@ -379,7 +375,7 @@ public class DocGen {
 		return response.toString();
 	}
 
-	String getGroupsAdmin(String ruleID, HttpSession session, Boolean forDirectReport)
+	String adminGetGroups(String ruleID, HttpSession session, Boolean forDirectReport)
 			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
 			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
 			NamingException, URISyntaxException, IOException {
@@ -391,7 +387,7 @@ public class DocGen {
 		 */
 		if (session.getAttribute("adminLoginStatus") == null) {
 			logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
-					+ ", which is not an admin in SF, tried to access Admin Group endpoint");
+					+ ", which is not an admin in SF, tried to access adminGetGroups endpoint");
 			return "Error! You are not authorized to access this resource! This event has been logged!";
 		}
 
@@ -449,7 +445,9 @@ public class DocGen {
 			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
 			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
 			NamingException, URISyntaxException, IOException {
+
 		// Rule in DB to download doc of Direct report for Admin
+
 		/*
 		 *** Security Check *** Checking if user trying to login is exactly an Admin or
 		 * not
@@ -457,7 +455,7 @@ public class DocGen {
 		 */
 		if (session.getAttribute("adminLoginStatus") == null) {
 			logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
-					+ ", which is not an admin in SF, tried to access Admin Group endpoint");
+					+ ", which is not an admin in SF, tried to access adminDocDownloadDirectReport endpoint");
 			return "Error! You are not authorized to access this resource! This event has been logged!";
 		}
 		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
@@ -466,19 +464,159 @@ public class DocGen {
 
 		/*
 		 *** Security Check *** Checking if templateID passed from UI is actually
-		 * available for the userID provided
-		 * 
-		 * if (!templateAvailableCheck(ruleID, session, true)) {// for direct Report
-		 * true logger.error("Unauthorized access! User: " + loggerInUser +
-		 * " Tried downlaoding doc of the user: " + requestData.getString("userID") +
-		 * " and template: " + templateID + " which is not assigned for this user");
-		 * return
-		 * "You are not authorized to access this data! This event has been logged!"; }
+		 * available for the loggedIn user
 		 */
+
+		if (!adminTemplateAvailableCheck(ruleID, session, true)) { // for DirectReport
+			logger.error("Unauthorized access! User: " + loggerInUser
+					+ " Tried downlaoding document of a template templateID: " + templateID
+					+ " Which is not available for the UserId provided.");
+			return "You are not authorized to access this data! This event has been logged!";
+		}
 		// Now Generating Object to POST
 		JSONObject docRequestObject = getDocPostObject(templateID, session, true);// for direct Report true
 		logger.debug("Doc Generation Request Obj: " + docRequestObject.toString());
 		return getDocFromAPI(docRequestObject);
+	}
+
+	String adminDocDownload(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, JSONException, ClientProtocolException, UnsupportedOperationException,
+			NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException, NamingException, URISyntaxException, IOException {
+
+		// Rule in DB to download doc for Admin
+		String loggerInUser = (String) session.getAttribute("loggedInUser");
+		/*
+		 *** Security Check *** Checking if user trying to login is exactly an Admin or
+		 * not
+		 *
+		 */
+		if (session.getAttribute("adminLoginStatus") == null) {
+			logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
+					+ ", which is not an admin in SF, tried to access adminDocDownload endpoint");
+			return "Error! You are not authorized to access this resource! This event has been logged!";
+		}
+		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
+		String templateID = requestData.getString("templateID");
+
+		/*
+		 *** Security Check *** Checking if templateID passed from UI is actually
+		 * available for the loggedIn user
+		 */
+
+		if (!adminTemplateAvailableCheck(ruleID, session, false)) { // for DirectReport
+			logger.error("Unauthorized access! User: " + loggerInUser
+					+ " Tried downlaoding document of a template that is not assigned for this user, templateID: "
+					+ templateID);
+			return "You are not authorized to access this data! This event has been logged!";
+		}
+
+		// Now Generating Object to POST
+		JSONObject docRequestObject = getDocPostObject(templateID, session, false); // for direct report false
+		logger.debug("Doc Generation Request Obj: " + docRequestObject.toString());
+		return getDocFromAPI(docRequestObject);
+	}
+
+	String adminGetTemplates(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
+		// Rule in DB to get templates of a Group of admin
+
+		/*
+		 *** Security Check *** Checking if user trying to login is exactly an Admin or
+		 * not
+		 *
+		 */
+		if (session.getAttribute("adminLoginStatus") == null) {
+			logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
+					+ ", which is not an admin in SF, tried to access Get Templates endpoint");
+			return "Error! You are not authorized to access this resource! This event has been logged!";
+		}
+
+		/*
+		 *** Security Check *** Checking if groupID passed from UI is actually available
+		 * for the loggerIn user
+		 */
+		JSONObject ruleData = getRuleData(ruleID, session, false); // forDirectReport false as this rule is for the
+																	// loggedIn user
+		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+		String countryID = ruleData.getString(mapRuleField.get(0).getField().getTechnicalName());
+		String companyID = ruleData.getString(mapRuleField.get(1).getField().getTechnicalName());
+
+		JSONObject requestObj = new JSONObject((String) session.getAttribute("requestData"));
+		String groupID = requestObj.getString("groupID");// groupID passed from UI
+
+		Boolean groupAvailableCheck = mapCountryCompanyGroupService
+				.findByGroupCountryCompany(groupID, countryID, companyID).size() == 1 ? true : false;
+		if (!groupAvailableCheck) {
+			logger.error("Unauthorized access! User: " + (String) session.getAttribute("loggedInUser")
+					+ " Tried accessing templates of group that is not available for this user. groupID: " + groupID);
+			return "You are not authorized to access this data! This event has been logged!";
+		}
+		// get available Templates in Azure from Session
+		@SuppressWarnings("unchecked")
+		Map<String, JSONObject> templatesAvailableInAzure = (Map<String, JSONObject>) session
+				.getAttribute("availableTemplatesInAzure");
+		List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupID);
+		// Now Iterating for each template assigned to the provided group
+		Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
+		String generatedCriteria;
+		String templateID;
+		List<Templates> tempTemplate;
+		JSONArray response = new JSONArray();
+		MapGroupTemplates tempMapGroupTemplate;
+		JSONObject tempTemplateJsonObject;
+		while (iterator.hasNext()) {
+			tempMapGroupTemplate = iterator.next();
+
+			// Generating criteria for each template to check if its valid for the loggedIn
+			// user
+			templateID = tempMapGroupTemplate.getTemplateID();
+			generatedCriteria = generateCriteria(templateID, session, false); // forDirectReport false
+			tempTemplate = templateService.findByIdAndCriteria(templateID, generatedCriteria);
+			if (tempTemplate.size() > 0) {
+				// check if the template is available in Azure
+				if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
+					tempTemplateJsonObject = new JSONObject(tempTemplate.get(0).toString());
+					tempTemplateJsonObject.put("availableInAzure", false);
+					response.put(tempTemplateJsonObject.toString());
+					continue;
+				}
+				response.put(tempTemplate.get(0).toString());
+			}
+		}
+		return response.toString();
+	}
+
+	private Boolean adminTemplateAvailableCheck(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, JSONException, ClientProtocolException, UnsupportedOperationException,
+			NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException, NamingException, URISyntaxException, IOException {
+		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
+		JSONArray availableTemplates;
+		JSONArray availableGroups = new JSONArray(
+				getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport));
+		logger.debug("Available Groups:" + availableGroups.toString() + " ::: forDirectReport" + forDirectReport);
+		String groupID;
+		for (int i = 0; i < availableGroups.length(); i++) {
+			// saving group ID in Session requestData attribute as its expected in Get
+			// Templates function
+			groupID = new JSONObject(availableGroups.getString(i)).getString("id");
+			requestData.put("groupID", groupID);
+			session.setAttribute("requestData", requestData.toString());
+			availableTemplates = new JSONArray(getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport));
+			logger.debug(
+					"Available templates:" + availableTemplates.toString() + " ::: forDirectReport" + forDirectReport);
+			for (int j = 0; j < availableTemplates.length(); j++) {
+				if (requestData.getString("templateID")
+						.equals(new JSONObject(availableTemplates.getString(j)).getString("id"))) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 	/*
 	 *** For Admin End***
