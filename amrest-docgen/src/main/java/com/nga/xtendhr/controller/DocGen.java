@@ -4,9 +4,13 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URISyntaxException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.naming.NamingException;
@@ -70,6 +74,10 @@ import com.nga.xtendhr.utility.CommonVariables;
 public class DocGen {
 
 	Logger logger = LoggerFactory.getLogger(DocGen.class);
+
+	private enum hunLocale {
+		január, február, március, április, május, junius, julius, augusztus, szeptember, október, november, december
+	};
 
 	@Autowired
 	MapCountryCompanyGroupService mapCountryCompanyGroupService;
@@ -795,6 +803,7 @@ public class DocGen {
 		}
 		return "";
 	}
+
 	/*
 	 *** GET Rules END***
 	 */
@@ -1124,6 +1133,13 @@ public class DocGen {
 			entityData = getEntityData(entity, session, forDirectReport);
 			return getValueFromPath(field.getValueFromPath(), entityData);
 		}
+		if (field.getSelectOption().equals("CONCATENATE_IN_JAVA")) { // Checking if the value of the field need to be
+																		// created from concatenation of other fields
+																		// calling concatenation function
+			return generateValueByConcatination(field.getRuleID(), session, forDirectReport);
+		} else if (field.getSelectOption().equals("Format_DATE")) {
+			return formatDate(field.getRuleID(), session, forDirectReport);
+		}
 		// Calling function dynamically
 		// more Info here: https://www.baeldung.com/java-method-reflection
 		Method method = this.getClass().getDeclaredMethod(field.getRule().getName(), String.class, HttpSession.class,
@@ -1273,13 +1289,24 @@ public class DocGen {
 		String value = null;
 		for (String key : pathArray) {
 			if (key.endsWith("\\0")) {// then value is at this location
-				value = key.substring(key.length() - 4, key.length() - 3).equals("*") // Checking if complete array is
-																						// required in output
-						? currentObject.getJSONArray(key.substring(0, key.length() - 5)).toString()
-						: currentObject.get(key.substring(0, key.length() - 2)).toString().equals("null") ? "null"
-								: currentObject.getString(key.substring(0, key.length() - 2));
-			} else if (key.endsWith("]")) { // in case of array
-				currentObject = currentObject.getJSONArray(key.substring(0, key.length() - 2)).getJSONObject(0);
+				// Checking if complete array is required in output
+				value = key.substring(key.length() - 4,
+						key.length() - 3).equals(
+								"*") ? currentObject.getJSONArray(key.substring(0, key.length() - 5)).toString()
+										// Checking if single complete object need to be picked from the array
+										: key.substring(key.length() - 3, key.length() - 2).equals("]")
+												? currentObject.getJSONArray(key.substring(0, key.length() - 5))
+														.getJSONObject(Integer.parseInt(key
+																.substring(key.indexOf('[') + 1, key.indexOf('[') + 2)))
+														.toString()
+												: currentObject.get(key.substring(0, key.length() - 2)).toString()
+														.equals("null") ? "null"
+																: currentObject
+																		.getString(key.substring(0, key.length() - 2));
+			} else if (key.endsWith("]")) { // in case of array get the indexed Object
+				int index = key.indexOf('[');
+				index = Integer.parseInt(key.substring(index + 1, index + 2)); // to get the index between []
+				currentObject = currentObject.getJSONArray(key.substring(0, key.length() - 3)).getJSONObject(index);
 			} else {// in case of Obj
 				currentObject = currentObject.getJSONObject(key);
 			}
@@ -1389,7 +1416,6 @@ public class DocGen {
 			// 1. If the value needs to be placed inside Parameters array
 			// 2. If the value need to be placed directly in the root object.
 			if (key.endsWith("]\\0")) {
-				logger.debug("key.substring(0, key.length() - 5): " + key.substring(0, key.length() - 5));
 				if (placeAt.has(key.substring(0, key.length() - 5)))
 					placeAt.getJSONArray(key.substring(0, key.length() - 5)).put(objToPlace);
 				else
@@ -1421,6 +1447,56 @@ public class DocGen {
 		return EntityUtils.toString(docResponse.getEntity(), "UTF-8");
 	}
 
+	private String generateValueByConcatination(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
+		// Required to concatenate field Values and return single value
+		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+		Iterator<MapRuleFields> iterator = mapRuleField.iterator();
+		MapRuleFields tempMapRuleFields;
+		String returnString = "";
+		while (iterator.hasNext()) {
+			tempMapRuleFields = iterator.next();
+			if (!tempMapRuleFields.getKey().isEmpty())
+				returnString = getFieldValue(tempMapRuleFields.getField(), session, forDirectReport)
+						+ tempMapRuleFields.getKey();
+			else
+				returnString = getFieldValue(tempMapRuleFields.getField(), session, forDirectReport);
+		}
+		logger.debug("Concatinated Value: " + returnString);
+		return returnString;
+	}
+
+	private String formatDate(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
+		// Required to format dates
+
+		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+		String dateToFormat = getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport);
+		dateToFormat = dateToFormat.substring(dateToFormat.indexOf("(") + 1, dateToFormat.indexOf(")"));
+		String language = getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport);
+		Date date;
+
+		switch (language) {
+		case "HUN":
+			date = new Date(Long.parseLong(dateToFormat));
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(date);
+			return (cal.get(Calendar.YEAR) + ". " + hunLocale.values()[cal.get(Calendar.MONTH)] + " "
+					+ cal.get(Calendar.DAY_OF_MONTH));
+
+		default:
+			// works with default languages like: fr, en, sv, es, etc
+			Locale locale = new Locale(language);
+			date = new Date(Long.parseLong(dateToFormat));
+			SimpleDateFormat sdf = new SimpleDateFormat("MMMM dd, yyyy", locale);
+			return (sdf.format(date));
+
+		}
+	}
 	/*
 	 *** Helper functions END***
 	 */
