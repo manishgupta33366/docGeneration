@@ -804,6 +804,119 @@ public class DocGen {
 		return "";
 	}
 
+	String generateValueByConcatination(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
+		// Required to concatenate field Values and return single value
+		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+		Iterator<MapRuleFields> iterator = mapRuleField.iterator();
+		MapRuleFields tempMapRuleFields;
+		String returnString = "";
+		while (iterator.hasNext()) {
+			tempMapRuleFields = iterator.next();
+			if (!tempMapRuleFields.getKey().isEmpty())
+				returnString = getFieldValue(tempMapRuleFields.getField(), session, forDirectReport)
+						+ tempMapRuleFields.getKey();
+			else
+				returnString = getFieldValue(tempMapRuleFields.getField(), session, forDirectReport);
+		}
+		logger.debug("Concatinated Value: " + returnString);
+		return returnString;
+	}
+
+	String formatDate(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
+		// Required to format dates
+
+		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+		String language = getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport);
+		String dateToFormat = getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport);
+		dateToFormat = dateToFormat.substring(dateToFormat.indexOf("(") + 1, dateToFormat.indexOf(")"));
+
+		Date date;
+
+		switch (language) {
+		case "HUN":
+			date = new Date(Long.parseLong(dateToFormat));
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(date);
+			return (cal.get(Calendar.YEAR) + ". " + hunLocale.values()[cal.get(Calendar.MONTH)] + " "
+					+ cal.get(Calendar.DAY_OF_MONTH));
+
+		default:
+			// works with default languages like: fr, en, sv, es, etc
+			Locale locale = new Locale(language);
+			date = new Date(Long.parseLong(dateToFormat));
+			SimpleDateFormat sdf = new SimpleDateFormat("MMMM dd, yyyy", locale);
+			return (sdf.format(date));
+
+		}
+	}
+
+	String checkForGreaterThen(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws NumberFormatException, BatchException, ClientProtocolException, UnsupportedOperationException,
+			NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException, NamingException, URISyntaxException, IOException {
+		// Required to check for Operation and return the result based on The mapped
+		// fields
+		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+		int greaterThen = Integer.parseInt(getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport));
+		int checkInteger = Integer.parseInt(getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport));
+
+		if (checkInteger >= greaterThen) {
+			return getFieldValue(mapRuleField.get(2).getField(), session, forDirectReport);
+		} else {
+			return getFieldValue(mapRuleField.get(3).getField(), session, forDirectReport);
+		}
+	}
+
+	String divideBy(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws NumberFormatException, BatchException, ClientProtocolException, UnsupportedOperationException,
+			NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException, NamingException, URISyntaxException, IOException {
+		// Required to get the result from operation
+		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+		int divideBy_devisor = Integer
+				.parseInt(getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport));
+		int toBeDivided_dividant = Integer
+				.parseInt(getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport));
+
+		return Double.toString(toBeDivided_dividant / divideBy_devisor);
+	}
+
+	String formatYearPlusValue(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
+		// Required to format date and add one to the year
+		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+		String language = getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport);
+		String dateToFormat = getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport);
+		dateToFormat = dateToFormat.substring(dateToFormat.indexOf("(") + 1, dateToFormat.indexOf(")"));
+
+		Date date = new Date(Long.parseLong(dateToFormat));
+		SimpleDateFormat sdf_YYYY = new SimpleDateFormat("yyyy");
+
+		switch (language) {
+		case "HUN":
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(date);
+			return (Integer.parseInt(sdf_YYYY.format(date))
+					+ Integer.parseInt(getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport)) + ". "
+					+ hunLocale.values()[11] + " " + 31);
+
+		default:
+			// works with default languages like: fr, en, sv, es, etc
+			Locale locale = new Locale(language);
+			Date decMonth = new Date(1577786942000L);
+			SimpleDateFormat sdf_MMDD = new SimpleDateFormat("MMMM dd,", (Locale) locale);
+			return (sdf_MMDD.format(decMonth) + " " + (Integer.parseInt(sdf_YYYY.format(date)) + 1));
+
+		}
+	}
 	/*
 	 *** GET Rules END***
 	 */
@@ -1133,13 +1246,7 @@ public class DocGen {
 			entityData = getEntityData(entity, session, forDirectReport);
 			return getValueFromPath(field.getValueFromPath(), entityData);
 		}
-		if (field.getSelectOption().equals("CONCATENATE_IN_JAVA")) { // Checking if the value of the field need to be
-																		// created from concatenation of other fields
-																		// calling concatenation function
-			return generateValueByConcatination(field.getRuleID(), session, forDirectReport);
-		} else if (field.getSelectOption().equals("Format_DATE")) {
-			return formatDate(field.getRuleID(), session, forDirectReport);
-		}
+
 		// Calling function dynamically
 		// more Info here: https://www.baeldung.com/java-method-reflection
 		Method method = this.getClass().getDeclaredMethod(field.getRule().getName(), String.class, HttpSession.class,
@@ -1447,56 +1554,6 @@ public class DocGen {
 		return EntityUtils.toString(docResponse.getEntity(), "UTF-8");
 	}
 
-	private String generateValueByConcatination(String ruleID, HttpSession session, Boolean forDirectReport)
-			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
-			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
-			NamingException, URISyntaxException, IOException {
-		// Required to concatenate field Values and return single value
-		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
-		Iterator<MapRuleFields> iterator = mapRuleField.iterator();
-		MapRuleFields tempMapRuleFields;
-		String returnString = "";
-		while (iterator.hasNext()) {
-			tempMapRuleFields = iterator.next();
-			if (!tempMapRuleFields.getKey().isEmpty())
-				returnString = getFieldValue(tempMapRuleFields.getField(), session, forDirectReport)
-						+ tempMapRuleFields.getKey();
-			else
-				returnString = getFieldValue(tempMapRuleFields.getField(), session, forDirectReport);
-		}
-		logger.debug("Concatinated Value: " + returnString);
-		return returnString;
-	}
-
-	private String formatDate(String ruleID, HttpSession session, Boolean forDirectReport)
-			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
-			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
-			NamingException, URISyntaxException, IOException {
-		// Required to format dates
-
-		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
-		String dateToFormat = getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport);
-		dateToFormat = dateToFormat.substring(dateToFormat.indexOf("(") + 1, dateToFormat.indexOf(")"));
-		String language = getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport);
-		Date date;
-
-		switch (language) {
-		case "HUN":
-			date = new Date(Long.parseLong(dateToFormat));
-			Calendar cal = Calendar.getInstance();
-			cal.setTime(date);
-			return (cal.get(Calendar.YEAR) + ". " + hunLocale.values()[cal.get(Calendar.MONTH)] + " "
-					+ cal.get(Calendar.DAY_OF_MONTH));
-
-		default:
-			// works with default languages like: fr, en, sv, es, etc
-			Locale locale = new Locale(language);
-			date = new Date(Long.parseLong(dateToFormat));
-			SimpleDateFormat sdf = new SimpleDateFormat("MMMM dd, yyyy", locale);
-			return (sdf.format(date));
-
-		}
-	}
 	/*
 	 *** Helper functions END***
 	 */
