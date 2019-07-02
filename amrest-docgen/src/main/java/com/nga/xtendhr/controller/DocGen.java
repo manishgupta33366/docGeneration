@@ -915,7 +915,6 @@ public class DocGen {
 			SimpleDateFormat sdf_MMDD = new SimpleDateFormat("MMMM dd,", locale);
 			return (sdf_MMDD.format(decMonth) + " " + (Integer.parseInt(sdf_YYYY.format(date))
 					+ Integer.parseInt(getFieldValue(mapRuleField.get(2).getField(), session, forDirectReport))));
-
 		}
 	}
 	/*
