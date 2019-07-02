@@ -905,15 +905,15 @@ public class DocGen {
 			Calendar cal = Calendar.getInstance();
 			cal.setTime(date);
 			return (Integer.parseInt(sdf_YYYY.format(date))
-					+ Integer.parseInt(getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport)) + ". "
+					+ Integer.parseInt(getFieldValue(mapRuleField.get(2).getField(), session, forDirectReport)) + ". "
 					+ hunLocale.values()[11] + " " + 31);
-
 		default:
 			// works with default languages like: fr, en, sv, es, etc
-			Locale locale = new Locale(language);
 			Date decMonth = new Date(1577786942000L);
-			SimpleDateFormat sdf_MMDD = new SimpleDateFormat("MMMM dd,", (Locale) locale);
-			return (sdf_MMDD.format(decMonth) + " " + (Integer.parseInt(sdf_YYYY.format(date)) + 1));
+			Locale locale = new Locale(language);
+			SimpleDateFormat sdf_MMDD = new SimpleDateFormat("MMMM dd,", locale);
+			return (sdf_MMDD.format(decMonth) + " " + (Integer.parseInt(sdf_YYYY.format(date))
+					+ Integer.parseInt(getFieldValue(mapRuleField.get(2).getField(), session, forDirectReport))));
 
 		}
 	}
@@ -1396,24 +1396,28 @@ public class DocGen {
 		String value = null;
 		for (String key : pathArray) {
 			if (key.endsWith("\\0")) {// then value is at this location
-				// Checking if complete array is required in output
-				value = key.substring(key.length() - 4,
-						key.length() - 3).equals(
-								"*") ? currentObject.getJSONArray(key.substring(0, key.length() - 5)).toString()
-										// Checking if single complete object need to be picked from the array
-										: key.substring(key.length() - 3, key.length() - 2).equals("]")
-												? currentObject.getJSONArray(key.substring(0, key.length() - 5))
-														.getJSONObject(Integer.parseInt(key
-																.substring(key.indexOf('[') + 1, key.indexOf('[') + 2)))
-														.toString()
-												: currentObject.get(key.substring(0, key.length() - 2)).toString()
-														.equals("null") ? "null"
-																: currentObject
-																		.getString(key.substring(0, key.length() - 2));
+				value = key.substring(key.length() - 4, key.length() - 3).equals("*") // Checking if complete array is
+																						// required in output
+						? currentObject.getJSONArray(key.substring(0, key.length() - 5)).toString()
+						: key.substring(key.length() - 3, key.length() - 2).equals("]") ? // Checking if single complete
+																							// object need to be picked
+																							// from the array
+								currentObject.getJSONArray(key.substring(0, key.length() - 5))
+										.getJSONObject(Integer
+												.parseInt(key.substring(key.indexOf('[') + 1, key.indexOf('[') + 2)))
+										.toString()
+								: currentObject.has(key.substring(0, key.length() - 2))// checking if object containing
+																						// the key or not, if not then
+																						// send "" back
+										? currentObject.get(key.substring(0, key.length() - 2)).toString()
+												.equals("null") ? "null"
+														: currentObject.getString(key.substring(0, key.length() - 2))
+										: "";
 			} else if (key.endsWith("]")) { // in case of array get the indexed Object
 				int index = key.indexOf('[');
 				index = Integer.parseInt(key.substring(index + 1, index + 2)); // to get the index between []
-				currentObject = currentObject.getJSONArray(key.substring(0, key.length() - 3)).getJSONObject(index);
+				JSONArray tempArray = currentObject.getJSONArray(key.substring(0, key.length() - 3));
+				currentObject = tempArray.length() > 0 ? tempArray.getJSONObject(index) : new JSONObject();
 			} else {// in case of Obj
 				currentObject = currentObject.getJSONObject(key);
 			}
