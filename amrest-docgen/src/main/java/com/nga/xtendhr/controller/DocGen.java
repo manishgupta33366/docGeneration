@@ -907,6 +907,7 @@ public class DocGen {
 			return (Integer.parseInt(sdf_YYYY.format(date))
 					+ Integer.parseInt(getFieldValue(mapRuleField.get(2).getField(), session, forDirectReport)) + ". "
 					+ hunLocale.values()[11] + " " + 31);
+
 		default:
 			// works with default languages like: fr, en, sv, es, etc
 			Date decMonth = new Date(1577786942000L);

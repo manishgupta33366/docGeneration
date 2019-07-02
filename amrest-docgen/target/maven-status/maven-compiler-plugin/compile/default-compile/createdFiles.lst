@@ -33,6 +33,7 @@ com\nga\xtendhr\service\MapGroupTemplatesService.class
 com\nga\xtendhr\controller\DocGen.class
 com\nga\xtendhr\service\FieldsServiceImp.class
 com\nga\xtendhr\service\MapTemplateFieldsService.class
+com\nga\xtendhr\controller\DocGen$hunLocale.class
 com\nga\xtendhr\service\MapRuleFieldsService.class
 com\nga\xtendhr\service\MapCountryCompanyGroupService.class
 com\nga\xtendhr\service\TemplateCriteriaGenerationService.class
