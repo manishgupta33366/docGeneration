@@ -821,7 +821,7 @@ public class DocGen {
 		String returnString = "";
 		while (iterator.hasNext()) {
 			tempMapRuleFields = iterator.next();
-			if (!tempMapRuleFields.getKey().isEmpty())
+			if (!(tempMapRuleFields.getKey() == null))
 				returnString = getFieldValue(tempMapRuleFields.getField(), session, forDirectReport)
 						+ tempMapRuleFields.getKey();
 			else
@@ -1432,7 +1432,7 @@ public class DocGen {
 							key.indexOf("~FieldID~"));
 					String fieldID = key.substring(key.indexOf("~FieldID~") + 9, key.indexOf('['));
 					System.out.println("FieldID: " + fieldID + " Key: " + keyToSearchInEachObj);
-					String valueToSearch = getFieldValue(fieldsService.findByEntity(fieldID).get(0), session,
+					String valueToSearch = getFieldValue(fieldsService.findByID(fieldID).get(0), session,
 							forDirectReport);
 					JSONObject tempJsonObj;
 					for (int i = 0; i < tempArray.length(); i++) {
