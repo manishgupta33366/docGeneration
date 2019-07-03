@@ -705,7 +705,10 @@ public class DocGen {
 		return isDirectReport;
 	}
 
-	String getDirectReportCountry(String ruleID, HttpSession session, Boolean forDirectReport) {
+	String getDirectReportCountry(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, JSONException, ClientProtocolException, UnsupportedOperationException,
+			NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException, NamingException, URISyntaxException, IOException {
 		// Rule in DB to get country of direct Report
 		// Before this rule isDirectReport must be mapped in order to check if usedID
 		// provided in post body is exactly a direct Report of loggedIn user and to set
@@ -715,10 +718,13 @@ public class DocGen {
 		MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
 		JSONObject directReportData = new JSONObject(
 				(String) session.getAttribute("directReportData-" + directReportUserID));
-		return getValueFromPath(mapRuleField.getValueFromPath(), directReportData);
+		return getValueFromPath(mapRuleField.getValueFromPath(), directReportData, session, forDirectReport);
 	}
 
-	String getDirectReportCompany(String ruleID, HttpSession session, Boolean forDirectReport) {
+	String getDirectReportCompany(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, JSONException, ClientProtocolException, UnsupportedOperationException,
+			NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException, NamingException, URISyntaxException, IOException {
 		// Rule in DB to get company of direct Report
 		// Before this rule isDirectReport must be mapped in order to check if usedID
 		// provided in post body is exactly a direct Report of loggedIn user and to set
@@ -728,7 +734,7 @@ public class DocGen {
 		MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
 		JSONObject directReportData = new JSONObject(
 				(String) session.getAttribute("directReportData-" + directReportUserID));
-		return getValueFromPath(mapRuleField.getValueFromPath(), directReportData);
+		return getValueFromPath(mapRuleField.getValueFromPath(), directReportData, session, forDirectReport);
 	}
 
 	String getDirectReports(String ruleID, HttpSession session, Boolean forDirectReport)
@@ -747,8 +753,8 @@ public class DocGen {
 		String keyToRemoveObj = childDirectReportsPath.split("/")[0];// String to remove object from object before
 																		// copying
 		for (int i = 0; i < parentDirectReportArray.length(); i++) {
-			tempHoldChildDirectReports = new JSONArray(
-					getValueFromPath(childDirectReportsPath, parentDirectReportArray.getJSONObject(i)));
+			tempHoldChildDirectReports = new JSONArray(getValueFromPath(childDirectReportsPath,
+					parentDirectReportArray.getJSONObject(i), session, forDirectReport));
 			for (int j = 0; j < tempHoldChildDirectReports.length(); j++) {
 				tempHoldChildDirectReports.getJSONObject(i).remove(keyToRemoveObj); // Removing object just make is look
 																					// similar as of main obj
@@ -1244,7 +1250,7 @@ public class DocGen {
 			// now entity variable will be having the root entity from which will get the
 			// data of our field
 			entityData = getEntityData(entity, session, forDirectReport);
-			return getValueFromPath(field.getValueFromPath(), entityData);
+			return getValueFromPath(field.getValueFromPath(), entityData, session, forDirectReport);
 		}
 
 		// Calling function dynamically
@@ -1390,7 +1396,10 @@ public class DocGen {
 		return dependentEntites.size() > 0 ? dependentEntites : null;
 	}
 
-	private String getValueFromPath(String path, JSONObject retriveFromObj) throws JSONException {
+	private String getValueFromPath(String path, JSONObject retriveFromObj, HttpSession session,
+			Boolean forDirectReport) throws JSONException, BatchException, ClientProtocolException,
+			UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException,
+			IllegalArgumentException, InvocationTargetException, NamingException, URISyntaxException, IOException {
 		String[] pathArray = path.split("/");
 		JSONObject currentObject = retriveFromObj;
 		String value = null;
@@ -1414,15 +1423,35 @@ public class DocGen {
 														: currentObject.getString(key.substring(0, key.length() - 2))
 										: "";
 			} else if (key.endsWith("]")) { // in case of array get the indexed Object
-				int index = key.indexOf('[');
-				index = Integer.parseInt(key.substring(index + 1, index + 2)); // to get the index between []
-				JSONArray tempArray = currentObject.getJSONArray(key.substring(0, key.length() - 3));
-				currentObject = tempArray.length() > 0 ? tempArray.getJSONObject(index) : new JSONObject();
+
+				JSONArray tempArray = null;
+				if (key.contains("?")) {
+					tempArray = currentObject.getJSONArray(key.substring(0, key.indexOf('~')));
+
+					String keyToSearchInEachObj = key.substring(key.indexOf("~SearchForKey~") + 14,
+							key.indexOf("~FieldID~"));
+					String fieldID = key.substring(key.indexOf("~FieldID~") + 9, key.indexOf('['));
+					System.out.println("FieldID: " + fieldID + " Key: " + keyToSearchInEachObj);
+					String valueToSearch = getFieldValue(fieldsService.findByEntity(fieldID).get(0), session,
+							forDirectReport);
+					JSONObject tempJsonObj;
+					for (int i = 0; i < tempArray.length(); i++) {
+						tempJsonObj = tempArray.getJSONObject(i);
+						if (tempJsonObj.getString(keyToSearchInEachObj).equals(valueToSearch)) {
+							currentObject = tempJsonObj;
+						}
+					}
+				} else {
+					int index = key.indexOf('[');
+					index = Integer.parseInt(key.substring(index + 1, index + 2)); // to get the index between []
+					tempArray = currentObject.getJSONArray(key.substring(0, key.length() - 3));
+					System.out.println(tempArray.toString());
+					currentObject = tempArray.length() > 0 ? tempArray.getJSONObject(index) : new JSONObject();
+				}
 			} else {// in case of Obj
 				currentObject = currentObject.getJSONObject(key);
 			}
 		}
-		// logger.debug("Returned Value for Path: " + path + "... Value: " + value);
 		return value;
 	}
 
