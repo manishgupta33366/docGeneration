@@ -114,9 +114,9 @@ public class DocGen {
 			loggedInUser = loggedInUser.equals("S0014379281") || loggedInUser.equals("S0018269301")
 					|| loggedInUser.equals("S0019013022") || loggedInUser.equals("S0020227452") ? "E00000815"
 							: loggedInUser;
-			if (session != null) {
-				session.invalidate();
-			}
+//			if (session != null) {
+//				session.invalidate();
+//			}
 			session = request.getSession(true);
 			session.setAttribute("loginStatus", "Success");
 			session.setAttribute("loggedInUser", loggedInUser);
@@ -1404,11 +1404,13 @@ public class DocGen {
 			Boolean forDirectReport) throws JSONException, BatchException, ClientProtocolException,
 			UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, NamingException, URISyntaxException, IOException {
+		logger.debug("Fetching value from Path: " + path);
+		logger.debug("Object from which value need to be fetched: " + retriveFromObj.toString());
 		String[] pathArray = path.split("/");
 		JSONObject currentObject = retriveFromObj;
 		String value = null;
 		for (String key : pathArray) {
-			if (key.endsWith("\\0")) {// then value is at this location
+			if (key.endsWith("\\0") && currentObject != null) {// then value is at this location
 				value = key.substring(key.length() - 4, key.length() - 3).equals("*") // Checking if complete array is
 																						// required in output
 						? currentObject.getJSONArray(key.substring(0, key.length() - 5)).toString()
@@ -1426,7 +1428,7 @@ public class DocGen {
 												.equals("null") ? "null"
 														: currentObject.getString(key.substring(0, key.length() - 2))
 										: "";
-			} else if (key.endsWith("]")) { // in case of array get the indexed Object
+			} else if (key.endsWith("]") && currentObject != null) { // in case of array get the indexed Object
 
 				JSONArray tempArray = null;
 				if (key.contains("?")) {
@@ -1450,10 +1452,10 @@ public class DocGen {
 					index = Integer.parseInt(key.substring(index + 1, index + 2)); // to get the index between []
 					tempArray = currentObject.getJSONArray(key.substring(0, key.length() - 3));
 					System.out.println(tempArray.toString());
-					currentObject = tempArray.length() > 0 ? tempArray.getJSONObject(index) : new JSONObject();
+					currentObject = tempArray.length() > 0 ? tempArray.getJSONObject(index) : null;
 				}
-			} else {// in case of Obj
-				currentObject = currentObject.getJSONObject(key);
+			} else if (currentObject != null) {// in case of Obj
+				currentObject = currentObject.has(key) ? currentObject.getJSONObject(key) : null;
 			}
 		}
 		return value;
