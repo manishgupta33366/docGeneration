@@ -819,13 +819,17 @@ public class DocGen {
 		Iterator<MapRuleFields> iterator = mapRuleField.iterator();
 		MapRuleFields tempMapRuleFields;
 		String returnString = "";
+		String fieldValue;
 		while (iterator.hasNext()) {
 			tempMapRuleFields = iterator.next();
-			if (!(tempMapRuleFields.getKey() == null))
-				returnString = getFieldValue(tempMapRuleFields.getField(), session, forDirectReport)
-						+ tempMapRuleFields.getKey();
-			else
-				returnString = getFieldValue(tempMapRuleFields.getField(), session, forDirectReport);
+			if (!(tempMapRuleFields.getKey() == null)) {
+				fieldValue = getFieldValue(tempMapRuleFields.getField(), session, forDirectReport);
+				returnString = fieldValue.equals("") ? returnString
+						: returnString + fieldValue + tempMapRuleFields.getKey();
+			} else {
+				fieldValue = getFieldValue(tempMapRuleFields.getField(), session, forDirectReport);
+				returnString = fieldValue.equals("") ? returnString : returnString + fieldValue;
+			}
 		}
 		logger.debug("Concatinated Value: " + returnString);
 		return returnString;
