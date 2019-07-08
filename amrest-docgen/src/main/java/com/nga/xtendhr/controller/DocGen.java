@@ -931,6 +931,21 @@ public class DocGen {
 					+ Integer.parseInt(getFieldValue(mapRuleField.get(2).getField(), session, forDirectReport))));
 		}
 	}
+
+	String fetchPickListValue(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
+		// rule required to fetch value for a pick-list field
+		String url = createPicklistURL(ruleID, session, forDirectReport);
+		MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
+		String picklistData = callSFSingle(mapRuleField.getKey(), url);
+		logger.debug("Picklist Fetched Data: " + picklistData);
+
+		return getValueFromPath(mapRuleField.getValueFromPath(), new JSONObject(picklistData), session,
+				forDirectReport);
+	}
+
 	/*
 	 *** GET Rules END***
 	 */
@@ -1597,6 +1612,26 @@ public class DocGen {
 		return EntityUtils.toString(docResponse.getEntity(), "UTF-8");
 	}
 
+	private String createPicklistURL(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
+		// required to create URL for PickList
+		List<MapRuleFields> mapRuleFields = mapRuleFieldsService.findByRuleID(ruleID);
+		MapRuleFields mapRuleField;
+		String url = mapRuleFields.get(0).getUrl();
+		url = url + "&$filter=";
+		mapRuleFields.remove(0);
+		Iterator<MapRuleFields> iterator = mapRuleFields.iterator();
+		while (iterator.hasNext()) {
+			mapRuleField = iterator.next();
+			url = url + mapRuleField.getKey() + " eq '"
+					+ getFieldValue(mapRuleField.getField(), session, forDirectReport) + "' and ";
+		}
+		url = url.substring(0, url.length() - 5);
+		logger.debug(url);
+		return url;
+	}
 	/*
 	 *** Helper functions END***
 	 */
