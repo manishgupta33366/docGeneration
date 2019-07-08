@@ -751,19 +751,23 @@ public class DocGen {
 		JSONArray tempHoldChildDirectReports = new JSONArray();
 		String childDirectReportsPath = mapRuleField.get(1).getValueFromPath();// Path to fetch Child Direct Reports
 		String keyToRemoveObj = childDirectReportsPath.split("/")[0];// String to remove object from object before
-																		// copying
+		String directReportData = ""; // copying
 		for (int i = 0; i < parentDirectReportArray.length(); i++) {
-			tempHoldChildDirectReports = new JSONArray(getValueFromPath(childDirectReportsPath,
-					parentDirectReportArray.getJSONObject(i), session, forDirectReport));
-			for (int j = 0; j < tempHoldChildDirectReports.length(); j++) {
-				tempHoldChildDirectReports.getJSONObject(i).remove(keyToRemoveObj); // Removing object just make is look
-																					// similar as of main obj
-				responseDirectReports.put(tempHoldChildDirectReports.get(j));
+			directReportData = getValueFromPath(childDirectReportsPath, parentDirectReportArray.getJSONObject(i),
+					session, forDirectReport);
+			if (directReportData != "") {
+				tempHoldChildDirectReports = new JSONArray(directReportData);
+				for (int j = 0; j < tempHoldChildDirectReports.length(); j++) {
+					tempHoldChildDirectReports.getJSONObject(i).remove(keyToRemoveObj); // Removing object just make is
+																						// look
+																						// similar as of main obj
+					responseDirectReports.put(tempHoldChildDirectReports.get(j));
+				}
+				// removing child directReports from Parent as those are already added to
+				// response
+				parentDirectReportArray.getJSONObject(i).remove(keyToRemoveObj);
+				responseDirectReports.put(parentDirectReportArray.getJSONObject(i));
 			}
-			// removing child directReports from Parent as those are already added to
-			// response
-			parentDirectReportArray.getJSONObject(i).remove(keyToRemoveObj);
-			responseDirectReports.put(parentDirectReportArray.getJSONObject(i));
 		}
 		return responseDirectReports.toString();
 	}
@@ -1408,7 +1412,7 @@ public class DocGen {
 		logger.debug("Object from which value need to be fetched: " + retriveFromObj.toString());
 		String[] pathArray = path.split("/");
 		JSONObject currentObject = retriveFromObj;
-		String value = null;
+		String value = "";
 		for (String key : pathArray) {
 			if (key.endsWith("\\0") && currentObject != null) {// then value is at this location
 				value = key.substring(key.length() - 4, key.length() - 3).equals("*") // Checking if complete array is

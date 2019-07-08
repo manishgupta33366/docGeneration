@@ -37,6 +37,7 @@ public class MapTemplateFields {
 	@Column(name = "\"TEMPLATE_FIELD_NAME\"", columnDefinition = "VARCHAR(64)")
 	private String templateFieldName;
 
+	@Id
 	@Column(name = "\"PLACE_FIELD_AT_PATH\"", columnDefinition = "VARCHAR(128)")
 	private String placeFieldAtPath;
 
