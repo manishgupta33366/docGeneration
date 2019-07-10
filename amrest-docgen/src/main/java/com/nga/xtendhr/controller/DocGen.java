@@ -276,15 +276,12 @@ public class DocGen {
 
 		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
 		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
-		if (session.getAttribute("loginStatus") == null) {
-			return "Session timeout! Please Login again!";
-		}
 		/*
 		 *** Security Check *** Checking if user trying to login is exactly an Admin or
 		 * not
 		 *
 		 */
-		else if (session.getAttribute("adminLoginStatus") == null) {
+		if (session.getAttribute("adminLoginStatus") == null) {
 			logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
 					+ ", which is not an admin in SF, tried to access Groups of a user:"
 					+ requestData.getString("userID"));
@@ -483,7 +480,7 @@ public class DocGen {
 		}
 		// Now Generating Object to POST
 		JSONObject docRequestObject = getDocPostObject(templateID, session, true);// for direct Report true
-		logger.debug("Doc Generation Request Obj: " + docRequestObject.toString());
+		// logger.debug("Doc Generation Request Obj: " + docRequestObject.toString());
 		return getDocFromAPI(docRequestObject);
 	}
 
@@ -521,7 +518,7 @@ public class DocGen {
 
 		// Now Generating Object to POST
 		JSONObject docRequestObject = getDocPostObject(templateID, session, false); // for direct report false
-		logger.debug("Doc Generation Request Obj: " + docRequestObject.toString());
+		// logger.debug("Doc Generation Request Obj: " + docRequestObject.toString());
 		return getDocFromAPI(docRequestObject);
 	}
 
@@ -940,9 +937,9 @@ public class DocGen {
 		String url = createPicklistURL(ruleID, session, forDirectReport);
 		MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
 		String picklistData = callSFSingle(mapRuleField.getKey(), url);
-		logger.debug("Picklist Fetched Data: " + picklistData);
+		// logger.debug("Picklist Fetched Data: " + picklistData);
 
-		return getValueFromPath(mapRuleField.getValueFromPath(), new JSONObject(picklistData), session,
+		return getValueFromPath(mapRuleField.getValueFromPath(), new JSONArray(picklistData).getJSONObject(0), session,
 				forDirectReport);
 	}
 
@@ -1337,14 +1334,15 @@ public class DocGen {
 		batchRequest.configureDestination(CommonVariables.sfDestination);
 		String selectPath = createSelectPath(entity); // Create GetPath for all the fields those are dependent on root
 														// entity
-		String expandPath = "";
+		String tempPath = entity.getExpandPath();
+		String expandPath = tempPath != null ? tempPath.length() > 0 ? tempPath + "," : "" : "";
 		List<Entities> dependentEntities = getDependentEntities(entity); // Get all the entities those are dependent on
 																			// the root entity
 		if (dependentEntities != null) {
 			Iterator<Entities> iterator = dependentEntities.iterator(); // Iterating for each Entity for creating select
 																		// and expand path
 			Entities tempEntity;
-			String tempPath = "";
+			tempPath = "";
 			while (iterator.hasNext()) {
 				tempEntity = iterator.next();
 				tempPath = createSelectPath(tempEntity);
@@ -1353,8 +1351,8 @@ public class DocGen {
 				expandPath = tempPath.toString() != "null" || tempPath.toString() != "" ? expandPath + tempPath + ","
 						: expandPath;
 			}
-			expandPath = expandPath.length() > 0 ? expandPath.substring(0, expandPath.length() - 1) : "";
 		}
+		expandPath = expandPath.length() > 0 ? expandPath.substring(0, expandPath.length() - 1) : "";
 		logger.debug("Generated expand path: " + expandPath + "...for entity: " + entityName);
 		logger.debug("Generated select path: " + selectPath + "...for entity: " + entityName);
 
@@ -1384,8 +1382,7 @@ public class DocGen {
 		Map<String, JSONObject> entityResponseMap = new HashMap<String, JSONObject>(); // reading responses from Batch
 																						// call
 		for (BatchSingleResponse batchResponse : batchResponses) {
-			responseObj = new JSONObject(batchResponse.getBody()).getJSONObject("d").getJSONArray("results")
-					.getJSONObject(0);
+			responseObj = new JSONObject(batchResponse.getBody()).getJSONObject("d");
 			response = responseObj.toString();
 			entityResponseMap.put(entityName, responseObj);
 			if (!forDirectReport)
@@ -1474,7 +1471,9 @@ public class DocGen {
 					currentObject = tempArray.length() > 0 ? tempArray.getJSONObject(index) : null;
 				}
 			} else if (currentObject != null) {// in case of Obj
-				currentObject = currentObject.has(key) ? currentObject.getJSONObject(key) : null;
+				currentObject = currentObject.has(key)// checking if that object has the key and that key is not null
+						? currentObject.get(key).toString().equals("null") ? null : currentObject.getJSONObject(key)
+						: null;
 			}
 		}
 		return value;
@@ -1518,7 +1517,7 @@ public class DocGen {
 				.getJSONArray("results");// Note the complete results array is returned not the object inside results
 											// array
 		String response = responseArray.toString();
-		logger.debug("Response from single request: " + response);
+		// logger.debug("Response from single request: " + response);
 		return response;
 	}
 
@@ -1629,7 +1628,6 @@ public class DocGen {
 					+ getFieldValue(mapRuleField.getField(), session, forDirectReport) + "' and ";
 		}
 		url = url.substring(0, url.length() - 5);
-		logger.debug(url);
 		return url;
 	}
 	/*
