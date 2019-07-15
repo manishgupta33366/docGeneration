@@ -19,4 +19,6 @@ public class DBConfiguration {
 	public static final String RULES = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGENC_RULES\"";
 	public static final String MAP_RULE_FIELDS = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGENC_MAP_RULE_FIELDS\"";
 	public static final String MAP_TEMPLATE_FIELDS = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGEN_MAP_TEMPLATE_FILEDS\"";
+	public static final String CODELIST = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGEN_CODELIST\"";
+	public static final String CODELIST_TEXT = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGEN_CODELIST_TEXT\"";
 }

@@ -48,6 +48,7 @@ import com.nga.xtendhr.model.MapRuleFields;
 import com.nga.xtendhr.model.MapTemplateFields;
 import com.nga.xtendhr.model.TemplateCriteriaGeneration;
 import com.nga.xtendhr.model.Templates;
+import com.nga.xtendhr.service.CodelistTextService;
 import com.nga.xtendhr.service.EntitiesService;
 import com.nga.xtendhr.service.FieldsService;
 import com.nga.xtendhr.service.MapCountryCompanyGroupService;
@@ -105,6 +106,9 @@ public class DocGen {
 
 	@Autowired
 	MapTemplateFieldsService mapTemplateFieldsService;
+
+	@Autowired
+	CodelistTextService codelistTextService;
 
 	@GetMapping(value = "/login")
 	public ResponseEntity<?> login(HttpServletRequest request) {
@@ -941,6 +945,17 @@ public class DocGen {
 
 		return getValueFromPath(mapRuleField.getValueFromPath(), new JSONArray(picklistData).getJSONObject(0), session,
 				forDirectReport);
+	}
+
+	String getCodelistValue(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
+		// rule required to fetch code-list value from DB
+		List<MapRuleFields> mapRuleFields = mapRuleFieldsService.findByRuleID(ruleID);
+		String codeListId = getFieldValue(mapRuleFields.get(0).getField(), session, forDirectReport);
+		String language = getFieldValue(mapRuleFields.get(1).getField(), session, forDirectReport);
+		return codelistTextService.findByCodelistLanguage(codeListId, language).get(0).getValue();
 	}
 
 	/*

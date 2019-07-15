@@ -10,6 +10,7 @@ com\nga\xtendhr\service\MapRuleFieldsServiceImp.class
 com\nga\xtendhr\model\TemplateCriteriaGeneration.class
 com\nga\xtendhr\service\TemplateServiceImp.class
 com\nga\xtendhr\Application.class
+com\nga\xtendhr\controller\Configurator.class
 com\nga\xtendhr\config\AppConfig.class
 com\nga\xtendhr\service\EntitiesService.class
 com\nga\xtendhr\connection\BatchRequest.class
