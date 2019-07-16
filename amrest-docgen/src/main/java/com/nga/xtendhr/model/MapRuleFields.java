@@ -36,6 +36,9 @@ public class MapRuleFields {
 	@Column(name = "\"SEQ\"", columnDefinition = "INTEGER")
 	private Integer seq;
 
+	@Column(name = "\"FIELD.ID\"", columnDefinition = "VARCHAR(32)")
+	private String fieldID;
+
 	@ManyToOne(cascade = CascadeType.ALL)
 	@JoinColumn(name = "\"RULE.ID\"", referencedColumnName = "\"ID\"", insertable = false, updatable = false)
 	private Rules rule;
@@ -115,6 +118,14 @@ public class MapRuleFields {
 
 	public void setRule(Rules rule) {
 		this.rule = rule;
+	}
+
+	public String getFieldID() {
+		return fieldID;
+	}
+
+	public void setFieldID(String fieldID) {
+		this.fieldID = fieldID;
 	}
 
 }

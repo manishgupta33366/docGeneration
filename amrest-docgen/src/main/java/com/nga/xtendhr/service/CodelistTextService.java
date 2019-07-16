@@ -11,5 +11,5 @@ public interface CodelistTextService {
 
 	public void delete(CodelistText item);
 
-	public List<CodelistText> findByCodelistLanguage(String codelistID, String language);
+	public List<CodelistText> findByCodelistLanguage(String codeListID, String language);
 }

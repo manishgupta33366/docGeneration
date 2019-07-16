@@ -48,6 +48,7 @@ import com.nga.xtendhr.model.MapRuleFields;
 import com.nga.xtendhr.model.MapTemplateFields;
 import com.nga.xtendhr.model.TemplateCriteriaGeneration;
 import com.nga.xtendhr.model.Templates;
+import com.nga.xtendhr.service.CodelistService;
 import com.nga.xtendhr.service.CodelistTextService;
 import com.nga.xtendhr.service.EntitiesService;
 import com.nga.xtendhr.service.FieldsService;
@@ -109,6 +110,9 @@ public class DocGen {
 
 	@Autowired
 	CodelistTextService codelistTextService;
+
+	@Autowired
+	CodelistService codelistService;
 
 	@GetMapping(value = "/login")
 	public ResponseEntity<?> login(HttpServletRequest request) {
@@ -953,9 +957,12 @@ public class DocGen {
 			NamingException, URISyntaxException, IOException {
 		// rule required to fetch code-list value from DB
 		List<MapRuleFields> mapRuleFields = mapRuleFieldsService.findByRuleID(ruleID);
-		String codeListId = getFieldValue(mapRuleFields.get(0).getField(), session, forDirectReport);
+		String CodelistSFKey = getFieldValue(mapRuleFields.get(0).getField(), session, forDirectReport);// SF_key of
+																										// Code-list
+		String codeListID = codelistService.findByFieldAndKey(mapRuleFields.get(0).getFieldID(), CodelistSFKey).get(0)
+				.getId();
 		String language = getFieldValue(mapRuleFields.get(1).getField(), session, forDirectReport);
-		return codelistTextService.findByCodelistLanguage(codeListId, language).get(0).getValue();
+		return codelistTextService.findByCodelistLanguage(codeListID, language).get(0).getValue();
 	}
 
 	/*
@@ -1435,8 +1442,6 @@ public class DocGen {
 			Boolean forDirectReport) throws JSONException, BatchException, ClientProtocolException,
 			UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, NamingException, URISyntaxException, IOException {
-		logger.debug("Fetching value from Path: " + path);
-		logger.debug("Object from which value need to be fetched: " + retriveFromObj.toString());
 		String[] pathArray = path.split("/");
 		JSONObject currentObject = retriveFromObj;
 		String value = "";
@@ -1468,7 +1473,7 @@ public class DocGen {
 					String keyToSearchInEachObj = key.substring(key.indexOf("~SearchForKey~") + 14,
 							key.indexOf("~FieldID~"));
 					String fieldID = key.substring(key.indexOf("~FieldID~") + 9, key.indexOf('['));
-					System.out.println("FieldID: " + fieldID + " Key: " + keyToSearchInEachObj);
+					// System.out.println("FieldID: " + fieldID + " Key: " + keyToSearchInEachObj);
 					String valueToSearch = getFieldValue(fieldsService.findByID(fieldID).get(0), session,
 							forDirectReport);
 					JSONObject tempJsonObj;
@@ -1482,7 +1487,6 @@ public class DocGen {
 					int index = key.indexOf('[');
 					index = Integer.parseInt(key.substring(index + 1, index + 2)); // to get the index between []
 					tempArray = currentObject.getJSONArray(key.substring(0, key.length() - 3));
-					System.out.println(tempArray.toString());
 					currentObject = tempArray.length() > 0 ? tempArray.getJSONObject(index) : null;
 				}
 			} else if (currentObject != null) {// in case of Obj

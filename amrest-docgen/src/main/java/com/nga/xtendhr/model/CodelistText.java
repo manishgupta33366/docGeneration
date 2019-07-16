@@ -21,7 +21,7 @@ import com.nga.xtendhr.config.DBConfiguration;
 @Entity
 @Table(name = DBConfiguration.CODELIST_TEXT, schema = DBConfiguration.SCHEMA_NAME)
 @NamedQueries({
-		@NamedQuery(name = "CodelistText.findByCodelist_Language", query = "SELECT CT FROM CodelistText CT WHERE CT.codeListID = :codeListId AND CT.language = :language") })
+		@NamedQuery(name = "CodelistText.findByCodelist_Language", query = "SELECT CT FROM CodelistText CT WHERE CT.codeListID = :codeListID AND CT.language = :language") })
 public class CodelistText {
 	@Id
 	@Column(name = "\"CODELIST.ID\"", columnDefinition = "VARCHAR(32)")

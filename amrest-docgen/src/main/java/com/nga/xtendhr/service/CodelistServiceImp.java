@@ -9,41 +9,42 @@ import javax.persistence.Query;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.nga.xtendhr.model.CodelistText;
+import com.nga.xtendhr.model.Codelist;
 
 @Transactional
 @Component
-public class CodelistTextServiceImp implements CodelistTextService {
+public class CodelistServiceImp implements CodelistService {
+
 	@PersistenceContext
 	EntityManager em;
 
 	@Override
 	@Transactional
-	public CodelistText create(CodelistText item) {
+	public Codelist create(Codelist item) {
 		em.persist(item);
 		return item;
 	}
 
 	@Override
 	@Transactional
-	public CodelistText update(CodelistText item) {
+	public Codelist update(Codelist item) {
 		em.merge(item);
 		return item;
 	}
 
 	@Override
 	@Transactional
-	public void delete(CodelistText item) {
+	public void delete(Codelist item) {
 		em.remove(item);
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public List<CodelistText> findByCodelistLanguage(String codeListID, String language) {
+	public List<Codelist> findByFieldAndKey(String fieldID, String sfKey) {
 		Query query;
-		List<CodelistText> items;
-		query = em.createNamedQuery("CodelistText.findByCodelist_Language").setParameter("codeListID", codeListID)
-				.setParameter("language", language);
+		List<Codelist> items;
+		query = em.createNamedQuery("Codelist.findByField_Key").setParameter("fieldID", fieldID).setParameter("sfKey",
+				sfKey);
 		items = query.getResultList();
 		return items;
 	}
