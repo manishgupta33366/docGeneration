@@ -40,6 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.nga.xtendhr.connection.BatchRequest;
 import com.nga.xtendhr.connection.DestinationClient;
+import com.nga.xtendhr.model.CodelistText;
 import com.nga.xtendhr.model.Entities;
 import com.nga.xtendhr.model.Fields;
 import com.nga.xtendhr.model.MapCountryCompanyGroup;
@@ -962,7 +963,8 @@ public class DocGen {
 		String codeListID = codelistService.findByFieldAndKey(mapRuleFields.get(0).getFieldID(), CodelistSFKey).get(0)
 				.getId();
 		String language = getFieldValue(mapRuleFields.get(1).getField(), session, forDirectReport);
-		return codelistTextService.findByCodelistLanguage(codeListID, language).get(0).getValue();
+		List<CodelistText> codelistText = codelistTextService.findByCodelistLanguage(codeListID, language);
+		return codelistText.size() > 0 ? codelistText.get(0).getValue() : "";
 	}
 
 	/*
