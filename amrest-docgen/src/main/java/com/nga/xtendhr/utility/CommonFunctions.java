@@ -79,9 +79,9 @@ public class CommonFunctions {
 		}
 	}
 
-	public static Boolean checkIfAdmin(String loggedInUser, String sfDestination)
+	public static Boolean checkIfAdmin(String loggedInUser)
 			throws NamingException, ClientProtocolException, IOException, URISyntaxException {
-		DestinationClient destClient = CommonFunctions.getDestinationCLient(sfDestination);
+		DestinationClient destClient = CommonFunctions.getDestinationCLient(CommonVariables.sfDestination);
 		try {
 			// calling users API to get country of the loggedIn user
 			HttpResponse response = destClient.callDestinationGET("/User",
@@ -98,6 +98,7 @@ public class CommonFunctions {
 			responseObject = responseObject.getJSONObject("d").getJSONArray("results").getJSONObject(0);
 
 			// calling getUsersByDynamicGroup to check if user trying to logging is an Admin
+			destClient = CommonFunctions.getDestinationCLient(CommonVariables.sfAdminPermission);
 			response = destClient.callDestinationGET("/getUsersByDynamicGroup", "?$format=json&$filter=userId eq '"
 					+ loggedInUser + "'&groupId=" + responseObject.getString("groupID") + "L");
 			responseJsonString = EntityUtils.toString(response.getEntity(), "UTF-8");

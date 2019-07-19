@@ -4,6 +4,8 @@ com\nga\xtendhr\service\MapTemplatFieldsServiceImp.class
 com\nga\xtendhr\service\MapRuleFieldsServiceImp.class
 com\nga\xtendhr\Application.class
 com\nga\xtendhr\controller\Configurator.class
+com\nga\xtendhr\service\ConfigurableTablesService.class
+com\nga\xtendhr\model\ConfigurableColumns.class
 com\nga\xtendhr\config\AppConfig.class
 com\nga\xtendhr\connection\BatchRequest.class
 com\nga\xtendhr\service\CountryServiceImp.class
@@ -24,11 +26,15 @@ com\nga\xtendhr\service\MapCountryCompanyGroupServiceImp.class
 com\nga\xtendhr\controller\Initial_SF_PEX.class
 com\nga\xtendhr\service\EntitiesServiceImp.class
 com\nga\xtendhr\service\TemplateService.class
+com\nga\xtendhr\service\ConfigurableColumnsService.class
+com\nga\xtendhr\service\ConfigurableTablesServiceImp.class
 com\nga\xtendhr\model\Templates.class
 com\nga\xtendhr\model\MapRuleFields.class
+com\nga\xtendhr\service\ConfigurableColumnsServiceImp.class
 com\nga\xtendhr\model\TemplateCriteriaGeneration.class
 com\nga\xtendhr\service\TemplateServiceImp.class
 com\nga\xtendhr\service\EntitiesService.class
+com\nga\xtendhr\model\ConfigurableTables.class
 com\nga\xtendhr\model\CodelistText.class
 com\nga\xtendhr\service\CodelistService.class
 com\nga\xtendhr\service\CodelistTextService.class

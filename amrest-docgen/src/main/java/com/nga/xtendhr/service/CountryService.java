@@ -2,6 +2,7 @@ package com.nga.xtendhr.service;
 
 import java.util.List;
 
+import com.nga.xtendhr.model.ConfigurableColumns;
 import com.nga.xtendhr.model.Countries;
 
 public interface CountryService {
@@ -16,4 +17,5 @@ public interface CountryService {
 
 	public Countries findById(String id);
 
+	public List<Countries> dynamicSelect(List<ConfigurableColumns> requiredColumns);
 }

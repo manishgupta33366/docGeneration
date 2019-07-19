@@ -1,5 +1,6 @@
 package com.nga.xtendhr.service;
 
+import java.util.Iterator;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -9,6 +10,7 @@ import javax.persistence.Query;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.nga.xtendhr.model.ConfigurableColumns;
 import com.nga.xtendhr.model.Countries;
 
 @Transactional
@@ -52,4 +54,14 @@ public class CountryServiceImp implements CountryService {
 		return item;
 	}
 
+	public List<Countries> dynamicSelect(List<ConfigurableColumns> requiredColumns) {
+		Iterator<ConfigurableColumns> iterator = requiredColumns.iterator();
+		String columnsToSelect = "";
+		while (iterator.hasNext()) {
+			columnsToSelect = columnsToSelect + "C." + iterator.next().getColumnName() + ",";
+		}
+		columnsToSelect = columnsToSelect.substring(0, columnsToSelect.length() - 1);
+		String query = "SELECT " + columnsToSelect + " FROM Countries C";
+		return em.createQuery(query, Countries.class).getResultList();
+	}
 }

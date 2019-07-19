@@ -21,4 +21,6 @@ public class DBConfiguration {
 	public static final String MAP_TEMPLATE_FIELDS = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGEN_MAP_TEMPLATE_FILEDS\"";
 	public static final String CODELIST = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGEN_CODELIST\"";
 	public static final String CODELIST_TEXT = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGEN_CODELIST_TEXT\"";
+	public static final String CONFIGURABLE_TABLES = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGEN_CONFIGURABLE_TABLES\"";
+	public static final String CONFIGURABLE_COLUMNS = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGEN_CONFIGURABLE_COLUMNS\"";
 }

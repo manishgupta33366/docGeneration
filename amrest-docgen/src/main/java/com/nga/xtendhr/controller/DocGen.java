@@ -132,7 +132,7 @@ public class DocGen {
 			JSONObject response = new JSONObject();
 			response.put("login", "success");
 
-			if (CommonFunctions.checkIfAdmin(loggedInUser, CommonVariables.sfDestination)) {
+			if (CommonFunctions.checkIfAdmin(loggedInUser)) {
 				session.setAttribute("adminLoginStatus", "Success");
 				response.put("isAdmin", true);
 			}
