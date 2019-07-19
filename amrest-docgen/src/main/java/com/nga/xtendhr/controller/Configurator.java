@@ -5,7 +5,6 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,39 +135,24 @@ public class Configurator {
 				return new ResponseEntity<>("Error! Table not found.", HttpStatus.INTERNAL_SERVER_ERROR);
 
 			List<ConfigurableColumns> configurableColumns = configurableColumnsService
-					.findByTableID(configurableTables.getId());// retrieve all the configurable columns for the table
-			// get names list of all the configurable columns
-			List<String> columnNames = configurableColumnsService.getColumnNamesByTableID(configurableTables.getId());
-			String tablePath = configurableTables.getPath(); // Table path
+					.findByTableID(configurableTables.getId()); // get all configurable columns
+			String tablePath = configurableTables.getPath();
 			JSONObject response = new JSONObject();
-			JSONArray countriesArray = new JSONArray();
-			JSONObject tempObj = new JSONObject();
-			JSONObject tempCountryJsonObj = new JSONObject();
+			response.put("columns", configurableColumns);
 			switch (tablePath) {
 			case DBConfiguration.COUNTRIES:
-				List<Countries> countries = countryService.findAll();
-				for (int i = 0; i < countries.size(); i++) {
-					tempObj = new JSONObject();
-					tempCountryJsonObj = new JSONObject(countries.get(i).toString());
-					for (int j = 0; j < columnNames.size(); j++) {
-						tempObj.put(columnNames.get(j), tempCountryJsonObj.get(columnNames.get(j)));
-					}
-					countriesArray.put(tempObj);
-				}
-				response.put("columns", configurableColumns);
-				response.put("data", countriesArray);
+				List<Countries> countries = countryService.dynamicSelect(configurableColumns); // get only the
+																								// configurable columns
+				response.put("data", countries);
 				return ResponseEntity.ok().body(response.toString());
 			case DBConfiguration.GROUPS:
-				// code block
 				break;
 			default:
-				// code block
 			}
-
-			return ResponseEntity.ok().body(configurableTablesService.findAll());
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
+		return null;
 	}
 }
