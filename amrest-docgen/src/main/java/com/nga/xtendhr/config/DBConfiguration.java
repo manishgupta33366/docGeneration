@@ -23,4 +23,5 @@ public class DBConfiguration {
 	public static final String CODELIST_TEXT = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGEN_CODELIST_TEXT\"";
 	public static final String CONFIGURABLE_TABLES = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGEN_CONFIGURABLE_TABLES\"";
 	public static final String CONFIGURABLE_COLUMNS = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGEN_CONFIGURABLE_COLUMNS\"";
+	public static final String TEMPLATE_FIELD_TAG = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGEN_TEMPALTE_FIELD_TAG\"";
 }

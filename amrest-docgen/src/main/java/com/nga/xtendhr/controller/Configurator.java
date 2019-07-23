@@ -5,6 +5,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,8 +14,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 import com.nga.xtendhr.config.DBConfiguration;
 import com.nga.xtendhr.model.ConfigurableColumns;
@@ -34,6 +37,7 @@ import com.nga.xtendhr.service.MapTemplateFieldsService;
 import com.nga.xtendhr.service.RulesService;
 import com.nga.xtendhr.service.TemplateCriteriaGenerationService;
 import com.nga.xtendhr.service.TemplateService;
+import com.nga.xtendhr.utility.WordFileProcessing;
 
 @RestController
 @RequestMapping("/DocGen")
@@ -135,24 +139,52 @@ public class Configurator {
 				return new ResponseEntity<>("Error! Table not found.", HttpStatus.INTERNAL_SERVER_ERROR);
 
 			List<ConfigurableColumns> configurableColumns = configurableColumnsService
-					.findByTableID(configurableTables.getId()); // get all configurable columns
-			String tablePath = configurableTables.getPath();
+					.findByTableID(configurableTables.getId());// retrieve all the configurable columns for the table
+			// get names list of all the configurable columns
+			List<String> columnNames = configurableColumnsService.getColumnNamesByTableID(configurableTables.getId());
+			String tablePath = configurableTables.getPath(); // Table path
 			JSONObject response = new JSONObject();
-			response.put("columns", configurableColumns);
+			JSONArray countriesArray = new JSONArray();
+			JSONObject tempObj = new JSONObject();
+			JSONObject tempCountryJsonObj = new JSONObject();
 			switch (tablePath) {
 			case DBConfiguration.COUNTRIES:
-				List<Countries> countries = countryService.dynamicSelect(configurableColumns); // get only the
-																								// configurable columns
-				response.put("data", countries);
+				List<Countries> countries = countryService.findAll();
+				for (int i = 0; i < countries.size(); i++) {
+					tempObj = new JSONObject();
+					tempCountryJsonObj = new JSONObject(countries.get(i).toString());
+					for (int j = 0; j < columnNames.size(); j++) {
+						tempObj.put(columnNames.get(j), tempCountryJsonObj.get(columnNames.get(j)));
+					}
+					countriesArray.put(tempObj);
+				}
+				response.put("columns", configurableColumns);
+				response.put("data", countriesArray);
 				return ResponseEntity.ok().body(response.toString());
 			case DBConfiguration.GROUPS:
+				// code block
 				break;
 			default:
+				// code block
 			}
+
+			return ResponseEntity.ok().body(configurableTablesService.findAll());
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		return null;
+	}
+
+	@RequestMapping(value = "/uploadTemplate", method = RequestMethod.POST)
+	public ResponseEntity<?> upload(@RequestParam CommonsMultipartFile file, HttpSession session) {
+		// String filename = file.getOriginalFilename();
+		try {
+			byte bytesArr[] = file.getBytes();
+			return ResponseEntity.ok().body(WordFileProcessing.getTags(WordFileProcessing.createWordFile(bytesArr)));
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
 	}
 }

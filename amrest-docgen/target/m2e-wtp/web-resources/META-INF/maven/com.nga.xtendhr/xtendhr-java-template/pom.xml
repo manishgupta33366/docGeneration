@@ -89,13 +89,20 @@
 			<artifactId>json</artifactId>
 			<version>20180813</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml -->
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>4.1.0</version>
+		</dependency>
+
 	</dependencies>
 
 	<properties>
 		<java.version>1.8</java.version><!-- Updating Java version to 1.8 -->
 		<sap.cloud.sdk.version>3.76.12</sap.cloud.sdk.version>
 	</properties>
-	
+
 	<packaging>war</packaging><!-- Setting default packaging to War -->
-	
+
 </project>

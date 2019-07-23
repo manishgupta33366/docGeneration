@@ -1584,10 +1584,12 @@ public class DocGen {
 		while (iterator.hasNext()) {
 			mapTemplateField = iterator.next();
 			JSONObject objToPlace = new JSONObject();
-			objToPlace.put("Key", mapTemplateField.getTemplateFieldName());
-			objToPlace.put("Value", getFieldValue(mapTemplateField.getField(), session, forDirectReport));
+			objToPlace.put("Key", mapTemplateField.getTemplateFiledTag().getId());
+			objToPlace.put("Value",
+					getFieldValue(mapTemplateField.getTemplateFiledTag().getField(), session, forDirectReport));
 			// To place value at specific location in POST object
-			docPostObject = placeValue(objToPlace, mapTemplateField.getPlaceFieldAtPath(), docPostObject);
+			docPostObject = placeValue(objToPlace, mapTemplateField.getTemplateFiledTag().getPlaceFieldAtPath(),
+					docPostObject);
 		}
 		return docPostObject;
 	}

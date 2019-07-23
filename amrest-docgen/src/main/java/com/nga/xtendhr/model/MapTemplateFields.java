@@ -31,31 +31,12 @@ public class MapTemplateFields {
 	private String templateID;
 
 	@Id
-	@Column(name = "\"FIELD.ID\"", columnDefinition = "VARCHAR(32)")
-	private String fieldID;
-
-	@Column(name = "\"TEMPLATE_FIELD_NAME\"", columnDefinition = "VARCHAR(64)")
-	private String templateFieldName;
-
-	@Id
-	@Column(name = "\"PLACE_FIELD_AT_PATH\"", columnDefinition = "VARCHAR(128)")
-	private String placeFieldAtPath;
-
-	public String getPlaceFieldAtPath() {
-		return placeFieldAtPath;
-	}
-
-	public void setPlaceFieldAtPath(String placeFieldAtPath) {
-		this.placeFieldAtPath = placeFieldAtPath;
-	}
+	@Column(name = "\"TEMPALTE_FIELD_TAG.ID\"", columnDefinition = "VARCHAR(32)")
+	private String templateFieldTagId;
 
 	@ManyToOne(cascade = CascadeType.ALL)
-	@JoinColumn(name = "\"TEMPLATE.ID\"", referencedColumnName = "\"ID\"", insertable = false, updatable = false)
-	private Templates template;
-
-	@ManyToOne(cascade = CascadeType.ALL)
-	@JoinColumn(name = "\"FIELD.ID\"", referencedColumnName = "\"ID\"", insertable = false, updatable = false)
-	private Fields field;
+	@JoinColumn(name = "\"TEMPALTE_FIELD_TAG.ID\"", referencedColumnName = "\"ID\"", insertable = false, updatable = false)
+	private TemplateFieldTag templateFiledTag;
 
 	public String getTemplateID() {
 		return templateID;
@@ -65,35 +46,19 @@ public class MapTemplateFields {
 		this.templateID = templateID;
 	}
 
-	public String getFieldID() {
-		return fieldID;
+	public String getTemplateFieldTagId() {
+		return templateFieldTagId;
 	}
 
-	public void setFieldID(String fieldID) {
-		this.fieldID = fieldID;
+	public void setTemplateFieldTagId(String templateFieldTagId) {
+		this.templateFieldTagId = templateFieldTagId;
 	}
 
-	public String getTemplateFieldName() {
-		return templateFieldName;
+	public TemplateFieldTag getTemplateFiledTag() {
+		return templateFiledTag;
 	}
 
-	public void setTemplateFieldName(String templateFieldName) {
-		this.templateFieldName = templateFieldName;
-	}
-
-	public Templates getTemplate() {
-		return template;
-	}
-
-	public void setTemplate(Templates template) {
-		this.template = template;
-	}
-
-	public Fields getField() {
-		return field;
-	}
-
-	public void setField(Fields field) {
-		this.field = field;
+	public void setTemplateFiledTag(TemplateFieldTag templateFiledTag) {
+		this.templateFiledTag = templateFiledTag;
 	}
 }
