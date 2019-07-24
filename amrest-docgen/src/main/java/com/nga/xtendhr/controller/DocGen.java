@@ -1463,7 +1463,7 @@ public class DocGen {
 																						// the key or not, if not then
 																						// send "" back
 										? currentObject.get(key.substring(0, key.length() - 2)).toString()
-												.equals("null") ? "null"
+												.equals("null") ? ""
 														: currentObject.getString(key.substring(0, key.length() - 2))
 										: "";
 			} else if (key.endsWith("]") && currentObject != null) { // in case of array get the indexed Object
