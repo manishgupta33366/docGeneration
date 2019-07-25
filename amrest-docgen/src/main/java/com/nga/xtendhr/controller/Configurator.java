@@ -1,6 +1,7 @@
 package com.nga.xtendhr.controller;
 
 import java.util.List;
+import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -23,6 +24,8 @@ import com.nga.xtendhr.config.DBConfiguration;
 import com.nga.xtendhr.model.ConfigurableColumns;
 import com.nga.xtendhr.model.ConfigurableTables;
 import com.nga.xtendhr.model.Countries;
+import com.nga.xtendhr.model.MapTemplateFields;
+import com.nga.xtendhr.model.Templates;
 import com.nga.xtendhr.service.CodelistService;
 import com.nga.xtendhr.service.CodelistTextService;
 import com.nga.xtendhr.service.ConfigurableColumnsService;
@@ -40,7 +43,7 @@ import com.nga.xtendhr.service.TemplateService;
 import com.nga.xtendhr.utility.WordFileProcessing;
 
 @RestController
-@RequestMapping("/DocGen")
+@RequestMapping("/DocGen/docGenAdmin/configurator")
 public class Configurator {
 	Logger logger = LoggerFactory.getLogger(DocGen.class);
 
@@ -86,7 +89,7 @@ public class Configurator {
 	@Autowired
 	CountryService countryService;
 
-	@GetMapping(value = "/docGenAdmin/configurator/getConfigurableTables")
+	@GetMapping(value = "/getConfigurableTables")
 	public ResponseEntity<?> getTableNames(HttpServletRequest request) {
 
 		try {
@@ -114,7 +117,7 @@ public class Configurator {
 		}
 	}
 
-	@GetMapping(value = "/docGenAdmin/configurator/getTableData")
+	@GetMapping(value = "/getTableData")
 	public ResponseEntity<?> getTableData(@RequestParam(name = "tableID") String tableID, HttpServletRequest request) {
 		try {
 			HttpSession session = request.getSession(false);// false is not create new session and use the existing
@@ -176,15 +179,48 @@ public class Configurator {
 	}
 
 	@RequestMapping(value = "/uploadTemplate", method = RequestMethod.POST)
-	public ResponseEntity<?> upload(@RequestParam CommonsMultipartFile file, HttpSession session) {
+	public ResponseEntity<?> upload(@RequestParam(name = "templateName") String templateName,
+			@RequestParam(name = "description") String description, @RequestParam CommonsMultipartFile file,
+			HttpSession session) {
 		// String filename = file.getOriginalFilename();
 		try {
 			byte bytesArr[] = file.getBytes();
-			return ResponseEntity.ok().body(WordFileProcessing.getTags(WordFileProcessing.createWordFile(bytesArr)));
+
+			Templates generatedTemplate = _createTemplate(templateName, description);
+			JSONArray tags = WordFileProcessing.getTags(WordFileProcessing.createWordFile(bytesArr));
+			_mapTemplateFields(generatedTemplate, tags);
+			return ResponseEntity.ok()
+					.body(WordFileProcessing.getTags(WordFileProcessing.createWordFile(bytesArr)).toString());
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
+	}
+
+	private Templates _createTemplate(String templateName, String description) {
+		Templates newTemplate = new Templates();
+		String templateId = _getUUID();
+		newTemplate.setId(templateId);
+		newTemplate.setName(templateName);
+		newTemplate.setDescription(description);
+		return templateService.create(newTemplate);
+	}
+
+	private String _getUUID() {
+		String uuid = UUID.randomUUID().toString();
+		uuid = uuid.substring(0, uuid.length() - 4);
+		return uuid;
+	}
+
+	private Boolean _mapTemplateFields(Templates template, JSONArray tags) {
+		MapTemplateFields templateField;
+		for (int i = 0; i < tags.length(); i++) {
+			templateField = new MapTemplateFields();
+			templateField.setTemplateID(template.getId());
+			templateField.setTemplateFieldTagId(tags.getString(i));
+			mapTemplateFieldsService.create(templateField);
+		}
+		return true;
 	}
 }

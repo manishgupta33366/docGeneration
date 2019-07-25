@@ -28,6 +28,7 @@ public class WordFileProcessing {
 
 	public static JSONArray getTags(XWPFDocument docxDocument) throws FileNotFoundException, IOException {
 		// For extracting all the tags in the word file
+		@SuppressWarnings("resource")
 		XWPFWordExtractor we = new XWPFWordExtractor(docxDocument);
 		Matcher m = Pattern.compile("\\<(.*?)\\>").matcher(we.getText());
 		JSONArray tags = new JSONArray();
