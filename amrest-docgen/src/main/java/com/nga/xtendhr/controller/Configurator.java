@@ -18,7 +18,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.commons.CommonsMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import com.nga.xtendhr.config.DBConfiguration;
 import com.nga.xtendhr.model.ConfigurableColumns;
@@ -180,17 +181,21 @@ public class Configurator {
 
 	@RequestMapping(value = "/uploadTemplate", method = RequestMethod.POST)
 	public ResponseEntity<?> upload(@RequestParam(name = "templateName") String templateName,
-			@RequestParam(name = "description") String description, @RequestParam CommonsMultipartFile file,
+			@RequestParam(name = "description") String description, MultipartHttpServletRequest request,
 			HttpSession session) {
 		// String filename = file.getOriginalFilename();
 		try {
-			byte bytesArr[] = file.getBytes();
+			// byte bytesArr[] = null;
+			MultipartFile multipartFile = request.getFiles("templateFile").get(0);
+			String fileName = multipartFile.getOriginalFilename();
 
+			logger.debug("Uploaded Orignal FileName: " + fileName + " ::: fileName:" + multipartFile.getName()
+					+ " ::: contentType:" + multipartFile.getContentType());
 			Templates generatedTemplate = _createTemplate(templateName, description);
-			JSONArray tags = WordFileProcessing.getTags(WordFileProcessing.createWordFile(bytesArr));
-			_mapTemplateFields(generatedTemplate, tags);
-			return ResponseEntity.ok()
-					.body(WordFileProcessing.getTags(WordFileProcessing.createWordFile(bytesArr)).toString());
+			JSONArray tags = WordFileProcessing.getTags(WordFileProcessing.createWordFile(multipartFile));
+			logger.debug(tags.toString());
+			Boolean mappedSuccessfully = _mapTemplateFields(generatedTemplate, tags);
+			return ResponseEntity.ok().body(mappedSuccessfully);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -214,13 +219,18 @@ public class Configurator {
 	}
 
 	private Boolean _mapTemplateFields(Templates template, JSONArray tags) {
-		MapTemplateFields templateField;
-		for (int i = 0; i < tags.length(); i++) {
-			templateField = new MapTemplateFields();
-			templateField.setTemplateID(template.getId());
-			templateField.setTemplateFieldTagId(tags.getString(i));
-			mapTemplateFieldsService.create(templateField);
+		try {
+			MapTemplateFields templateField;
+			for (int i = 0; i < tags.length(); i++) {
+				templateField = new MapTemplateFields();
+				templateField.setTemplateID(template.getId());
+				templateField.setTemplateFieldTagId(tags.getString(i));
+				mapTemplateFieldsService.create(templateField);
+			}
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
 		}
-		return true;
 	}
 }

@@ -945,11 +945,12 @@ public class DocGen {
 		// rule required to fetch value for a pick-list field
 		String url = createPicklistURL(ruleID, session, forDirectReport);
 		MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
-		String picklistData = callSFSingle(mapRuleField.getKey(), url);
+		JSONArray picklistData = new JSONArray(callSFSingle(mapRuleField.getKey(), url));
 		// logger.debug("Picklist Fetched Data: " + picklistData);
-
-		return getValueFromPath(mapRuleField.getValueFromPath(), new JSONArray(picklistData).getJSONObject(0), session,
-				forDirectReport);
+		return picklistData.length() > 0
+				? getValueFromPath(mapRuleField.getValueFromPath(), picklistData.getJSONObject(0), session,
+						forDirectReport)
+				: "";
 	}
 
 	String getCodelistValue(String ruleID, HttpSession session, Boolean forDirectReport)
