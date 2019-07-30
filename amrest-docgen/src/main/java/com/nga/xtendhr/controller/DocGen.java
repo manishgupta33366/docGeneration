@@ -299,6 +299,8 @@ public class DocGen {
 		getFieldValue(mapRuleField.get(0).getField(), session, true);// get data of direct report
 		String countryID = getFieldValue(mapRuleField.get(1).getField(), session, true);// forDirectReport true
 		String companyID = getFieldValue(mapRuleField.get(2).getField(), session, true);// forDirectReport true
+		if (countryID.equals("") || companyID.equals(""))
+			return "";
 		Iterator<MapCountryCompanyGroup> iterator = mapCountryCompanyGroupService
 				.findByCountryCompanyAdmin(countryID, companyID).iterator();
 		JSONArray response = new JSONArray();
@@ -854,6 +856,8 @@ public class DocGen {
 		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
 		String language = getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport);
 		String dateToFormat = getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport);
+		if (dateToFormat.equals("")) // return if value returned is ""
+			return "";
 		dateToFormat = dateToFormat.substring(dateToFormat.indexOf("(") + 1, dateToFormat.indexOf(")"));
 
 		Date date;
@@ -961,9 +965,13 @@ public class DocGen {
 		List<MapRuleFields> mapRuleFields = mapRuleFieldsService.findByRuleID(ruleID);
 		String CodelistSFKey = getFieldValue(mapRuleFields.get(0).getField(), session, forDirectReport);// SF_key of
 																										// Code-list
+		if (CodelistSFKey.equals(""))
+			return "";
 		String codeListID = codelistService.findByFieldAndKey(mapRuleFields.get(0).getFieldID(), CodelistSFKey).get(0)
 				.getId();
 		String language = getFieldValue(mapRuleFields.get(1).getField(), session, forDirectReport);
+		if (language.equals(""))
+			return "";
 		List<CodelistText> codelistText = codelistTextService.findByCodelistLanguage(codeListID, language);
 		return codelistText.size() > 0 ? codelistText.get(0).getValue() : "";
 	}
@@ -1464,8 +1472,10 @@ public class DocGen {
 																						// the key or not, if not then
 																						// send "" back
 										? currentObject.get(key.substring(0, key.length() - 2)).toString()
-												.equals("null") ? ""
-														: currentObject.getString(key.substring(0, key.length() - 2))
+												.equals("null")
+														? ""
+														: currentObject.get(key.substring(0, key.length() - 2))
+																.toString()
 										: "";
 			} else if (key.endsWith("]") && currentObject != null) { // in case of array get the indexed Object
 
