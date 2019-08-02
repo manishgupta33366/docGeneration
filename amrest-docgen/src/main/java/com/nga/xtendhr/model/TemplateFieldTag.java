@@ -33,9 +33,20 @@ public class TemplateFieldTag {
 	@Column(name = "\"PLACE_FIELD_AT_PATH\"", columnDefinition = "VARCHAR(128)")
 	private String placeFieldAtPath;
 
+	@Column(name = "\"TYPE\"", columnDefinition = "VARCHAR(32)")
+	private String type;
+
 	@ManyToOne(cascade = CascadeType.ALL)
 	@JoinColumn(name = "\"FIELD.ID\"", referencedColumnName = "\"ID\"", insertable = false, updatable = false)
 	private Fields field;
+
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
 
 	public String getId() {
 		return id;

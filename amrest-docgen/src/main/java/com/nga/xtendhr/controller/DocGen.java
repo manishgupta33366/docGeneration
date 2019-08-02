@@ -41,6 +41,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.nga.xtendhr.connection.BatchRequest;
 import com.nga.xtendhr.connection.DestinationClient;
 import com.nga.xtendhr.model.CodelistText;
+import com.nga.xtendhr.model.CountrySpecificFields;
 import com.nga.xtendhr.model.Entities;
 import com.nga.xtendhr.model.Fields;
 import com.nga.xtendhr.model.MapCountryCompanyGroup;
@@ -48,9 +49,11 @@ import com.nga.xtendhr.model.MapGroupTemplates;
 import com.nga.xtendhr.model.MapRuleFields;
 import com.nga.xtendhr.model.MapTemplateFields;
 import com.nga.xtendhr.model.TemplateCriteriaGeneration;
+import com.nga.xtendhr.model.TemplateFieldTag;
 import com.nga.xtendhr.model.Templates;
 import com.nga.xtendhr.service.CodelistService;
 import com.nga.xtendhr.service.CodelistTextService;
+import com.nga.xtendhr.service.CountrySpecificFieldsService;
 import com.nga.xtendhr.service.EntitiesService;
 import com.nga.xtendhr.service.FieldsService;
 import com.nga.xtendhr.service.MapCountryCompanyGroupService;
@@ -114,6 +117,9 @@ public class DocGen {
 
 	@Autowired
 	CodelistService codelistService;
+
+	@Autowired
+	CountrySpecificFieldsService countrySpecificFieldsService;
 
 	@GetMapping(value = "/login")
 	public ResponseEntity<?> login(HttpServletRequest request) {
@@ -1592,16 +1598,68 @@ public class DocGen {
 		JSONObject docPostObject = new JSONObject();
 		MapTemplateFields mapTemplateField;
 		Iterator<MapTemplateFields> iterator = mapTemplateFieldsService.findByTemplateID(templateID).iterator();
+		JSONObject fieldsWithType = new JSONObject(); // Object to holding fields with types (for different countries)
+		String fieldType = null;
+		JSONObject objToPlace;
 		while (iterator.hasNext()) {
 			mapTemplateField = iterator.next();
-			JSONObject objToPlace = new JSONObject();
+			fieldType = mapTemplateField.getTemplateFiledTag().getType();
+			if (fieldType != null) {
+				if (fieldsWithType.has(fieldType)) // checking if type (key) is already present in the Object
+					fieldsWithType.getJSONArray(fieldType).put(mapTemplateField.getTemplateFiledTag());
+				else { // If not add new array to hold the TemplateFiledTag
+					fieldsWithType.put(fieldType, new JSONArray());
+					fieldsWithType.getJSONArray(fieldType).put(mapTemplateField.getTemplateFiledTag());
+				}
+				continue; // continue the loop
+			}
+			objToPlace = new JSONObject();
 			objToPlace.put("Key", mapTemplateField.getTemplateFiledTag().getId());
 			objToPlace.put("Value",
 					getFieldValue(mapTemplateField.getTemplateFiledTag().getField(), session, forDirectReport));
 			// To place value at specific location in POST object
 			docPostObject = placeValue(objToPlace, mapTemplateField.getTemplateFiledTag().getPlaceFieldAtPath(),
 					docPostObject);
+
 		}
+
+		// Now processing fields with country specific type; Kind of bad thing ;)
+		// Now fieldsWithType will have format like:
+		/*
+		 * { Type1: [ TemplateFiledTagObj1, TemplateFiledTagObj2, TemplateFiledTagObj3],
+		 * Type2: [ TemplateFiledTagObj4, TemplateFiledTagObj5, TemplateFiledTagObj6 ] }
+		 */
+		logger.debug("Fields with type: " + fieldsWithType.toString());
+		Iterator<String> fieldsTypeItr = fieldsWithType.keys(); // get Field Types
+		JSONArray templateFieldTagArray; // required for holding templateFiledTags
+		String tempFieldType;
+		String fieldValue;
+		while (fieldsTypeItr.hasNext()) {
+			tempFieldType = fieldsTypeItr.next();
+			templateFieldTagArray = fieldsWithType.getJSONArray(tempFieldType);
+			List<CountrySpecificFields> countrySpecificFields = countrySpecificFieldsService.findByType(tempFieldType);
+			Iterator<CountrySpecificFields> countrySpecificFieldsItr = countrySpecificFields.iterator();
+			int numberOfFieldsFilled = 0; // to check how many fields are filled successfully
+			while (countrySpecificFieldsItr.hasNext()) { // iterating till required fields are not filled or till all
+															// the fields mapped to the Type;D
+				if (numberOfFieldsFilled == templateFieldTagArray.length())
+					break;
+				fieldValue = getFieldValue(countrySpecificFieldsItr.next().getField(), session, forDirectReport);
+				if (fieldValue.equals("")) // Continue if "" and move to next field mapped to the type if any ;D
+					continue;
+				// else add the value to the post object
+				objToPlace = new JSONObject();
+				TemplateFieldTag tempTemplateFieldTag = (TemplateFieldTag) templateFieldTagArray
+						.get(numberOfFieldsFilled);
+				objToPlace.put("Key", tempTemplateFieldTag.getId());
+				objToPlace.put("Value", fieldValue);
+				// To place value at specific location in POST object
+				docPostObject = placeValue(objToPlace, tempTemplateFieldTag.getPlaceFieldAtPath(), docPostObject);
+				numberOfFieldsFilled++;
+			}
+		}
+
+		logger.debug("Doc generation Post Obj:: " + docPostObject.toString());
 		return docPostObject;
 	}
 
