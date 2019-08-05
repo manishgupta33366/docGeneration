@@ -1666,7 +1666,7 @@ public class DocGen {
 			int counter = 1;
 			while (countrySpecificFieldsItr.hasNext()) {
 				fieldValue = getFieldValue(countrySpecificFieldsItr.next().getField(), session, forDirectReport,
-						country);
+						tempTemplateFieldTag.getType());
 				if (fieldValue.equals("")) // Continue if "" and move to next field mapped to the type if any ;D
 					continue;
 				// else add the value to the post object

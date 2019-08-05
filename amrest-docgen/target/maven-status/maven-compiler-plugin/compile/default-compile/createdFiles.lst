@@ -21,6 +21,7 @@ com\nga\xtendhr\controller\ApplicationTest.class
 com\nga\xtendhr\utility\CommonFunctions.class
 com\nga\xtendhr\controller\DocGen$hunLocale.class
 com\nga\xtendhr\service\MapCountryCompanyGroupService.class
+com\nga\xtendhr\model\CountrySpecificFields.class
 com\nga\xtendhr\service\FieldsService.class
 com\nga\xtendhr\connection\DestinationClient.class
 com\nga\xtendhr\model\Codelist.class
@@ -53,6 +54,8 @@ com\nga\xtendhr\service\MapGroupTemplatesService.class
 com\nga\xtendhr\controller\DocGen.class
 com\nga\xtendhr\service\FieldsServiceImp.class
 com\nga\xtendhr\service\MapTemplateFieldsService.class
+com\nga\xtendhr\service\CountrySpecificFieldsService.class
+com\nga\xtendhr\service\CountrySpecificFieldsServiceImp.class
 com\nga\xtendhr\service\MapRuleFieldsService.class
 com\nga\xtendhr\service\TemplateCriteriaGenerationService.class
 com\nga\xtendhr\service\RulesService.class

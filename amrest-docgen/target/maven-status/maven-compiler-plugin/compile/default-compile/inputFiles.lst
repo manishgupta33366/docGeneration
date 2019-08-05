@@ -14,6 +14,7 @@ C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\Entities.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\connection\DestinationClient.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\MapTemplateFieldsService.java
+C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\CountrySpecificFields.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\Rules.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\MapGroupTemplatesService.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\ConfigurableColumnsServiceImp.java
@@ -21,6 +22,7 @@ C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\controll
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\CodelistText.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\ConfigurableColumns.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\connection\BatchRequest.java
+C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\CountrySpecificFieldsServiceImp.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\TemplateServiceImp.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\MapCountryCompanyGroup.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\utility\WordFileProcessing.java
@@ -44,6 +46,7 @@ C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\EntitiesServiceImp.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\config\DBConfiguration.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\controller\Initial_SF_PEX.java
+C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\CountrySpecificFieldsService.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\utility\CommonVariables.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\RulesServiceImp.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\controller\ApplicationTest.java
