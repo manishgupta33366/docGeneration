@@ -42,4 +42,12 @@ public class RulesServiceImp implements RulesService {
 		List<Rules> items = query.getResultList();
 		return items;
 	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<Rules> findByRuleName(String name) {
+		Query query = em.createNamedQuery("Rules.findByName").setParameter("name", name);
+		List<Rules> items = query.getResultList();
+		return items;
+	}
 }

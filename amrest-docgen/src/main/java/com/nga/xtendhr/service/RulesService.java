@@ -12,4 +12,6 @@ public interface RulesService {
 	public void delete(Rules item);
 
 	public List<Rules> findByRuleID(String ruleID);
+
+	public List<Rules> findByRuleName(String name);
 }

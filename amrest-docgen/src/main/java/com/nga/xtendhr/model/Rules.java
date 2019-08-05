@@ -18,7 +18,8 @@ import com.nga.xtendhr.config.DBConfiguration;
  * @version	:	0.0.1
  */
 
-@NamedQueries({ @NamedQuery(name = "Rules.findByID", query = "SELECT R FROM Rules R WHERE R.id = :id") })
+@NamedQueries({ @NamedQuery(name = "Rules.findByID", query = "SELECT R FROM Rules R WHERE R.id = :id"),
+		@NamedQuery(name = "Rules.findByName", query = "SELECT R FROM Rules R WHERE R.name = :name") })
 @Entity
 @Table(name = DBConfiguration.RULES, schema = DBConfiguration.SCHEMA_NAME)
 public class Rules {

@@ -302,9 +302,9 @@ public class DocGen {
 					+ requestData.getString("userID"));
 			return "Error! You are not authorized to access this resource! This event has been logged!";
 		}
-		getFieldValue(mapRuleField.get(0).getField(), session, true);// get data of direct report
-		String countryID = getFieldValue(mapRuleField.get(1).getField(), session, true);// forDirectReport true
-		String companyID = getFieldValue(mapRuleField.get(2).getField(), session, true);// forDirectReport true
+		getFieldValue(mapRuleField.get(0).getField(), session, true, null);// get data of direct report
+		String countryID = getFieldValue(mapRuleField.get(1).getField(), session, true, null);// forDirectReport true
+		String companyID = getFieldValue(mapRuleField.get(2).getField(), session, true, null);// forDirectReport true
 		if (countryID.equals("") || companyID.equals(""))
 			return "";
 		Iterator<MapCountryCompanyGroup> iterator = mapCountryCompanyGroupService
@@ -336,13 +336,14 @@ public class DocGen {
 		}
 
 		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
-		getFieldValue(mapRuleField.get(0).getField(), session, true);// get data of direct report
-		String directReportCountryID = getFieldValue(mapRuleField.get(1).getField(), session, true);// forDirectReport
-																									// true
-		String directReportCompanyID = getFieldValue(mapRuleField.get(2).getField(), session, true);// forDirectReport
-																									// true
-		getFieldValue(mapRuleField.get(3).getField(), session, true);// get get Templates from Azure and set that in
-																		// session and forDirectReport true
+		getFieldValue(mapRuleField.get(0).getField(), session, true, null);// get data of direct report
+		String directReportCountryID = getFieldValue(mapRuleField.get(1).getField(), session, true, null);// forDirectReport
+		// true
+		String directReportCompanyID = getFieldValue(mapRuleField.get(2).getField(), session, true, null);// forDirectReport
+		// true
+		getFieldValue(mapRuleField.get(3).getField(), session, true, null);// get get Templates from Azure and set that
+																			// in
+																			// session and forDirectReport true
 
 		/*
 		 *** Security Check *** Checking if groupID passed from UI is actually available
@@ -619,7 +620,7 @@ public class DocGen {
 		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
 		JSONArray availableTemplates;
 		JSONArray availableGroups = new JSONArray(
-				getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport));
+				getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport, null));
 		logger.debug("Available Groups:" + availableGroups.toString() + " ::: forDirectReport" + forDirectReport);
 		String groupID;
 		for (int i = 0; i < availableGroups.length(); i++) {
@@ -628,7 +629,8 @@ public class DocGen {
 			groupID = new JSONObject(availableGroups.getString(i)).getString("id");
 			requestData.put("groupID", groupID);
 			session.setAttribute("requestData", requestData.toString());
-			availableTemplates = new JSONArray(getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport));
+			availableTemplates = new JSONArray(
+					getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport, null));
 			logger.debug(
 					"Available templates:" + availableTemplates.toString() + " ::: forDirectReport" + forDirectReport);
 			for (int j = 0; j < availableTemplates.length(); j++) {
@@ -653,7 +655,7 @@ public class DocGen {
 			NamingException, URISyntaxException, IOException {
 		// Rule in DB required to check if current loggenIn user is a manager
 		MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
-		JSONArray directReports = new JSONArray(getFieldValue(mapRuleField.getField(), session, forDirectReport));
+		JSONArray directReports = new JSONArray(getFieldValue(mapRuleField.getField(), session, forDirectReport, null));
 		String isManager = directReports.length() > 0 ? "true" : "false";
 		return isManager;
 	}
@@ -732,7 +734,7 @@ public class DocGen {
 		MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
 		JSONObject directReportData = new JSONObject(
 				(String) session.getAttribute("directReportData-" + directReportUserID));
-		return getValueFromPath(mapRuleField.getValueFromPath(), directReportData, session, forDirectReport);
+		return getValueFromPath(mapRuleField.getValueFromPath(), directReportData, session, forDirectReport, null);
 	}
 
 	String getDirectReportCompany(String ruleID, HttpSession session, Boolean forDirectReport)
@@ -748,7 +750,7 @@ public class DocGen {
 		MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
 		JSONObject directReportData = new JSONObject(
 				(String) session.getAttribute("directReportData-" + directReportUserID));
-		return getValueFromPath(mapRuleField.getValueFromPath(), directReportData, session, forDirectReport);
+		return getValueFromPath(mapRuleField.getValueFromPath(), directReportData, session, forDirectReport, null);
 	}
 
 	String getDirectReports(String ruleID, HttpSession session, Boolean forDirectReport)
@@ -760,7 +762,7 @@ public class DocGen {
 		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
 		// getting the Parent/root array containing directReports
 		JSONArray parentDirectReportArray = new JSONArray(
-				getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport));
+				getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport, null));
 		JSONArray responseDirectReports = new JSONArray();
 		JSONArray tempHoldChildDirectReports = new JSONArray();
 		String childDirectReportsPath = mapRuleField.get(1).getValueFromPath();// Path to fetch Child Direct Reports
@@ -768,7 +770,7 @@ public class DocGen {
 		String directReportData = ""; // copying
 		for (int i = 0; i < parentDirectReportArray.length(); i++) {
 			directReportData = getValueFromPath(childDirectReportsPath, parentDirectReportArray.getJSONObject(i),
-					session, forDirectReport);
+					session, forDirectReport, null);
 			if (directReportData != "") {
 				tempHoldChildDirectReports = new JSONArray(directReportData);
 				for (int j = 0; j < tempHoldChildDirectReports.length(); j++) {
@@ -805,14 +807,14 @@ public class DocGen {
 			List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
 			JSONObject requestObj = new JSONObject();
 			requestObj.put(mapRuleField.get(0).getKey(),
-					getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport));
+					getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport, null));
 			requestObj.put(mapRuleField.get(1).getKey(),
-					getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport));
+					getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport, null));
 			requestObj.put(mapRuleField.get(2).getKey(),
-					getFieldValue(mapRuleField.get(2).getField(), session, forDirectReport));
+					getFieldValue(mapRuleField.get(2).getField(), session, forDirectReport, null));
 			JSONObject apiResponse = null;
-			apiResponse = new JSONObject(CommonFunctions
-					.callpostAPI(getFieldValue(mapRuleField.get(3).getField(), session, forDirectReport), requestObj));
+			apiResponse = new JSONObject(CommonFunctions.callpostAPI(
+					getFieldValue(mapRuleField.get(3).getField(), session, forDirectReport, null), requestObj));
 			Map<String, JSONObject> templatesAvailableInAzureMap = new HashMap<String, JSONObject>();
 			JSONArray availableTemplates = apiResponse.getJSONArray("templates");
 			JSONObject tempTemplateObject;
@@ -841,11 +843,11 @@ public class DocGen {
 		while (iterator.hasNext()) {
 			tempMapRuleFields = iterator.next();
 			if (!(tempMapRuleFields.getKey() == null)) {
-				fieldValue = getFieldValue(tempMapRuleFields.getField(), session, forDirectReport);
+				fieldValue = getFieldValue(tempMapRuleFields.getField(), session, forDirectReport, null);
 				returnString = fieldValue.equals("") ? returnString
 						: returnString + fieldValue + tempMapRuleFields.getKey();
 			} else {
-				fieldValue = getFieldValue(tempMapRuleFields.getField(), session, forDirectReport);
+				fieldValue = getFieldValue(tempMapRuleFields.getField(), session, forDirectReport, null);
 				returnString = fieldValue.equals("") ? returnString : returnString + fieldValue;
 			}
 		}
@@ -860,8 +862,8 @@ public class DocGen {
 		// Required to format dates
 
 		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
-		String language = getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport);
-		String dateToFormat = getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport);
+		String language = getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport, null);
+		String dateToFormat = getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport, null);
 		if (dateToFormat.equals("")) // return if value returned is ""
 			return "";
 		dateToFormat = dateToFormat.substring(dateToFormat.indexOf("(") + 1, dateToFormat.indexOf(")"));
@@ -893,13 +895,15 @@ public class DocGen {
 		// Required to check for Operation and return the result based on The mapped
 		// fields
 		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
-		int greaterThen = Integer.parseInt(getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport));
-		int checkInteger = Integer.parseInt(getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport));
+		int greaterThen = Integer
+				.parseInt(getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport, null));
+		int checkInteger = Integer
+				.parseInt(getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport, null));
 
 		if (checkInteger >= greaterThen) {
-			return getFieldValue(mapRuleField.get(2).getField(), session, forDirectReport);
+			return getFieldValue(mapRuleField.get(2).getField(), session, forDirectReport, null);
 		} else {
-			return getFieldValue(mapRuleField.get(3).getField(), session, forDirectReport);
+			return getFieldValue(mapRuleField.get(3).getField(), session, forDirectReport, null);
 		}
 	}
 
@@ -910,9 +914,9 @@ public class DocGen {
 		// Required to get the result from operation
 		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
 		int divideBy_devisor = Integer
-				.parseInt(getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport));
+				.parseInt(getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport, null));
 		int toBeDivided_dividant = Integer
-				.parseInt(getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport));
+				.parseInt(getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport, null));
 
 		return Double.toString(toBeDivided_dividant / divideBy_devisor);
 	}
@@ -923,8 +927,8 @@ public class DocGen {
 			NamingException, URISyntaxException, IOException {
 		// Required to format date and add one to the year
 		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
-		String language = getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport);
-		String dateToFormat = getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport);
+		String language = getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport, null);
+		String dateToFormat = getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport, null);
 		dateToFormat = dateToFormat.substring(dateToFormat.indexOf("(") + 1, dateToFormat.indexOf(")"));
 
 		Date date = new Date(Long.parseLong(dateToFormat));
@@ -935,8 +939,8 @@ public class DocGen {
 			Calendar cal = Calendar.getInstance();
 			cal.setTime(date);
 			return (Integer.parseInt(sdf_YYYY.format(date))
-					+ Integer.parseInt(getFieldValue(mapRuleField.get(2).getField(), session, forDirectReport)) + ". "
-					+ hunLocale.values()[11] + " " + 31);
+					+ Integer.parseInt(getFieldValue(mapRuleField.get(2).getField(), session, forDirectReport, null))
+					+ ". " + hunLocale.values()[11] + " " + 31);
 
 		default:
 			// works with default languages like: fr, en, sv, es, etc
@@ -944,7 +948,7 @@ public class DocGen {
 			Locale locale = new Locale(language);
 			SimpleDateFormat sdf_MMDD = new SimpleDateFormat("MMMM dd,", locale);
 			return (sdf_MMDD.format(decMonth) + " " + (Integer.parseInt(sdf_YYYY.format(date))
-					+ Integer.parseInt(getFieldValue(mapRuleField.get(2).getField(), session, forDirectReport))));
+					+ Integer.parseInt(getFieldValue(mapRuleField.get(2).getField(), session, forDirectReport, null))));
 		}
 	}
 
@@ -959,7 +963,7 @@ public class DocGen {
 		// logger.debug("Picklist Fetched Data: " + picklistData);
 		return picklistData.length() > 0
 				? getValueFromPath(mapRuleField.getValueFromPath(), picklistData.getJSONObject(0), session,
-						forDirectReport)
+						forDirectReport, null)
 				: "";
 	}
 
@@ -969,13 +973,14 @@ public class DocGen {
 			NamingException, URISyntaxException, IOException {
 		// rule required to fetch code-list value from DB
 		List<MapRuleFields> mapRuleFields = mapRuleFieldsService.findByRuleID(ruleID);
-		String CodelistSFKey = getFieldValue(mapRuleFields.get(0).getField(), session, forDirectReport);// SF_key of
-																										// Code-list
+		String CodelistSFKey = getFieldValue(mapRuleFields.get(0).getField(), session, forDirectReport, null);// SF_key
+																												// of
+		// Code-list
 		if (CodelistSFKey.equals(""))
 			return "";
 		String codeListID = codelistService.findByFieldAndKey(mapRuleFields.get(0).getFieldID(), CodelistSFKey).get(0)
 				.getId();
-		String language = getFieldValue(mapRuleFields.get(1).getField(), session, forDirectReport);
+		String language = getFieldValue(mapRuleFields.get(1).getField(), session, forDirectReport, null);
 		if (language.equals(""))
 			return "";
 		List<CodelistText> codelistText = codelistTextService.findByCodelistLanguage(codeListID, language);
@@ -1001,7 +1006,7 @@ public class DocGen {
 		 *** Security Check *** Checking if loggedIn user is a manager
 		 *
 		 */
-		Boolean isManager = Boolean.parseBoolean(getFieldValue(mapRuleField.get(0).getField(), session, false));
+		Boolean isManager = Boolean.parseBoolean(getFieldValue(mapRuleField.get(0).getField(), session, false, null));
 		if (!isManager) {
 			logger.error("Unauthorized access! User: " + (String) session.getAttribute("loggedInUser")
 					+ " who is not a manager, Tried accessing groups of user: " + requestData.getString("userID"));
@@ -1012,7 +1017,8 @@ public class DocGen {
 		 *** Security Check *** Checking if userID passed from UI is actually a direct
 		 * report of the loggenIn user
 		 */
-		Boolean isDirectReport = Boolean.parseBoolean(getFieldValue(mapRuleField.get(1).getField(), session, false));
+		Boolean isDirectReport = Boolean
+				.parseBoolean(getFieldValue(mapRuleField.get(1).getField(), session, false, null));
 
 		if (!isDirectReport) {
 			logger.error("Unauthorized access! User: " + (String) session.getAttribute("loggedInUser")
@@ -1020,8 +1026,8 @@ public class DocGen {
 					+ ", which is not its direct report or level 2");// userID passed from UI
 			return "You are not authorized to access this data! This event has been logged!";
 		}
-		String countryID = getFieldValue(mapRuleField.get(2).getField(), session, true);// forDirectReport true
-		String companyID = getFieldValue(mapRuleField.get(3).getField(), session, true);// forDirectReport true
+		String countryID = getFieldValue(mapRuleField.get(2).getField(), session, true, null);// forDirectReport true
+		String companyID = getFieldValue(mapRuleField.get(3).getField(), session, true, null);// forDirectReport true
 		Iterator<MapCountryCompanyGroup> iterator = mapCountryCompanyGroupService
 				.findByCountryCompany(countryID, companyID, false).iterator();
 		JSONArray response = new JSONArray();
@@ -1106,7 +1112,7 @@ public class DocGen {
 		 *** Security Check *** Checking if loggedIn user is a manager
 		 *
 		 */
-		Boolean isManager = Boolean.parseBoolean(getFieldValue(mapRuleField.get(0).getField(), session, false));
+		Boolean isManager = Boolean.parseBoolean(getFieldValue(mapRuleField.get(0).getField(), session, false, null));
 		String loggerInUser = (String) session.getAttribute("loggedInUser");
 		if (!isManager) {
 			logger.error("Unauthorized access! User: " + loggerInUser
@@ -1118,7 +1124,8 @@ public class DocGen {
 		 *** Security Check *** Checking if userID passed from UI is actually a direct
 		 * report of the loggenIn user
 		 */
-		Boolean isDirectReport = Boolean.parseBoolean(getFieldValue(mapRuleField.get(1).getField(), session, false));
+		Boolean isDirectReport = Boolean
+				.parseBoolean(getFieldValue(mapRuleField.get(1).getField(), session, false, null));
 
 		if (!isDirectReport) {
 			logger.error("Unauthorized access! User: " + loggerInUser + " Tried accessing templates of a user: "
@@ -1127,11 +1134,11 @@ public class DocGen {
 			return "You are not authorized to access this data! This event has been logged!";
 		}
 
-		String directReportCountryID = getFieldValue(mapRuleField.get(2).getField(), session, true);// forDirectReport
-																									// true
-		String directReportCompanyID = getFieldValue(mapRuleField.get(3).getField(), session, true);// forDirectReport
-																									// true
-		getFieldValue(mapRuleField.get(4).getField(), session, true);// forDirectReport true
+		String directReportCountryID = getFieldValue(mapRuleField.get(2).getField(), session, true, null);// forDirectReport
+		// true
+		String directReportCompanyID = getFieldValue(mapRuleField.get(3).getField(), session, true, null);// forDirectReport
+		// true
+		getFieldValue(mapRuleField.get(4).getField(), session, true, null);// forDirectReport true
 
 		/*
 		 *** Security Check *** Checking if groupID passed from UI is actually available
@@ -1220,7 +1227,7 @@ public class DocGen {
 
 		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
 		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
-		Boolean isManager = Boolean.parseBoolean(getFieldValue(mapRuleField.get(3).getField(), session, false));
+		Boolean isManager = Boolean.parseBoolean(getFieldValue(mapRuleField.get(3).getField(), session, false, null));
 		String loggerInUser = (String) session.getAttribute("loggedInUser");
 		String userID = requestData.getString("userID");
 		String templateID = requestData.getString("templateID");
@@ -1239,7 +1246,8 @@ public class DocGen {
 		 *** Security Check *** Checking if userID passed from UI is actually a direct
 		 * report of the loggenIn user
 		 */
-		Boolean isDirectReport = Boolean.parseBoolean(getFieldValue(mapRuleField.get(2).getField(), session, false));
+		Boolean isDirectReport = Boolean
+				.parseBoolean(getFieldValue(mapRuleField.get(2).getField(), session, false, null));
 
 		if (!isDirectReport) {
 			logger.error("Unauthorized access! User: " + loggerInUser + " Tried downloading doc of a user: " + userID
@@ -1279,7 +1287,7 @@ public class DocGen {
 		Iterator<TemplateCriteriaGeneration> iterator = templateCriteriaGeneration.iterator();
 		String criteria = "";
 		while (iterator.hasNext()) {
-			criteria = criteria + getFieldValue(iterator.next().getField(), session, forDirectReport) + "|";
+			criteria = criteria + getFieldValue(iterator.next().getField(), session, forDirectReport, null) + "|";
 		}
 		criteria = criteria.length() > 0 ? criteria.substring(0, criteria.length() - 1) : "";
 		logger.debug("criteria: " + criteria + " for  templateID: " + templateID + " ::: forDirectReport: "
@@ -1287,7 +1295,7 @@ public class DocGen {
 		return criteria;
 	}
 
-	private String getFieldValue(Fields field, HttpSession session, Boolean forDirectReport)
+	private String getFieldValue(Fields field, HttpSession session, Boolean forDirectReport, String fieldBasedOnCountry)
 			throws BatchException, ClientProtocolException, UnsupportedOperationException, NamingException,
 			URISyntaxException, IOException, NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException {
@@ -1309,7 +1317,8 @@ public class DocGen {
 			// now entity variable will be having the root entity from which will get the
 			// data of our field
 			entityData = getEntityData(entity, session, forDirectReport);
-			return getValueFromPath(field.getValueFromPath(), entityData, session, forDirectReport);
+			return getValueFromPath(field.getValueFromPath(), entityData, session, forDirectReport,
+					fieldBasedOnCountry);
 		}
 
 		// Calling function dynamically
@@ -1456,9 +1465,10 @@ public class DocGen {
 	}
 
 	private String getValueFromPath(String path, JSONObject retriveFromObj, HttpSession session,
-			Boolean forDirectReport) throws JSONException, BatchException, ClientProtocolException,
-			UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException, NamingException, URISyntaxException, IOException {
+			Boolean forDirectReport, String basedOnCountry)
+			throws JSONException, BatchException, ClientProtocolException, UnsupportedOperationException,
+			NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException, NamingException, URISyntaxException, IOException {
 		String[] pathArray = path.split("/");
 		JSONObject currentObject = retriveFromObj;
 		String value = "";
@@ -1494,7 +1504,10 @@ public class DocGen {
 					String fieldID = key.substring(key.indexOf("~FieldID~") + 9, key.indexOf('['));
 					// System.out.println("FieldID: " + fieldID + " Key: " + keyToSearchInEachObj);
 					String valueToSearch = getFieldValue(fieldsService.findByID(fieldID).get(0), session,
-							forDirectReport);
+							forDirectReport, null);
+					if (fieldID.equals("PARAMETER"))
+						valueToSearch = basedOnCountry;
+
 					JSONObject tempJsonObj;
 					for (int i = 0; i < tempArray.length(); i++) {
 						tempJsonObj = tempArray.getJSONObject(i);
@@ -1530,7 +1543,7 @@ public class DocGen {
 		while (iterator.hasNext()) {
 			mapRuleField = iterator.next();
 			field = mapRuleField.getField();
-			responseObj.put(field.getTechnicalName(), getFieldValue(field, session, forDirectReport));
+			responseObj.put(field.getTechnicalName(), getFieldValue(field, session, forDirectReport, null));
 		}
 		return responseObj;
 	}
@@ -1567,7 +1580,7 @@ public class DocGen {
 		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
 		JSONArray availableTemplates;
 		JSONArray availableGroups = new JSONArray(
-				getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport));
+				getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport, null));
 		logger.debug("Available Groups:" + availableGroups.toString() + " ::: forDirectReport" + forDirectReport);
 		String groupID;
 		for (int i = 0; i < availableGroups.length(); i++) {
@@ -1576,7 +1589,8 @@ public class DocGen {
 			groupID = new JSONObject(availableGroups.getString(i)).getString("id");
 			requestData.put("groupID", groupID);
 			session.setAttribute("requestData", requestData.toString());
-			availableTemplates = new JSONArray(getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport));
+			availableTemplates = new JSONArray(
+					getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport, null));
 			logger.debug(
 					"Available templates:" + availableTemplates.toString() + " ::: forDirectReport" + forDirectReport);
 			for (int j = 0; j < availableTemplates.length(); j++) {
@@ -1598,68 +1612,70 @@ public class DocGen {
 		JSONObject docPostObject = new JSONObject();
 		MapTemplateFields mapTemplateField;
 		Iterator<MapTemplateFields> iterator = mapTemplateFieldsService.findByTemplateID(templateID).iterator();
-		JSONObject fieldsWithType = new JSONObject(); // Object to holding fields with types (for different countries)
+		JSONArray templateFieldTagBasedOnCountryArr = new JSONArray(); // array to hold
+																		// tempTemplateFieldTagBasedOnCountry
+
 		String fieldType = null;
 		JSONObject objToPlace;
 		while (iterator.hasNext()) {
 			mapTemplateField = iterator.next();
 			fieldType = mapTemplateField.getTemplateFiledTag().getType();
 			if (fieldType != null) {
-				if (fieldsWithType.has(fieldType)) // checking if type (key) is already present in the Object
-					fieldsWithType.getJSONArray(fieldType).put(mapTemplateField.getTemplateFiledTag());
-				else { // If not add new array to hold the TemplateFiledTag
-					fieldsWithType.put(fieldType, new JSONArray());
-					fieldsWithType.getJSONArray(fieldType).put(mapTemplateField.getTemplateFiledTag());
-				}
+				templateFieldTagBasedOnCountryArr.put(mapTemplateField.getTemplateFiledTag());
 				continue; // continue the loop
 			}
 			objToPlace = new JSONObject();
 			objToPlace.put("Key", mapTemplateField.getTemplateFiledTag().getId());
 			objToPlace.put("Value",
-					getFieldValue(mapTemplateField.getTemplateFiledTag().getField(), session, forDirectReport));
+					getFieldValue(mapTemplateField.getTemplateFiledTag().getField(), session, forDirectReport, null));
 			// To place value at specific location in POST object
 			docPostObject = placeValue(objToPlace, mapTemplateField.getTemplateFiledTag().getPlaceFieldAtPath(),
 					docPostObject);
 
 		}
+		processCountrySpecificFields(docPostObject, templateFieldTagBasedOnCountryArr, session, forDirectReport);
+		logger.debug("Doc generation Post Obj:: " + docPostObject.toString());
+		return docPostObject;
+	}
 
-		// Now processing fields with country specific type; Kind of bad thing ;)
+	private JSONObject processCountrySpecificFields(JSONObject docPostObject,
+			JSONArray templateFieldTagBasedOnCountryArr, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
+		// Required to process Country specific fields
+		// Now processing fields with country specific type; Kind of bad thing...
+		// remember? ;)
 		// Now fieldsWithType will have format like:
 		/*
 		 * { Type1: [ TemplateFiledTagObj1, TemplateFiledTagObj2, TemplateFiledTagObj3],
 		 * Type2: [ TemplateFiledTagObj4, TemplateFiledTagObj5, TemplateFiledTagObj6 ] }
 		 */
-		logger.debug("Fields with type: " + fieldsWithType.toString());
-		Iterator<String> fieldsTypeItr = fieldsWithType.keys(); // get Field Types
-		JSONArray templateFieldTagArray; // required for holding templateFiledTags
-		String tempFieldType;
+
+		Iterator<CountrySpecificFields> countrySpecificFieldsItr;
 		String fieldValue;
-		while (fieldsTypeItr.hasNext()) {
-			tempFieldType = fieldsTypeItr.next();
-			templateFieldTagArray = fieldsWithType.getJSONArray(tempFieldType);
-			List<CountrySpecificFields> countrySpecificFields = countrySpecificFieldsService.findByType(tempFieldType);
-			Iterator<CountrySpecificFields> countrySpecificFieldsItr = countrySpecificFields.iterator();
-			int numberOfFieldsFilled = 0; // to check how many fields are filled successfully
-			while (countrySpecificFieldsItr.hasNext()) { // iterating till required fields are not filled or till all
-															// the fields mapped to the Type;D
-				if (numberOfFieldsFilled == templateFieldTagArray.length())
-					break;
-				fieldValue = getFieldValue(countrySpecificFieldsItr.next().getField(), session, forDirectReport);
+		JSONObject objToPlace;
+		for (int i = 0; i < templateFieldTagBasedOnCountryArr.length(); i++) {
+			TemplateFieldTag tempTemplateFieldTag = (TemplateFieldTag) templateFieldTagBasedOnCountryArr.get(i);
+			String country = getFieldValue(mapRuleFieldsService
+					.findByRuleID(rulesService.findByRuleName("processCountrySpecificFields").get(0).getId()).get(0)
+					.getField(), session, forDirectReport, tempTemplateFieldTag.getType());
+
+			countrySpecificFieldsItr = countrySpecificFieldsService.findByType(tempTemplateFieldTag.getType())
+					.iterator();
+			int counter = 1;
+			while (countrySpecificFieldsItr.hasNext()) {
+				fieldValue = getFieldValue(countrySpecificFieldsItr.next().getField(), session, forDirectReport,
+						country);
 				if (fieldValue.equals("")) // Continue if "" and move to next field mapped to the type if any ;D
 					continue;
 				// else add the value to the post object
 				objToPlace = new JSONObject();
-				TemplateFieldTag tempTemplateFieldTag = (TemplateFieldTag) templateFieldTagArray
-						.get(numberOfFieldsFilled);
-				objToPlace.put("Key", tempTemplateFieldTag.getId());
+				objToPlace.put("Key", (tempTemplateFieldTag.getId() + 0 + counter++));
 				objToPlace.put("Value", fieldValue);
-				// To place value at specific location in POST object
 				docPostObject = placeValue(objToPlace, tempTemplateFieldTag.getPlaceFieldAtPath(), docPostObject);
-				numberOfFieldsFilled++;
 			}
 		}
-
-		logger.debug("Doc generation Post Obj:: " + docPostObject.toString());
 		return docPostObject;
 	}
 
@@ -1717,7 +1733,7 @@ public class DocGen {
 		while (iterator.hasNext()) {
 			mapRuleField = iterator.next();
 			url = url + mapRuleField.getKey() + " eq '"
-					+ getFieldValue(mapRuleField.getField(), session, forDirectReport) + "' and ";
+					+ getFieldValue(mapRuleField.getField(), session, forDirectReport, null) + "' and ";
 		}
 		url = url.substring(0, url.length() - 5);
 		return url;
