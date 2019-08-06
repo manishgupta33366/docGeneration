@@ -11,5 +11,5 @@ public interface CountrySpecificFieldsService {
 
 	public void delete(CountrySpecificFields item);
 
-	public List<CountrySpecificFields> findByType(String type);
+	public List<CountrySpecificFields> findByTypeAndCountry(String type, String country);
 }

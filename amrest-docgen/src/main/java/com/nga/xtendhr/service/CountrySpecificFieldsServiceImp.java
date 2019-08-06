@@ -39,10 +39,11 @@ public class CountrySpecificFieldsServiceImp implements CountrySpecificFieldsSer
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<CountrySpecificFields> findByType(String type) {
+	public List<CountrySpecificFields> findByTypeAndCountry(String type, String country) {
 		Query query;
 		List<CountrySpecificFields> items;
-		query = em.createNamedQuery("CountrySpecificFields.findByType").setParameter("type", type);
+		query = em.createNamedQuery("CountrySpecificFields.findByTypeAndCountry").setParameter("type", type)
+				.setParameter("country", country);
 		items = query.getResultList();
 		return items;
 	}

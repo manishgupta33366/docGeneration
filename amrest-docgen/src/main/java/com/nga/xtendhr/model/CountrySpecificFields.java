@@ -24,7 +24,7 @@ import com.nga.xtendhr.config.DBConfiguration;
 @Entity
 @Table(name = DBConfiguration.COUNTRY_SPECIFIC_FIELDS, schema = DBConfiguration.SCHEMA_NAME)
 @NamedQueries({
-		@NamedQuery(name = "CountrySpecificFields.findByType", query = "SELECT CSF FROM CountrySpecificFields CSF WHERE CSF.type = :type ORDER BY CSF.seq") })
+		@NamedQuery(name = "CountrySpecificFields.findByTypeAndCountry", query = "SELECT CSF FROM CountrySpecificFields CSF WHERE CSF.type = :type and CSF.countryId = :country ORDER BY CSF.seq") })
 public class CountrySpecificFields {
 	@Id
 	@Column(name = "\"COUNTRY.ID\"", columnDefinition = "VARCHAR(32)")

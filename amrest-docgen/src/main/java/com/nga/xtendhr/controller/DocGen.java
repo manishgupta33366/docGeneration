@@ -1503,10 +1503,12 @@ public class DocGen {
 							key.indexOf("~FieldID~"));
 					String fieldID = key.substring(key.indexOf("~FieldID~") + 9, key.indexOf('['));
 					// System.out.println("FieldID: " + fieldID + " Key: " + keyToSearchInEachObj);
-					String valueToSearch = getFieldValue(fieldsService.findByID(fieldID).get(0), session,
-							forDirectReport, null);
+					String valueToSearch;
 					if (fieldID.equals("PARAMETER"))
 						valueToSearch = basedOnCountry;
+					else
+						valueToSearch = getFieldValue(fieldsService.findByID(fieldID).get(0), session, forDirectReport,
+								null);
 
 					JSONObject tempJsonObj;
 					for (int i = 0; i < tempArray.length(); i++) {
@@ -1661,17 +1663,18 @@ public class DocGen {
 					.findByRuleID(rulesService.findByRuleName("processCountrySpecificFields").get(0).getId()).get(0)
 					.getField(), session, forDirectReport, tempTemplateFieldTag.getType());
 
-			countrySpecificFieldsItr = countrySpecificFieldsService.findByType(tempTemplateFieldTag.getType())
-					.iterator();
+			countrySpecificFieldsItr = countrySpecificFieldsService
+					.findByTypeAndCountry(tempTemplateFieldTag.getType(), country).iterator();
 			int counter = 1;
 			while (countrySpecificFieldsItr.hasNext()) {
 				fieldValue = getFieldValue(countrySpecificFieldsItr.next().getField(), session, forDirectReport,
 						tempTemplateFieldTag.getType());
+				logger.debug("fieldValue::: " + fieldValue);
 				if (fieldValue.equals("")) // Continue if "" and move to next field mapped to the type if any ;D
 					continue;
 				// else add the value to the post object
 				objToPlace = new JSONObject();
-				objToPlace.put("Key", (tempTemplateFieldTag.getId() + 0 + counter++));
+				objToPlace.put("Key", tempTemplateFieldTag.getId() + 0 + counter++);
 				objToPlace.put("Value", fieldValue);
 				docPostObject = placeValue(objToPlace, tempTemplateFieldTag.getPlaceFieldAtPath(), docPostObject);
 			}
