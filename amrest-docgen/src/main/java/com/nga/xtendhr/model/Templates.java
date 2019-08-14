@@ -39,6 +39,17 @@ public class Templates {
 	@Column(name = "\"DESCRIPTION\"", columnDefinition = "VARCHAR(128)")
 	private String description;
 
+	@Column(name = "\"DISPLAY_NAME\"", columnDefinition = "VARCHAR(128)")
+	private String displayName;
+
+	public String getDisplayName() {
+		return displayName;
+	}
+
+	public void setDisplayName(String displayName) {
+		this.displayName = displayName;
+	}
+
 	public String getId() {
 		return id;
 	}

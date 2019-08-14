@@ -185,6 +185,22 @@ public class Configurator {
 			HttpSession session) {
 		// String filename = file.getOriginalFilename();
 		try {
+
+			if (session.getAttribute("loginStatus") == null) {
+				return new ResponseEntity<>("Session timeout! Please Login again!", HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+			/*
+			 *** Security Check *** Checking if user trying to login is exactly an Admin or
+			 * not
+			 *
+			 */
+			else if (session.getAttribute("adminLoginStatus") == null) {
+				logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
+						+ ", which is not an admin in SF, tried to access TableNames in configurator App.");
+				return new ResponseEntity<>(
+						"Error! You are not authorized to access this resource! This event has been logged!",
+						HttpStatus.INTERNAL_SERVER_ERROR);
+			}
 			// byte bytesArr[] = null;
 			MultipartFile multipartFile = request.getFiles("templateFile").get(0);
 			String fileName = multipartFile.getOriginalFilename();
@@ -201,6 +217,31 @@ public class Configurator {
 			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
+	}
+
+	@RequestMapping(value = "/getCriteriaFields", method = RequestMethod.GET)
+	public ResponseEntity<?> getCriteriaFields(HttpSession session) {
+		try {
+			if (session.getAttribute("loginStatus") == null) {
+				return new ResponseEntity<>("Session timeout! Please Login again!", HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+			/*
+			 *** Security Check *** Checking if user trying to login is exactly an Admin or
+			 * not
+			 *
+			 */
+			else if (session.getAttribute("adminLoginStatus") == null) {
+				logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
+						+ ", which is not an admin in SF, tried to access TableNames in configurator App.");
+				return new ResponseEntity<>(
+						"Error! You are not authorized to access this resource! This event has been logged!",
+						HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+			return ResponseEntity.ok().body(templateCriteriaGenerationService.getDistinctFields());
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 	}
 
 	private Templates _createTemplate(String templateName, String description) {

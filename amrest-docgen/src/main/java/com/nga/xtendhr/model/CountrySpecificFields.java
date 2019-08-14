@@ -34,6 +34,7 @@ public class CountrySpecificFields {
 	@Column(name = "\"FIELD.ID\"", columnDefinition = "VARCHAR(32)")
 	private String fieldId;
 
+	@Id
 	@Column(name = "\"TYPE\"", columnDefinition = "VARCHAR(32)")
 	private String type;
 

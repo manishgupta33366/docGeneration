@@ -24,7 +24,8 @@ import com.nga.xtendhr.config.DBConfiguration;
 @Entity
 @Table(name = DBConfiguration.TEMPLATE_CRITERIA_GENERATION, schema = DBConfiguration.SCHEMA_NAME)
 @NamedQueries({
-		@NamedQuery(name = "TemplateCriteriaGeneration.findByTemplateID", query = "SELECT TCG FROM TemplateCriteriaGeneration TCG WHERE TCG.templateID = :templateID ORDER BY TCG.seq") })
+		@NamedQuery(name = "TemplateCriteriaGeneration.findByTemplateID", query = "SELECT TCG FROM TemplateCriteriaGeneration TCG WHERE TCG.templateID = :templateID ORDER BY TCG.seq"),
+		@NamedQuery(name = "TemplateCriteriaGeneration.getDistinctFields", query = "SELECT DISTINCT TCG.field FROM TemplateCriteriaGeneration TCG") })
 public class TemplateCriteriaGeneration {
 	@Id
 	@Column(name = "\"TEMPLATE.ID\"", columnDefinition = "VARCHAR(32)")
