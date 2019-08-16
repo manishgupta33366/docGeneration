@@ -150,6 +150,20 @@ public class DocGen {
 		}
 	}
 
+	@GetMapping(value = "/cleanSession")
+	public ResponseEntity<?> cleanSession(HttpServletRequest request) {
+		try {
+			HttpSession session = request.getSession(true);
+			if (session != null) {
+				session.invalidate();
+			}
+			return ResponseEntity.ok().body(true);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
 	@GetMapping(value = "/test")
 	public ResponseEntity<?> test(@RequestParam(name = "url") String url) {
 		try {

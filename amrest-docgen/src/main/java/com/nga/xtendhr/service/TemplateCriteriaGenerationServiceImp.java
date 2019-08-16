@@ -9,6 +9,7 @@ import javax.persistence.Query;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.nga.xtendhr.model.Fields;
 import com.nga.xtendhr.model.TemplateCriteriaGeneration;
 
 @Transactional
@@ -40,6 +41,14 @@ public class TemplateCriteriaGenerationServiceImp implements TemplateCriteriaGen
 		Query query = em.createNamedQuery("TemplateCriteriaGeneration.findByTemplateID").setParameter("templateID",
 				templateID);
 		List<TemplateCriteriaGeneration> items = query.getResultList();
+		return items;
+	}
+
+	@Override
+	public List<Fields> getDistinctFields() {
+		Query query = em.createNamedQuery("TemplateCriteriaGeneration.getDistinctFields");
+		@SuppressWarnings("unchecked")
+		List<Fields> items = query.getResultList();
 		return items;
 	}
 }
