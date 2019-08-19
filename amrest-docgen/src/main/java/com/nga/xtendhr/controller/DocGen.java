@@ -511,8 +511,10 @@ public class DocGen {
 			return "You are not authorized to access this data! This event has been logged!";
 		}
 		// Now Generating Object to POST
+		session.setAttribute("hardReload", true);
 		JSONObject docRequestObject = getDocPostObject(templateID, session, true);// for direct Report true
-		// logger.debug("Doc Generation Request Obj: " + docRequestObject.toString());
+		session.removeAttribute("hardReload");
+		logger.debug("Doc Generation Request Obj: " + docRequestObject.toString());
 		return getDocFromAPI(docRequestObject);
 	}
 
@@ -549,8 +551,10 @@ public class DocGen {
 		}
 
 		// Now Generating Object to POST
+		session.setAttribute("hardReload", true);
 		JSONObject docRequestObject = getDocPostObject(templateID, session, false); // for direct report false
-		// logger.debug("Doc Generation Request Obj: " + docRequestObject.toString());
+		session.removeAttribute("hardReload");
+		logger.debug("Doc Generation Request Obj: " + docRequestObject.toString());
 		return getDocFromAPI(docRequestObject);
 	}
 
@@ -1228,7 +1232,9 @@ public class DocGen {
 			return "You are not authorized to access this data! This event has been logged!";
 		}
 		// Now Generating Object to POST
+		session.setAttribute("hardReload", true);
 		JSONObject docRequestObject = getDocPostObject(templateID, session, false); // for direct report false
+		session.removeAttribute("hardReload");
 		logger.debug("Doc Generation Request Obj: " + docRequestObject.toString());
 		return getDocFromAPI(docRequestObject);
 	}
@@ -1279,7 +1285,9 @@ public class DocGen {
 			return "You are not authorized to access this data! This event has been logged!";
 		}
 		// Now Generating Object to POST
+		session.setAttribute("hardReload", true);
 		JSONObject docRequestObject = getDocPostObject(templateID, session, true);// for direct Report true
+		session.removeAttribute("hardReload");
 		logger.debug("Doc Generation Request Obj: " + docRequestObject.toString());
 		return getDocFromAPI(docRequestObject);
 	}
@@ -1357,6 +1365,27 @@ public class DocGen {
 		// function to get data of the root entity
 		JSONObject entityData;
 		String entityName = entity.getName();
+
+		/*
+		 * For Doc download Hard Reload start Always retrieve data from SF no need to
+		 * fetch from Session
+		 */
+		if (session.getAttribute("hardReload") != null) {
+			if (!forDirectReport) {// if false then data needs to get for the loggedIn user
+				entityData = fetchDataFromSF(entity, session, forDirectReport);
+				logger.debug("HardReload Data fetched from SF for entity: " + entityName + " ::: For Direct report: "
+						+ forDirectReport);
+				return entityData;
+			}
+			// Else retrieve data for direct report
+			entityData = fetchDataFromSF(entity, session, forDirectReport);
+			logger.debug("Data fetched from SF for direct report entity: " + entityName + " ::: For Direct report: "
+					+ forDirectReport);
+			return entityData;
+		}
+		/*
+		 * For Doc download Hard Reload End
+		 */
 		if (!forDirectReport) {// if false then data needs to get for the loggedIn user
 			if (session.getAttribute(entityName) != null) { // Check if entity data is present in the Session
 				entityData = new JSONObject((String) session.getAttribute(entityName));
