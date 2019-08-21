@@ -506,14 +506,19 @@ public class DocGen {
 
 		if (!adminTemplateAvailableCheck(ruleID, session, true)) { // for DirectReport
 			logger.error("Unauthorized access! User: " + loggerInUser
-					+ " Tried downlaoding document of a template templateID: " + templateID
+					+ " Tried downloading document of a template templateID: " + templateID
 					+ " Which is not available for the UserId provided.");
 			return "You are not authorized to access this data! This event has been logged!";
 		}
+		// Removing all the entities data from the session for Hard Reload of data from
+		// SF
+		List<String> distinctEntityNames = entitiesService.getDistinctNames();
+		Iterator<String> entityNamesItr = distinctEntityNames.iterator();
+		while (entityNamesItr.hasNext()) {
+			session.removeAttribute("directReportEntities-" + requestData.getString("userID") + entityNamesItr.next());
+		}
 		// Now Generating Object to POST
-		session.setAttribute("hardReload", true);
 		JSONObject docRequestObject = getDocPostObject(templateID, session, true);// for direct Report true
-		session.removeAttribute("hardReload");
 		logger.debug("Doc Generation Request Obj: " + docRequestObject.toString());
 		return getDocFromAPI(docRequestObject);
 	}
@@ -545,15 +550,20 @@ public class DocGen {
 
 		if (!adminTemplateAvailableCheck(ruleID, session, false)) { // for DirectReport
 			logger.error("Unauthorized access! User: " + loggerInUser
-					+ " Tried downlaoding document of a template that is not assigned for this user, templateID: "
+					+ " Tried downloading document of a template that is not assigned for this user, templateID: "
 					+ templateID);
 			return "You are not authorized to access this data! This event has been logged!";
 		}
 
+		// Removing all the entities data from the session for Hard Reload of data from
+		// SF
+		List<String> distinctEntityNames = entitiesService.getDistinctNames();
+		Iterator<String> entityNamesItr = distinctEntityNames.iterator();
+		while (entityNamesItr.hasNext()) {
+			session.removeAttribute(entityNamesItr.next());
+		}
 		// Now Generating Object to POST
-		session.setAttribute("hardReload", true);
 		JSONObject docRequestObject = getDocPostObject(templateID, session, false); // for direct report false
-		session.removeAttribute("hardReload");
 		logger.debug("Doc Generation Request Obj: " + docRequestObject.toString());
 		return getDocFromAPI(docRequestObject);
 	}
@@ -1227,14 +1237,19 @@ public class DocGen {
 		 */
 		if (!templateAvailableCheck(ruleID, session, false)) { // for DirectReport false
 			logger.error("Unauthorized access! User: " + loggerInUser
-					+ " Tried downlaoding document of a template that is not assigned for this user, templateID: "
+					+ " Tried downloading document of a template that is not assigned for this user, templateID: "
 					+ templateID);
 			return "You are not authorized to access this data! This event has been logged!";
 		}
+		// Removing all the entities data from the session for Hard Reload of data from
+		// SF
+		List<String> distinctEntityNames = entitiesService.getDistinctNames();
+		Iterator<String> entityNamesItr = distinctEntityNames.iterator();
+		while (entityNamesItr.hasNext()) {
+			session.removeAttribute(entityNamesItr.next());
+		}
 		// Now Generating Object to POST
-		session.setAttribute("hardReload", true);
 		JSONObject docRequestObject = getDocPostObject(templateID, session, false); // for direct report false
-		session.removeAttribute("hardReload");
 		logger.debug("Doc Generation Request Obj: " + docRequestObject.toString());
 		return getDocFromAPI(docRequestObject);
 	}
@@ -1280,14 +1295,20 @@ public class DocGen {
 		 * available for the userID provided
 		 */
 		if (!templateAvailableCheck(ruleID, session, true)) {// for direct Report true
-			logger.error("Unauthorized access! User: " + loggerInUser + " Tried downlaoding doc of the user: " + userID
+			logger.error("Unauthorized access! User: " + loggerInUser + " Tried downloading doc of the user: " + userID
 					+ " and template: " + templateID + " which is not assigned for this user");
 			return "You are not authorized to access this data! This event has been logged!";
 		}
+
+		// Removing all the entities data from the session for Hard Reload of data from
+		// SF
+		List<String> distinctEntityNames = entitiesService.getDistinctNames();
+		Iterator<String> entityNamesItr = distinctEntityNames.iterator();
+		while (entityNamesItr.hasNext()) {
+			session.removeAttribute("directReportEntities-" + requestData.getString("userID") + entityNamesItr.next());
+		}
 		// Now Generating Object to POST
-		session.setAttribute("hardReload", true);
 		JSONObject docRequestObject = getDocPostObject(templateID, session, true);// for direct Report true
-		session.removeAttribute("hardReload");
 		logger.debug("Doc Generation Request Obj: " + docRequestObject.toString());
 		return getDocFromAPI(docRequestObject);
 	}
@@ -1370,22 +1391,21 @@ public class DocGen {
 		 * For Doc download Hard Reload start Always retrieve data from SF no need to
 		 * fetch from Session
 		 */
-		if (session.getAttribute("hardReload") != null) {
-			if (!forDirectReport) {// if false then data needs to get for the loggedIn user
-				entityData = fetchDataFromSF(entity, session, forDirectReport);
-				logger.debug("HardReload Data fetched from SF for entity: " + entityName + " ::: For Direct report: "
-						+ forDirectReport);
-				return entityData;
-			}
-			// Else retrieve data for direct report
-			entityData = fetchDataFromSF(entity, session, forDirectReport);
-			logger.debug("Data fetched from SF for direct report entity: " + entityName + " ::: For Direct report: "
-					+ forDirectReport);
-			return entityData;
-		}
+		/*
+		 * if (session.getAttribute("hardReload") != null) { if (!forDirectReport) {//
+		 * if false then data needs to get for the loggedIn user entityData =
+		 * fetchDataFromSF(entity, session, forDirectReport);
+		 * logger.debug("HardReload Data fetched from SF for entity: " + entityName +
+		 * " ::: For Direct report: " + forDirectReport); return entityData; } // Else
+		 * retrieve data for direct report entityData = fetchDataFromSF(entity, session,
+		 * forDirectReport);
+		 * logger.debug("Data fetched from SF for direct report entity: " + entityName +
+		 * " ::: For Direct report: " + forDirectReport); return entityData; }
+		 */
 		/*
 		 * For Doc download Hard Reload End
 		 */
+
 		if (!forDirectReport) {// if false then data needs to get for the loggedIn user
 			if (session.getAttribute(entityName) != null) { // Check if entity data is present in the Session
 				entityData = new JSONObject((String) session.getAttribute(entityName));

@@ -54,4 +54,12 @@ public class EntitiesServiceImp implements EntitiesService {
 		return items;
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<String> getDistinctNames() {
+		Query query = em.createNamedQuery("Entites.getDistinctNames");
+		List<String> items = query.getResultList();
+		return items;
+	}
+
 }

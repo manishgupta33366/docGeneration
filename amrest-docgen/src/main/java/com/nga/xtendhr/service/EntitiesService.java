@@ -15,4 +15,6 @@ public interface EntitiesService {
 	public List<Entities> findAll();
 
 	public List<Entities> findAllDependant(String entityID);
+
+	public List<String> getDistinctNames();
 }
