@@ -244,7 +244,6 @@ public class DocGen {
 			HttpResponse searchResponse;
 			String searchResponseJsonString;
 			JSONObject searchResponseResponseObject;
-			JSONArray searchResponseObjectResultArray;
 			if (searchString == null) {
 				searchResponse = CommonFunctions.getDestinationCLient(CommonVariables.sfDestination).callDestinationGET(
 						"/User",
@@ -258,12 +257,63 @@ public class DocGen {
 			}
 			searchResponseJsonString = EntityUtils.toString(searchResponse.getEntity(), "UTF-8");
 			searchResponseResponseObject = new JSONObject(searchResponseJsonString);
-			searchResponseObjectResultArray = searchResponseResponseObject.getJSONObject("d").getJSONArray("results");
-			return ResponseEntity.ok().body(searchResponseObjectResultArray.toString());
+			return ResponseEntity.ok().body(searchResponseResponseObject.getJSONObject("d"));
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
+	}
+
+	@GetMapping(value = "/docGenAdmin/executeGetUserDetailsRule")
+	public ResponseEntity<?> executeGetUserDetailsRule(@RequestParam(name = "ruleID") String ruleID,
+			@RequestBody String requestData, HttpServletRequest request)
+			throws BatchException, JSONException, ClientProtocolException, UnsupportedOperationException,
+			NamingException, URISyntaxException, IOException, NoSuchMethodException, SecurityException,
+			IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		/*
+		 * Rule required to get data for a specific User (Accessible only by Admin)
+		 */
+		HttpSession session = request.getSession(false);
+		if (session.getAttribute("loginStatus") == null) {
+			return new ResponseEntity<>("Session timeout! Please Login again!", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		/*
+		 *** Security Check *** Checking if user trying to login is exactly an Admin or
+		 * not
+		 *
+		 */
+		else if (session.getAttribute("adminLoginStatus") == null) {
+			logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
+					+ ", which is not an admin in SF, tried to login as admin.");
+			return new ResponseEntity<>(
+					"Error! You are not authorized to access this resource! This event has been logged!",
+					HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		JSONObject requestObj = new JSONObject((String) session.getAttribute("requestData"));
+		String userID = requestObj.getString("userID");// userID passed from UI
+		List<MapRuleFields> mapRuleFields = mapRuleFieldsService.findByRuleID(ruleID);
+		Iterator<MapRuleFields> mapRuleFieldItr = mapRuleFields.iterator();
+		String url;
+
+		MapRuleFields tempMapRuleField;
+		JSONObject responseObj = new JSONObject();
+		String fieldValue;
+		while (mapRuleFieldItr.hasNext()) {
+			tempMapRuleField = mapRuleFieldItr.next();
+			url = tempMapRuleField.getUrl();// URL
+			url = url.replaceFirst("<>", userID);// UserId passed from UI
+			// Entity name saved in KEY column
+			JSONArray responseArray = new JSONObject(callSFSingle(tempMapRuleField.getKey(), url))
+					.getJSONArray("results");
+			fieldValue = responseArray.length() > 0
+					? getValueFromPath(tempMapRuleField.getValueFromPath(), responseArray.getJSONObject(0), session,
+							false, null)
+					: "";
+			responseObj.put(tempMapRuleField.getFieldID(), fieldValue);// note here fieldID is being used as a
+																		// technicalName
+		}
+		return ResponseEntity.ok().body(responseObj.toString());
 	}
 
 	@PostMapping(value = "/docGenAdmin/executePostCallRule")
@@ -471,9 +521,8 @@ public class DocGen {
 		String url = "";
 		url = mapRuleField.getUrl();// URL saved at required Data
 		url = url.replaceFirst("<>", directReportUserID);// UserId passed from UI
-
-		JSONArray responseArray = new JSONArray(callSFSingle(mapRuleField.getKey(), url));// Entity name saved in KEY
-																							// column
+		// Entity name saved in KEY column
+		JSONArray responseArray = new JSONObject(callSFSingle(mapRuleField.getKey(), url)).getJSONArray("results");
 		session.setAttribute("directReportData-" + directReportUserID, responseArray.get(0).toString());
 		return "true";
 	}
@@ -737,8 +786,7 @@ public class DocGen {
 		url = url.replaceFirst("<>", directReportUserID);// UserId passed from UI
 		url = url.replaceAll("<>", loggedInUser);// for direct Manager and for 2nd level manager
 
-		JSONArray responseArray = new JSONArray(callSFSingle(mapRuleField.getKey(), url));// Entity name saved in KEY
-																							// column
+		JSONArray responseArray = new JSONObject(callSFSingle(mapRuleField.getKey(), url)).getJSONArray("results");
 		isDirectReport = responseArray.length() > 0 ? "true" : "false";
 		// generating a unique Id for each UserID sent from the UI, In order to fetch
 		// data in future
@@ -987,7 +1035,7 @@ public class DocGen {
 		// rule required to fetch value for a pick-list field
 		String url = createPicklistURL(ruleID, session, forDirectReport);
 		MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
-		JSONArray picklistData = new JSONArray(callSFSingle(mapRuleField.getKey(), url));
+		JSONArray picklistData = new JSONObject(callSFSingle(mapRuleField.getKey(), url)).getJSONArray("results");
 		// logger.debug("Picklist Fetched Data: " + picklistData);
 		return picklistData.length() > 0
 				? getValueFromPath(mapRuleField.getValueFromPath(), picklistData.getJSONObject(0), session,
@@ -1628,11 +1676,11 @@ public class DocGen {
 		}
 		batchRequest.callBatchPOST("/$batch", "");// Executing Batch request
 		List<BatchSingleResponse> batchResponses = batchRequest.getResponses();
+		// Note the complete results array/ is returned not the object inside results
+		// array
+		JSONObject responseObject = new JSONObject(batchResponses.get(0).getBody()).getJSONObject("d");
 
-		JSONArray responseArray = new JSONObject(batchResponses.get(0).getBody()).getJSONObject("d")
-				.getJSONArray("results");// Note the complete results array is returned not the object inside results
-											// array
-		String response = responseArray.toString();
+		String response = responseObject.toString();
 		// logger.debug("Response from single request: " + response);
 		return response;
 	}
