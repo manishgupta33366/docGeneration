@@ -299,19 +299,28 @@ public class DocGen {
 		MapRuleFields tempMapRuleField;
 		JSONObject responseObj = new JSONObject();
 		String fieldValue;
+		JSONArray fieldsArray;
+		Fields field;
 		while (mapRuleFieldItr.hasNext()) {
 			tempMapRuleField = mapRuleFieldItr.next();
 			url = tempMapRuleField.getUrl();// URL
 			url = url.replaceFirst("<>", userID);// UserId passed from UI
+
+			fieldsArray = new JSONArray(tempMapRuleField.getFieldID());
+
 			// Entity name saved in KEY column
 			JSONArray responseArray = new JSONObject(callSFSingle(tempMapRuleField.getKey(), url))
 					.getJSONArray("results");
-			fieldValue = responseArray.length() > 0
-					? getValueFromPath(tempMapRuleField.getValueFromPath(), responseArray.getJSONObject(0), session,
-							false, null)
-					: "";
-			responseObj.put(tempMapRuleField.getFieldID(), fieldValue);// note here fieldID is being used as a
-																		// technicalName
+			for (int i = 0; i < fieldsArray.length(); i++) {
+				field = fieldsService.findByID(tempMapRuleField.getFieldID()).get(i);
+				fieldValue = responseArray.length() > 0
+						? getValueFromPath(field.getValueFromPath(), responseArray.getJSONObject(0), session, false,
+								null)
+						: "";
+				responseObj.put(field.getTechnicalName(), fieldValue);// note here fieldID is being used as a
+				// technicalName
+			}
+
 		}
 		return ResponseEntity.ok().body(responseObj.toString());
 	}
@@ -1607,7 +1616,8 @@ public class DocGen {
 			} else if (key.endsWith("]") && currentObject != null) { // in case of array get the indexed Object
 
 				JSONArray tempArray = null;
-				if (key.contains("?")) {
+				if (key.contains("?")) { // if ? then object to be retrieved from the Array is dynamic means NO static
+											// index is provided
 					tempArray = currentObject.getJSONArray(key.substring(0, key.indexOf('~')));
 
 					String keyToSearchInEachObj = key.substring(key.indexOf("~SearchForKey~") + 14,
@@ -1615,9 +1625,11 @@ public class DocGen {
 					String fieldID = key.substring(key.indexOf("~FieldID~") + 9, key.indexOf('['));
 					// System.out.println("FieldID: " + fieldID + " Key: " + keyToSearchInEachObj);
 					String valueToSearch;
-					if (fieldID.equals("PARAMETER"))
-						valueToSearch = basedOnCountry;
-					else
+					if (fieldID.equals("PARAMETER")) // if fieldID equals PARAMETER then the value to be search is
+														// coming from the parameter passed by the calling function
+						valueToSearch = basedOnCountry; // so setting valueToSearch to the value passed from the
+														// Calling function
+					else // else Value to search will come from a field
 						valueToSearch = getFieldValue(fieldsService.findByID(fieldID).get(0), session, forDirectReport,
 								null);
 
@@ -1628,7 +1640,7 @@ public class DocGen {
 							currentObject = tempJsonObj;
 						}
 					}
-				} else {
+				} else { // else get the Static, which is set in the DB to retrieve object from the Array
 					int index = key.indexOf('[');
 					index = Integer.parseInt(key.substring(index + 1, index + 2)); // to get the index between []
 					tempArray = currentObject.getJSONArray(key.substring(0, key.length() - 3));
