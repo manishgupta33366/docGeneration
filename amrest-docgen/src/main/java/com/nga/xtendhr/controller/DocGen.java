@@ -257,72 +257,72 @@ public class DocGen {
 			}
 			searchResponseJsonString = EntityUtils.toString(searchResponse.getEntity(), "UTF-8");
 			searchResponseResponseObject = new JSONObject(searchResponseJsonString);
-			return ResponseEntity.ok().body(searchResponseResponseObject.getJSONObject("d"));
+			return ResponseEntity.ok().body(searchResponseResponseObject.getJSONObject("d").toString());
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
-	@GetMapping(value = "/docGenAdmin/executeGetUserDetailsRule")
+	@PostMapping(value = "/docGenAdmin/executeGetUserDetailsRule")
 	public ResponseEntity<?> executeGetUserDetailsRule(@RequestParam(name = "ruleID") String ruleID,
 			@RequestBody String requestData, HttpServletRequest request)
 			throws BatchException, JSONException, ClientProtocolException, UnsupportedOperationException,
 			NamingException, URISyntaxException, IOException, NoSuchMethodException, SecurityException,
 			IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		/*
-		 * Rule required to get data for a specific User (Accessible only by Admin)
-		 */
-		HttpSession session = request.getSession(false);
-		if (session.getAttribute("loginStatus") == null) {
-			return new ResponseEntity<>("Session timeout! Please Login again!", HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-		/*
-		 *** Security Check *** Checking if user trying to login is exactly an Admin or
-		 * not
-		 *
-		 */
-		else if (session.getAttribute("adminLoginStatus") == null) {
-			logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
-					+ ", which is not an admin in SF, tried to login as admin.");
-			return new ResponseEntity<>(
-					"Error! You are not authorized to access this resource! This event has been logged!",
-					HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-
-		JSONObject requestObj = new JSONObject((String) session.getAttribute("requestData"));
-		String userID = requestObj.getString("userID");// userID passed from UI
-		List<MapRuleFields> mapRuleFields = mapRuleFieldsService.findByRuleID(ruleID);
-		Iterator<MapRuleFields> mapRuleFieldItr = mapRuleFields.iterator();
-		String url;
-
-		MapRuleFields tempMapRuleField;
-		JSONObject responseObj = new JSONObject();
-		String fieldValue;
-		JSONArray fieldsArray;
-		Fields field;
-		while (mapRuleFieldItr.hasNext()) {
-			tempMapRuleField = mapRuleFieldItr.next();
-			url = tempMapRuleField.getUrl();// URL
-			url = url.replaceFirst("<>", userID);// UserId passed from UI
-
-			fieldsArray = new JSONArray(tempMapRuleField.getFieldID());
-
-			// Entity name saved in KEY column
-			JSONArray responseArray = new JSONObject(callSFSingle(tempMapRuleField.getKey(), url))
-					.getJSONArray("results");
-			for (int i = 0; i < fieldsArray.length(); i++) {
-				field = fieldsService.findByID(tempMapRuleField.getFieldID()).get(i);
-				fieldValue = responseArray.length() > 0
-						? getValueFromPath(field.getValueFromPath(), responseArray.getJSONObject(0), session, false,
-								null)
-						: "";
-				responseObj.put(field.getTechnicalName(), fieldValue);// note here fieldID is being used as a
-				// technicalName
+		try {
+			/*
+			 * Rule required to get data for a specific User (Accessible only by Admin)
+			 */
+			HttpSession session = request.getSession(false);
+			if (session.getAttribute("loginStatus") == null) {
+				return new ResponseEntity<>("Session timeout! Please Login again!", HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+			/*
+			 *** Security Check *** Checking if user trying to login is exactly an Admin or
+			 * not
+			 *
+			 */
+			else if (session.getAttribute("adminLoginStatus") == null) {
+				logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
+						+ ", which is not an admin in SF, tried to login as admin.");
+				return new ResponseEntity<>(
+						"Error! You are not authorized to access this resource! This event has been logged!",
+						HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 
+			JSONObject requestObj = new JSONObject(requestData);
+			String userID = requestObj.getString("userID");// userID passed from UI
+			List<MapRuleFields> mapRuleFields = mapRuleFieldsService.findByRuleID(ruleID);
+			Iterator<MapRuleFields> mapRuleFieldItr = mapRuleFields.iterator();
+			String url;
+
+			MapRuleFields tempMapRuleField;
+			JSONObject responseObj = new JSONObject();
+			String fieldValue;
+			JSONArray fieldsArray;
+			Fields field;
+			while (mapRuleFieldItr.hasNext()) {
+				tempMapRuleField = mapRuleFieldItr.next();
+				url = tempMapRuleField.getUrl();// URL
+				url = url.replaceFirst("<>", userID);// UserId passed from UI
+				// all fields based on single entity are saved in a form of array
+				fieldsArray = new JSONArray(tempMapRuleField.getFieldID());
+
+				// Entity name saved in KEY column
+				JSONObject response = new JSONObject(callSFSingle(tempMapRuleField.getKey(), url));
+				for (int i = 0; i < fieldsArray.length(); i++) {
+					field = fieldsService.findByID(fieldsArray.getString(i)).get(i);// get field from the fields table
+					fieldValue = getValueFromPath(field.getValueFromPath(), response, session, false, null);
+					responseObj.put(field.getTechnicalName(), fieldValue);
+				}
+
+			}
+			return ResponseEntity.ok().body(responseObj.toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		return ResponseEntity.ok().body(responseObj.toString());
 	}
 
 	@PostMapping(value = "/docGenAdmin/executePostCallRule")
