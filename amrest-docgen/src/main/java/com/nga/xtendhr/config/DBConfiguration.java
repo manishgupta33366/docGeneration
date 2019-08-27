@@ -26,4 +26,5 @@ public class DBConfiguration {
 	public static final String TEMPLATE_FIELD_TAG = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGEN_TEMPALTE_FIELD_TAG\"";
 	public static final String COUNTRY_SPECIFIC_FIELDS = "\"" + ARTIFACT_PATH + TABLE_PATH
 			+ "DGEN_COUNTRY_SPECIFIC_FIELDS\"";
+	public static final String SF_DATA_MAPPING = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGEN_SF_DATA_MAPPING\"";
 }

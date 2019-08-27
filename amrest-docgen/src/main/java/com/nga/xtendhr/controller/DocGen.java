@@ -61,6 +61,7 @@ import com.nga.xtendhr.service.MapGroupTemplatesService;
 import com.nga.xtendhr.service.MapRuleFieldsService;
 import com.nga.xtendhr.service.MapTemplateFieldsService;
 import com.nga.xtendhr.service.RulesService;
+import com.nga.xtendhr.service.SFDataMappingService;
 import com.nga.xtendhr.service.TemplateCriteriaGenerationService;
 import com.nga.xtendhr.service.TemplateService;
 import com.nga.xtendhr.utility.CommonFunctions;
@@ -120,6 +121,9 @@ public class DocGen {
 
 	@Autowired
 	CountrySpecificFieldsService countrySpecificFieldsService;
+
+	@Autowired
+	SFDataMappingService sFDataMappingService;
 
 	@GetMapping(value = "/login")
 	public ResponseEntity<?> login(HttpServletRequest request) {
@@ -353,6 +357,28 @@ public class DocGen {
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	String adminGetUserDetails(String ruleID, HttpSession session, Boolean forDirectReport) {
+		try {
+			JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
+			/*
+			 *** Security Check *** Checking if user trying to login is exactly an Admin or
+			 * not
+			 *
+			 */
+			if (session.getAttribute("adminLoginStatus") == null) {
+				logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
+						+ ", which is not an admin in SF, tried to access Groups of a user:"
+						+ requestData.getString("userID"));
+				return "Error! You are not authorized to access this resource! This event has been logged!";
+			}
+			JSONObject ruleData = getRuleData(ruleID, session, true);
+			return (ruleData.toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			return "Error!";
 		}
 	}
 
@@ -1043,6 +1069,7 @@ public class DocGen {
 			NamingException, URISyntaxException, IOException {
 		// rule required to fetch value for a pick-list field
 		String url = createPicklistURL(ruleID, session, forDirectReport);
+		logger.debug("Picklist Fetch URL: " + url);
 		MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
 		JSONArray picklistData = new JSONObject(callSFSingle(mapRuleField.getKey(), url)).getJSONArray("results");
 		// logger.debug("Picklist Fetched Data: " + picklistData);
@@ -1629,12 +1656,20 @@ public class DocGen {
 														// coming from the parameter passed by the calling function
 						valueToSearch = basedOnCountry; // so setting valueToSearch to the value passed from the
 														// Calling function
-					else // else Value to search will come from a field
+					else if (fieldID.indexOf("TABLE_SF_DATA") != -1) { // else if value to search in the object is
+																		// coming from Table
+						fieldID = key.substring(key.indexOf("~TABLE_SF_DATA~") + 15, key.indexOf('['));
 						valueToSearch = getFieldValue(fieldsService.findByID(fieldID).get(0), session, forDirectReport,
 								null);
-
+						valueToSearch = sFDataMappingService.findByKey(valueToSearch).get(0).getData();
+					} else // else Value to search will come from a field
+						valueToSearch = getFieldValue(fieldsService.findByID(fieldID).get(0), session, forDirectReport,
+								null);
+					// logger.debug("valueToSearch: " + valueToSearch);
 					JSONObject tempJsonObj;
-					for (int i = 0; i < tempArray.length(); i++) {
+					for (int i = 0; i < tempArray.length(); i++) { // now Iterating each object in the array till a
+																	// object with the value "valueToSearch" is not
+																	// found, once found it will be returned
 						tempJsonObj = tempArray.getJSONObject(i);
 						if (tempJsonObj.getString(keyToSearchInEachObj).equals(valueToSearch)) {
 							currentObject = tempJsonObj;
