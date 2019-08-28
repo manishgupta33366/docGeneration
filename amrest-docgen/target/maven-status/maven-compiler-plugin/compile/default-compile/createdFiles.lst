@@ -19,6 +19,7 @@ com\nga\xtendhr\utility\GetDestinationClient.class
 com\nga\xtendhr\model\Rules.class
 com\nga\xtendhr\controller\ApplicationTest.class
 com\nga\xtendhr\utility\CommonFunctions.class
+com\nga\xtendhr\service\SFDataMappingService.class
 com\nga\xtendhr\controller\DocGen$hunLocale.class
 com\nga\xtendhr\service\MapCountryCompanyGroupService.class
 com\nga\xtendhr\model\CountrySpecificFields.class
@@ -42,7 +43,9 @@ com\nga\xtendhr\model\CodelistText.class
 com\nga\xtendhr\service\CodelistService.class
 com\nga\xtendhr\service\CodelistTextService.class
 com\nga\xtendhr\service\RulesServiceImp.class
+com\nga\xtendhr\service\SFDataMappingImp.class
 com\nga\xtendhr\model\MapTemplateFields.class
+com\nga\xtendhr\model\SFDataMapping.class
 com\nga\xtendhr\utility\CommonVariables.class
 com\nga\xtendhr\model\Countries.class
 com\nga\xtendhr\model\Groups.class

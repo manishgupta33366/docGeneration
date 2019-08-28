@@ -57,7 +57,7 @@ public class EntitiesServiceImp implements EntitiesService {
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<String> getDistinctNames() {
-		Query query = em.createNamedQuery("Entites.getDistinctNames");
+		Query query = em.createNamedQuery("Entites.getDistinctNames").setParameter("isDependant", false);
 		List<String> items = query.getResultList();
 		return items;
 	}

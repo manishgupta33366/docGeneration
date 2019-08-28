@@ -360,26 +360,26 @@ public class DocGen {
 		}
 	}
 
-	String adminGetUserDetails(String ruleID, HttpSession session, Boolean forDirectReport) {
-		try {
-			JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
-			/*
-			 *** Security Check *** Checking if user trying to login is exactly an Admin or
-			 * not
-			 *
-			 */
-			if (session.getAttribute("adminLoginStatus") == null) {
-				logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
-						+ ", which is not an admin in SF, tried to access Groups of a user:"
-						+ requestData.getString("userID"));
-				return "Error! You are not authorized to access this resource! This event has been logged!";
-			}
-			JSONObject ruleData = getRuleData(ruleID, session, true);
-			return (ruleData.toString());
-		} catch (Exception e) {
-			e.printStackTrace();
-			return "Error!";
+	String adminGetUserDetails(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
+
+		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
+		/*
+		 *** Security Check *** Checking if user trying to login is exactly an Admin or
+		 * not
+		 *
+		 */
+		if (session.getAttribute("adminLoginStatus") == null) {
+			logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
+					+ ", which is not an admin in SF, tried to access Groups of a user:"
+					+ requestData.getString("userID"));
+			return "Error! You are not authorized to access this resource! This event has been logged!";
 		}
+		JSONObject ruleData = getRuleData(ruleID, session, true);
+		return (ruleData.toString());
+
 	}
 
 	String adminGetGroupsOfDirectReport(String ruleID, HttpSession session, Boolean forDirectReport)
@@ -1431,10 +1431,10 @@ public class DocGen {
 				+ " ::: forDirectReport: " + forDirectReport);
 		if (field.getRuleID() == null) {
 
-			// checking if a default value is there in field
+			// checking if a default value is there in field if yes then return that
 			if (field.getDefaultValue() != null)
 				return field.getDefaultValue();
-
+			// else fetch data
 			JSONObject entityData;
 			Entities entity = field.getEntity();
 			logger.debug("EntityName: " + entity.getName() + " For Field: " + field.getTechnicalName());

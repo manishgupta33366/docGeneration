@@ -9,6 +9,7 @@ C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\TemplateCriteriaGenerationServiceImp.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\TemplateCriteriaGenerationService.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\config\AppConfig.java
+C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\SFDataMapping.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\CodelistServiceImp.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\ConfigurableColumnsService.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\Entities.java
@@ -47,6 +48,7 @@ C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\config\DBConfiguration.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\controller\Initial_SF_PEX.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\CountrySpecificFieldsService.java
+C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\SFDataMappingService.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\utility\CommonVariables.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\RulesServiceImp.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\controller\ApplicationTest.java
@@ -57,4 +59,5 @@ C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\Te
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\ConfigurableTables.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\TemplateCriteriaGeneration.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\MapGroupTemplateServiceimp.java
+C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\SFDataMappingImp.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\FieldsServiceImp.java

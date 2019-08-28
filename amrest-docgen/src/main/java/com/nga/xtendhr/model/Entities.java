@@ -25,7 +25,7 @@ import com.nga.xtendhr.config.DBConfiguration;
 @Table(name = DBConfiguration.ENTITIES, schema = DBConfiguration.SCHEMA_NAME)
 @NamedQueries({ @NamedQuery(name = "Entites.selectAll", query = "SELECT E FROM Fields E"),
 		@NamedQuery(name = "Entites.findAllDependant", query = "SELECT E FROM Entities E WHERE E.dependantOn = :entityID"),
-		@NamedQuery(name = "Entites.getDistinctNames", query = "SELECT DISTINCT E.name FROM Entities E WHERE E.isDependant=false") })
+		@NamedQuery(name = "Entites.getDistinctNames", query = "SELECT DISTINCT E.name FROM Entities E WHERE E.isDependant= :isDependant") })
 public class Entities {
 	@Id
 	@Column(name = "\"ID\"", columnDefinition = "VARCHAR(32)")
