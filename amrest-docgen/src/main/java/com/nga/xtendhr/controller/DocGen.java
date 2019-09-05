@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.naming.NamingException;
 import javax.servlet.http.HttpServletRequest;
@@ -761,6 +762,51 @@ public class DocGen {
 	/*
 	 *** GET Rules Start***
 	 */
+
+	String calculateAge(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
+		// Rule in DB required to get age
+		MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
+		String dob = getFieldValue(mapRuleField.getField(), session, forDirectReport, null);
+		String dobms = dob.substring(dob.indexOf("(") + 1, dob.indexOf(")"));
+		Date dobDate = new Date(Long.parseLong(dobms));
+		Date today = new Date();
+
+		long diffInMillies = Math.abs(today.getTime() - dobDate.getTime());
+		long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+		return Long.toString(diff / 365);
+	}
+
+	String formatCurrentDate(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
+		// Rule in DB Required to format dates
+		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
+		String language = getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport, null);
+		// String dateToFormat = getFieldValue(mapRuleField.get(1).getField(), session,
+		// forDirectReport, null);
+		Calendar cal = Calendar.getInstance();
+		long dateToFormat = cal.getTimeInMillis(); // current date and time
+		Date date;
+		switch (language) {
+		case "HUN":
+			date = new Date(dateToFormat);
+			cal.setTime(date);
+			return (cal.get(Calendar.YEAR) + ". " + hunLocale.values()[cal.get(Calendar.MONTH)] + " "
+					+ cal.get(Calendar.DAY_OF_MONTH));
+
+		default:
+			// works with default languages like: fr, en, sv, es, etc
+			Locale locale = new Locale(language);
+			date = new Date(dateToFormat);
+			SimpleDateFormat sdf = new SimpleDateFormat("MMMM dd, yyyy", locale);
+			return (sdf.format(date));
+		}
+	}
+
 	String checkIfManager(String ruleID, HttpSession session, Boolean forDirectReport)
 			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
 			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
