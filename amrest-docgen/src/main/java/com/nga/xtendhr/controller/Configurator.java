@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import com.nga.xtendhr.config.DBConfiguration;
 import com.nga.xtendhr.model.Companies;
@@ -214,7 +213,7 @@ public class Configurator {
 
 	@RequestMapping(value = "/uploadTemplate", method = RequestMethod.POST)
 	public ResponseEntity<?> upload(@RequestParam(name = "templateName") String templateName,
-			@RequestParam(name = "description") String description, MultipartHttpServletRequest request,
+			@RequestParam(name = "description") String description, @RequestParam("file") MultipartFile multipartFile,
 			HttpSession session) {
 		// String filename = file.getOriginalFilename();
 		try {
@@ -235,7 +234,6 @@ public class Configurator {
 						HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 			// byte bytesArr[] = null;
-			MultipartFile multipartFile = request.getFiles("templateFile").get(0);
 			String fileName = multipartFile.getOriginalFilename();
 
 			logger.debug("Uploaded Orignal FileName: " + fileName + " ::: fileName:" + multipartFile.getName()

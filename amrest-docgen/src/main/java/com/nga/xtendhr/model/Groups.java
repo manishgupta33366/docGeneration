@@ -62,6 +62,7 @@ public class Groups {
 		JSONObject obj = new JSONObject();
 		obj.put("id", this.getId());
 		obj.put("name", this.getName());
+		obj.put("description", this.getDescription());
 		return obj.toString();
 	}
 }
