@@ -3,7 +3,11 @@ package com.nga.xtendhr.model;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.Table;
+
+import org.json.JSONObject;
 
 import com.nga.xtendhr.config.DBConfiguration;
 
@@ -18,7 +22,7 @@ import com.nga.xtendhr.config.DBConfiguration;
 
 @Entity
 @Table(name = DBConfiguration.GROUPS, schema = DBConfiguration.SCHEMA_NAME)
-
+@NamedQueries({ @NamedQuery(name = "Groups.selectAll", query = "SELECT G FROM Groups G") })
 public class Groups {
 	@Id
 	@Column(name = "\"ID\"", columnDefinition = "VARCHAR(32)")
@@ -52,5 +56,12 @@ public class Groups {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public String toString() {// overriding the toString() method
+		JSONObject obj = new JSONObject();
+		obj.put("id", this.getId());
+		obj.put("name", this.getName());
+		return obj.toString();
 	}
 }

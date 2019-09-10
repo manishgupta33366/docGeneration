@@ -7,6 +7,7 @@ public class DBConfiguration {
 	public static final String TABLE_PATH = ".db::Table.";
 
 	public static final String COUNTRIES = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGEN_COUNTRIES\"";
+	public static final String COMPANIES = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGEN_COMPANIES\"";
 	public static final String MAP_COUNTRY_COMPANY_GROUP = "\"" + ARTIFACT_PATH + TABLE_PATH
 			+ "DGEN_MAP_COUNTRY_COMPANY_GROUP\"";
 	public static final String GROUPS = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGEN_GROUPS\"";

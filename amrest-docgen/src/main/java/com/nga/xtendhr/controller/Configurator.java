@@ -22,18 +22,22 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import com.nga.xtendhr.config.DBConfiguration;
+import com.nga.xtendhr.model.Companies;
 import com.nga.xtendhr.model.ConfigurableColumns;
 import com.nga.xtendhr.model.ConfigurableTables;
 import com.nga.xtendhr.model.Countries;
+import com.nga.xtendhr.model.Groups;
 import com.nga.xtendhr.model.MapTemplateFields;
 import com.nga.xtendhr.model.Templates;
 import com.nga.xtendhr.service.CodelistService;
 import com.nga.xtendhr.service.CodelistTextService;
+import com.nga.xtendhr.service.CompaniesService;
 import com.nga.xtendhr.service.ConfigurableColumnsService;
 import com.nga.xtendhr.service.ConfigurableTablesService;
 import com.nga.xtendhr.service.CountryService;
 import com.nga.xtendhr.service.EntitiesService;
 import com.nga.xtendhr.service.FieldsService;
+import com.nga.xtendhr.service.GroupsService;
 import com.nga.xtendhr.service.MapCountryCompanyGroupService;
 import com.nga.xtendhr.service.MapGroupTemplatesService;
 import com.nga.xtendhr.service.MapRuleFieldsService;
@@ -89,6 +93,12 @@ public class Configurator {
 
 	@Autowired
 	CountryService countryService;
+
+	@Autowired
+	GroupsService groupsService;
+
+	@Autowired
+	CompaniesService companiesService;
 
 	@GetMapping(value = "/getConfigurableTables")
 	public ResponseEntity<?> getTableNames(HttpServletRequest request) {
@@ -166,8 +176,31 @@ public class Configurator {
 				response.put("data", countriesArray);
 				return ResponseEntity.ok().body(response.toString());
 			case DBConfiguration.GROUPS:
-				// code block
-				break;
+				List<Groups> groups = groupsService.findAll();
+				for (int i = 0; i < groups.size(); i++) {
+					tempObj = new JSONObject();
+					tempCountryJsonObj = new JSONObject(groups.get(i).toString());
+					for (int j = 0; j < columnNames.size(); j++) {
+						tempObj.put(columnNames.get(j), tempCountryJsonObj.get(columnNames.get(j)));
+					}
+					countriesArray.put(tempObj);
+				}
+				response.put("columns", configurableColumns);
+				response.put("data", countriesArray);
+				return ResponseEntity.ok().body(response.toString());
+			case DBConfiguration.COMPANIES:
+				List<Companies> companies = companiesService.findAll();
+				for (int i = 0; i < companies.size(); i++) {
+					tempObj = new JSONObject();
+					tempCountryJsonObj = new JSONObject(companies.get(i).toString());
+					for (int j = 0; j < columnNames.size(); j++) {
+						tempObj.put(columnNames.get(j), tempCountryJsonObj.get(columnNames.get(j)));
+					}
+					countriesArray.put(tempObj);
+				}
+				response.put("columns", configurableColumns);
+				response.put("data", countriesArray);
+				return ResponseEntity.ok().body(response.toString());
 			default:
 				// code block
 			}

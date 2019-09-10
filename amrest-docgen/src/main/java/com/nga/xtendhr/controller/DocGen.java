@@ -786,12 +786,10 @@ public class DocGen {
 		// Rule in DB Required to format dates
 		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
 		String language = getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport, null);
-		// String dateToFormat = getFieldValue(mapRuleField.get(1).getField(), session,
-		// forDirectReport, null);
 		Calendar cal = Calendar.getInstance();
 		long dateToFormat = cal.getTimeInMillis(); // current date and time
 		Date date;
-		switch (language) {
+		switch (language) { // switch for custom or default date format
 		case "HUN":
 			date = new Date(dateToFormat);
 			cal.setTime(date);
