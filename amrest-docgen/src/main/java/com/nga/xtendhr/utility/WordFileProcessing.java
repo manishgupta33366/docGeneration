@@ -29,7 +29,7 @@ public class WordFileProcessing {
 		// For extracting all the tags in the word file
 		@SuppressWarnings("resource")
 		XWPFWordExtractor we = new XWPFWordExtractor(docxDocument);
-		Matcher m = Pattern.compile("\\<(.*?)\\>").matcher(we.getText());
+		Matcher m = Pattern.compile("\\.(.*?)\\]").matcher(we.getText());
 		JSONArray tags = new JSONArray();
 		while (m.find()) {
 			tags.put(m.group(1));

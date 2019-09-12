@@ -26,6 +26,7 @@ import com.nga.xtendhr.model.ConfigurableColumns;
 import com.nga.xtendhr.model.ConfigurableTables;
 import com.nga.xtendhr.model.Countries;
 import com.nga.xtendhr.model.Groups;
+import com.nga.xtendhr.model.MapGroupTemplates;
 import com.nga.xtendhr.model.MapTemplateFields;
 import com.nga.xtendhr.model.Templates;
 import com.nga.xtendhr.service.CodelistService;
@@ -213,7 +214,9 @@ public class Configurator {
 
 	@RequestMapping(value = "/uploadTemplate", method = RequestMethod.POST)
 	public ResponseEntity<?> upload(@RequestParam(name = "templateName") String templateName,
-			@RequestParam(name = "description") String description, @RequestParam("file") MultipartFile multipartFile,
+			@RequestParam(name = "description") String description, @RequestParam(name = "criteria") String criteria,
+			@RequestParam(name = "displayName") String displayName, @RequestParam(name = "groupId") String groupId,
+			@RequestParam(name = "companyId") String CompanyId, @RequestParam("file") MultipartFile multipartFile,
 			HttpSession session) {
 		// String filename = file.getOriginalFilename();
 		try {
@@ -238,8 +241,9 @@ public class Configurator {
 
 			logger.debug("Uploaded Orignal FileName: " + fileName + " ::: fileName:" + multipartFile.getName()
 					+ " ::: contentType:" + multipartFile.getContentType());
-			Templates generatedTemplate = _createTemplate(templateName, description);
+			Templates generatedTemplate = _createTemplate(templateName, description, displayName);
 			JSONArray tags = WordFileProcessing.getTags(WordFileProcessing.createWordFile(multipartFile));
+			_mapGroupTemplate(generatedTemplate, groupId);
 			logger.debug(tags.toString());
 			Boolean mappedSuccessfully = _mapTemplateFields(generatedTemplate, tags);
 			return ResponseEntity.ok().body(mappedSuccessfully);
@@ -248,6 +252,35 @@ public class Configurator {
 			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
+	}
+
+	@RequestMapping(value = "/getCompaniesAndGroupsFromCountry", method = RequestMethod.GET)
+	public ResponseEntity<?> getCompaniesAndGroupsFromCountry(@RequestParam(name = "countryID") String countryID,
+			HttpSession session) {
+		try {
+			if (session.getAttribute("loginStatus") == null) {
+				return new ResponseEntity<>("Session timeout! Please Login again!", HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+			/*
+			 *** Security Check *** Checking if user trying to login is exactly an Admin or
+			 * not
+			 *
+			 */
+			else if (session.getAttribute("adminLoginStatus") == null) {
+				logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
+						+ ", which is not an admin in SF, tried to access TableNames in configurator App.");
+				return new ResponseEntity<>(
+						"Error! You are not authorized to access this resource! This event has been logged!",
+						HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+
+			mapCountryCompanyGroupService.findByCountry(countryID);
+
+			return ResponseEntity.ok().body(templateCriteriaGenerationService.getDistinctFields());
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 	}
 
 	@RequestMapping(value = "/getCriteriaFields", method = RequestMethod.GET)
@@ -275,13 +308,21 @@ public class Configurator {
 		}
 	}
 
-	private Templates _createTemplate(String templateName, String description) {
+	private Templates _createTemplate(String templateName, String description, String displayName) {
 		Templates newTemplate = new Templates();
 		String templateId = _getUUID();
 		newTemplate.setId(templateId);
 		newTemplate.setName(templateName);
 		newTemplate.setDescription(description);
+		newTemplate.setDisplayName(displayName);
 		return templateService.create(newTemplate);
+	}
+
+	private MapGroupTemplates _mapGroupTemplate(Templates generatedTemplate, String groupId) {
+		MapGroupTemplates mapGroupTemplates = new MapGroupTemplates();
+		mapGroupTemplates.setTemplateID(generatedTemplate.getId());
+		mapGroupTemplates.setGroupID(groupId);
+		return mapGroupTemplateService.create(mapGroupTemplates);
 	}
 
 	private String _getUUID() {
