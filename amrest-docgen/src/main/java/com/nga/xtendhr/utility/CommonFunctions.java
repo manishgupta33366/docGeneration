@@ -8,6 +8,8 @@ import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
 
+import javax.naming.Context;
+import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
 import org.apache.http.HttpResponse;
@@ -18,8 +20,11 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.nga.xtendhr.connection.ConnectionWithJWT;
 import com.nga.xtendhr.connection.DestinationClient;
 import com.nga.xtendhr.controller.DocGen;
+import com.sap.core.connectivity.api.configuration.ConnectivityConfiguration;
+import com.sap.core.connectivity.api.configuration.DestinationConfiguration;
 
 /*
  * CommonFunctions class 
@@ -77,6 +82,21 @@ public class CommonFunctions {
 			logger.debug("Error while retriving Templates from API, ResponseCode: " + responseCode);
 			return new JSONObject().put("templates", new JSONArray()).toString();
 		}
+	}
+
+	public String callpostAPIWithJWT(String url, JSONObject body, String destinationName)
+			throws IOException, NamingException, URISyntaxException {
+		logger.debug("POST Body to send:" + body.toString());
+		ConnectivityConfiguration configuration;
+		Context ctx = new InitialContext();
+		configuration = (ConnectivityConfiguration) ctx.lookup("java:comp/env/connectivityConfiguration");
+		DestinationConfiguration destination = configuration.getConfiguration(destinationName);
+		ConnectionWithJWT connectionWithJWT = new ConnectionWithJWT();
+		connectionWithJWT.setDestination(destination);
+		HttpResponse response = connectionWithJWT.callDestinationPOST(body.toString());
+		String responseJSONString = EntityUtils.toString(response.getEntity(), "UTF-8");
+		logger.debug("Response from POST JWT API: " + responseJSONString);
+		return responseJSONString;
 	}
 
 	public static Boolean checkIfAdmin(String loggedInUser)

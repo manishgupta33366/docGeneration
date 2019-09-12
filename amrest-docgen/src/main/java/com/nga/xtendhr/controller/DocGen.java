@@ -40,7 +40,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nga.xtendhr.connection.BatchRequest;
-import com.nga.xtendhr.connection.DestinationClient;
 import com.nga.xtendhr.model.CodelistText;
 import com.nga.xtendhr.model.CountrySpecificFields;
 import com.nga.xtendhr.model.Entities;
@@ -49,6 +48,7 @@ import com.nga.xtendhr.model.MapCountryCompanyGroup;
 import com.nga.xtendhr.model.MapGroupTemplates;
 import com.nga.xtendhr.model.MapRuleFields;
 import com.nga.xtendhr.model.MapTemplateFields;
+import com.nga.xtendhr.model.Rules;
 import com.nga.xtendhr.model.TemplateCriteriaGeneration;
 import com.nga.xtendhr.model.TemplateFieldTag;
 import com.nga.xtendhr.model.Templates;
@@ -353,8 +353,14 @@ public class DocGen {
 						HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 			MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
-			return ResponseEntity.ok()
-					.body(CommonFunctions.callpostAPI(mapRuleField.getUrl(), new JSONObject(requestData)));
+
+			if (mapRuleField.getCallUsingJWT()) {
+				CommonFunctions commonFunctions = new CommonFunctions();
+				return ResponseEntity.ok().body(commonFunctions.callpostAPIWithJWT(mapRuleField.getUrl(),
+						new JSONObject(requestData), mapRuleField.getDestinationName()));
+			} else
+				return ResponseEntity.ok()
+						.body(CommonFunctions.callpostAPI(mapRuleField.getUrl(), new JSONObject(requestData)));
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -967,9 +973,9 @@ public class DocGen {
 					getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport, null));
 			requestObj.put(mapRuleField.get(2).getKey(),
 					getFieldValue(mapRuleField.get(2).getField(), session, forDirectReport, null));
-			JSONObject apiResponse = null;
-			apiResponse = new JSONObject(CommonFunctions.callpostAPI(
-					getFieldValue(mapRuleField.get(3).getField(), session, forDirectReport, null), requestObj));
+			CommonFunctions commonFunctions = new CommonFunctions();
+			JSONObject apiResponse = new JSONObject(commonFunctions.callpostAPIWithJWT(mapRuleField.get(3).getUrl(),
+					requestObj, mapRuleField.get(3).getDestinationName()));
 			Map<String, JSONObject> templatesAvailableInAzureMap = new HashMap<String, JSONObject>();
 			JSONArray availableTemplates = apiResponse.getJSONArray("templates");
 			JSONObject tempTemplateObject;
@@ -1906,22 +1912,12 @@ public class DocGen {
 	}
 
 	private String getDocFromAPI(JSONObject requestObj)
-			throws URISyntaxException, NamingException, ParseException, IOException {
-		DestinationClient docDestination = new DestinationClient();
-		docDestination.setDestName(CommonVariables.docGenDestination);
-		docDestination.setHeaderProvider();
-		docDestination.setConfiguration();
-		docDestination.setDestConfiguration();
-		docDestination.setHeaders(docDestination.getDestProperty("Authentication"));
-
-		HttpResponse docResponse = docDestination.callDestinationPOST("", "", requestObj.toString());
-		if (docResponse.getStatusLine().getStatusCode() != 200) {
-			logger.debug("Error while fetching document from API, response from API: Response Status code: "
-					+ docResponse.getStatusLine().getStatusCode() + " ::: Response: "
-					+ EntityUtils.toString(docResponse.getEntity(), "UTF-8"));
-			return "Error while generating Doc";
-		}
-		return EntityUtils.toString(docResponse.getEntity(), "UTF-8");
+			throws URISyntaxException, NamingException, ParseException, IOException {// function to get document from
+																						// doc gen API
+		Rules rule = rulesService.findByRuleName("processCountrySpecificFields").get(0);
+		MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(rule.getId()).get(0);
+		CommonFunctions commonFunctions = new CommonFunctions();
+		return commonFunctions.callpostAPIWithJWT(mapRuleField.getUrl(), requestObj, mapRuleField.getDestinationName());
 	}
 
 	private String createPicklistURL(String ruleID, HttpSession session, Boolean forDirectReport)

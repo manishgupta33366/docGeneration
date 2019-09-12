@@ -39,6 +39,12 @@ public class MapRuleFields {
 	@Column(name = "\"FIELD.ID\"", columnDefinition = "VARCHAR(32)")
 	private String fieldID;
 
+	@Column(name = "\"DESTINATION_NAME\"", columnDefinition = "VARCHAR(32)")
+	private String destinationName;
+
+	@Column(name = "\"CALL_USING_JWT\"", columnDefinition = "BOOLEAN")
+	private Boolean callUsingJWT;
+
 	@ManyToOne(cascade = CascadeType.ALL)
 	@JoinColumn(name = "\"RULE.ID\"", referencedColumnName = "\"ID\"", insertable = false, updatable = false)
 	private Rules rule;
@@ -55,6 +61,14 @@ public class MapRuleFields {
 
 	@Column(name = "\"VALUE_FROM_PATH\"", columnDefinition = "VARCHAR(128)")
 	private String valueFromPath;
+
+	public String getDestinationName() {
+		return destinationName;
+	}
+
+	public void setDestinationName(String destinationName) {
+		this.destinationName = destinationName;
+	}
 
 	public String getValueFromPath() {
 		return valueFromPath;
@@ -114,6 +128,14 @@ public class MapRuleFields {
 
 	public Rules getRule() {
 		return rule;
+	}
+
+	public Boolean getCallUsingJWT() {
+		return callUsingJWT;
+	}
+
+	public void setCallUsingJWT(Boolean callUsingJWT) {
+		this.callUsingJWT = callUsingJWT;
 	}
 
 	public void setRule(Rules rule) {
