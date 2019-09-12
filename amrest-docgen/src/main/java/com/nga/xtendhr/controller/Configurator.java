@@ -258,6 +258,7 @@ public class Configurator {
 	public ResponseEntity<?> getCompaniesAndGroupsFromCountry(@RequestParam(name = "countryID") String countryID,
 			HttpSession session) {
 		try {
+
 			if (session.getAttribute("loginStatus") == null) {
 				return new ResponseEntity<>("Session timeout! Please Login again!", HttpStatus.INTERNAL_SERVER_ERROR);
 			}
