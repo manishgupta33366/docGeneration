@@ -84,16 +84,16 @@ public class CommonFunctions {
 		}
 	}
 
-	public String callpostAPIWithJWT(String url, JSONObject body, String destinationName)
+	public String callpostAPIWithJWT(String path, JSONObject body, String destinationName)
 			throws IOException, NamingException, URISyntaxException {
-		logger.debug("POST Body to send:" + body.toString());
+		logger.debug("POST Body to send: " + body.toString());
 		ConnectivityConfiguration configuration;
 		Context ctx = new InitialContext();
 		configuration = (ConnectivityConfiguration) ctx.lookup("java:comp/env/connectivityConfiguration");
 		DestinationConfiguration destination = configuration.getConfiguration(destinationName);
 		ConnectionWithJWT connectionWithJWT = new ConnectionWithJWT();
 		connectionWithJWT.setDestination(destination);
-		HttpResponse response = connectionWithJWT.callDestinationPOST(body.toString());
+		HttpResponse response = connectionWithJWT.callDestinationPOST(path, body.toString());
 		String responseJSONString = EntityUtils.toString(response.getEntity(), "UTF-8");
 		logger.debug("Response from POST JWT API: " + responseJSONString);
 		return responseJSONString;

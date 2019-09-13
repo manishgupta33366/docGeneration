@@ -8,6 +8,7 @@ com\nga\xtendhr\controller\Configurator.class
 com\nga\xtendhr\service\ConfigurableTablesService.class
 com\nga\xtendhr\model\ConfigurableColumns.class
 com\nga\xtendhr\config\AppConfig.class
+com\nga\xtendhr\connection\ConnectionWithJWT.class
 com\nga\xtendhr\connection\BatchRequest.class
 com\nga\xtendhr\model\TemplateFieldTag.class
 com\nga\xtendhr\service\CountryServiceImp.class

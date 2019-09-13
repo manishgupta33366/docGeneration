@@ -1914,7 +1914,7 @@ public class DocGen {
 	private String getDocFromAPI(JSONObject requestObj)
 			throws URISyntaxException, NamingException, ParseException, IOException {// function to get document from
 																						// doc gen API
-		Rules rule = rulesService.findByRuleName("processCountrySpecificFields").get(0);
+		Rules rule = rulesService.findByRuleName("getDocFromAPI").get(0);
 		MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(rule.getId()).get(0);
 		CommonFunctions commonFunctions = new CommonFunctions();
 		return commonFunctions.callpostAPIWithJWT(mapRuleField.getUrl(), requestObj, mapRuleField.getDestinationName());
