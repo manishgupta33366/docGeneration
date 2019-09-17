@@ -155,6 +155,14 @@ public class MapCountryCompanyGroup {
 		this.group = group;
 	}
 
+	public Companies getCompany() {
+		return company;
+	}
+
+	public void setCompany(Companies company) {
+		this.company = company;
+	}
+
 	public String toString() {// overriding the toString() method
 		JSONObject obj = new JSONObject();
 		obj.put("id", this.group.getId());
