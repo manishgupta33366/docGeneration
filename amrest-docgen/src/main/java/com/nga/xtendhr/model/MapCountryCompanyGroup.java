@@ -71,6 +71,10 @@ public class MapCountryCompanyGroup {
 	@JoinColumn(name = "\"GRP.ID\"", referencedColumnName = "\"ID\"", insertable = false, updatable = false)
 	private Groups group;
 
+	@ManyToOne(cascade = CascadeType.ALL)
+	@JoinColumn(name = "\"COMPANY.ID\"", referencedColumnName = "\"ID\"", insertable = false, updatable = false)
+	private Companies company;
+
 	public String getCountryID() {
 		return countryID;
 	}
