@@ -36,15 +36,6 @@ public class TemplateServiceImp implements TemplateService {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<Templates> findByIdAndCriteria(String id, String criteria) {
-		Query query = em.createNamedQuery("Templates.findByTemplateAndCriteria").setParameter("criteria", criteria)
-				.setParameter("id", id);
-		List<Templates> items = query.getResultList();
-		return items;
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
 	public List<Templates> findById(String id) {
 		Query query = em.createNamedQuery("Templates.findById").setParameter("id", id);
 		List<Templates> items = query.getResultList();

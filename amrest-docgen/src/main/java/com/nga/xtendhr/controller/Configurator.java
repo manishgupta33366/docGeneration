@@ -35,6 +35,7 @@ import com.nga.xtendhr.service.CompaniesService;
 import com.nga.xtendhr.service.ConfigurableColumnsService;
 import com.nga.xtendhr.service.ConfigurableTablesService;
 import com.nga.xtendhr.service.CountryService;
+import com.nga.xtendhr.service.CriteriaService;
 import com.nga.xtendhr.service.EntitiesService;
 import com.nga.xtendhr.service.FieldsService;
 import com.nga.xtendhr.service.GroupsService;
@@ -43,7 +44,6 @@ import com.nga.xtendhr.service.MapGroupTemplatesService;
 import com.nga.xtendhr.service.MapRuleFieldsService;
 import com.nga.xtendhr.service.MapTemplateFieldsService;
 import com.nga.xtendhr.service.RulesService;
-import com.nga.xtendhr.service.TemplateCriteriaGenerationService;
 import com.nga.xtendhr.service.TemplateService;
 import com.nga.xtendhr.utility.WordFileProcessing;
 
@@ -59,7 +59,7 @@ public class Configurator {
 	MapGroupTemplatesService mapGroupTemplateService;
 
 	@Autowired
-	TemplateCriteriaGenerationService templateCriteriaGenerationService;
+	CriteriaService criteriaService;
 
 	@Autowired
 	FieldsService fieldsService;
@@ -214,7 +214,8 @@ public class Configurator {
 
 	@RequestMapping(value = "/uploadTemplate", method = RequestMethod.POST)
 	public ResponseEntity<?> upload(@RequestParam(name = "templateName") String templateName,
-			@RequestParam(name = "description") String description, @RequestParam(name = "criteria") String criteria,
+			@RequestParam(name = "description") String description,
+			@RequestParam(name = "criteriaId") String criteriaId,
 			@RequestParam(name = "displayName") String displayName, @RequestParam(name = "countryId") String countryId,
 			@RequestParam(name = "companyId") String companyId, @RequestParam(name = "groupId") String groupId,
 			@RequestParam("file") MultipartFile multipartFile, HttpSession session) {
@@ -246,7 +247,7 @@ public class Configurator {
 
 			logger.debug("Uploaded Orignal FileName: " + fileName + " ::: fileName:" + multipartFile.getName()
 					+ " ::: contentType:" + multipartFile.getContentType());
-			Templates generatedTemplate = _createTemplate(templateName, description, displayName);
+			Templates generatedTemplate = _createTemplate(templateName, description, displayName, criteriaId);
 			JSONArray tags = WordFileProcessing.getTags(WordFileProcessing.createWordFile(multipartFile));
 			_mapGroupTemplate(generatedTemplate, groupId);
 			logger.debug(tags.toString());
@@ -286,7 +287,7 @@ public class Configurator {
 		}
 	}
 
-	@RequestMapping(value = "/getCriteriaFields", method = RequestMethod.GET)
+	@RequestMapping(value = "/getCriteria", method = RequestMethod.GET)
 	public ResponseEntity<?> getCriteriaFields(HttpSession session) {
 		try {
 			if (session.getAttribute("loginStatus") == null) {
@@ -304,20 +305,21 @@ public class Configurator {
 						"Error! You are not authorized to access this resource! This event has been logged!",
 						HttpStatus.INTERNAL_SERVER_ERROR);
 			}
-			return ResponseEntity.ok().body(templateCriteriaGenerationService.getDistinctFields());
+			return ResponseEntity.ok().body(criteriaService.findAll());
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
-	private Templates _createTemplate(String templateName, String description, String displayName) {
+	private Templates _createTemplate(String templateName, String description, String displayName, String criteriaId) {
 		Templates newTemplate = new Templates();
 		String templateId = _getUUID();
 		newTemplate.setId(templateId);
 		newTemplate.setName(templateName);
 		newTemplate.setDescription(description);
 		newTemplate.setDisplayName(displayName);
+		newTemplate.setCriteriaId(criteriaId);
 		return templateService.create(newTemplate);
 	}
 

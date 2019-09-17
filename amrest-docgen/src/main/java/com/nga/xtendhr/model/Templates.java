@@ -22,9 +22,7 @@ import com.nga.xtendhr.config.DBConfiguration;
 
 @Entity
 @Table(name = DBConfiguration.TEMPLATES, schema = DBConfiguration.SCHEMA_NAME)
-@NamedQueries({
-		@NamedQuery(name = "Templates.findByTemplateAndCriteria", query = "SELECT T FROM Templates T WHERE T.id = :id AND T.criteria = :criteria"),
-		@NamedQuery(name = "Templates.findById", query = "SELECT T FROM Templates T WHERE T.id = :id") })
+@NamedQueries({ @NamedQuery(name = "Templates.findById", query = "SELECT T FROM Templates T WHERE T.id = :id") })
 public class Templates {
 	@Id
 	@Column(name = "\"ID\"", columnDefinition = "VARCHAR(32)")
@@ -33,8 +31,8 @@ public class Templates {
 	@Column(name = "\"NAME\"", columnDefinition = "VARCHAR(64)")
 	private String name;
 
-	@Column(name = "\"CRITERIA\"", columnDefinition = "VARCHAR(128)")
-	private String criteria;
+	@Column(name = "\"CRITERIA.ID\"", columnDefinition = "VARCHAR(128)")
+	private String criteriaId;
 
 	@Column(name = "\"DESCRIPTION\"", columnDefinition = "VARCHAR(128)")
 	private String description;
@@ -66,12 +64,12 @@ public class Templates {
 		this.name = name;
 	}
 
-	public String getCriteria() {
-		return criteria;
+	public String getCriteriaId() {
+		return criteriaId;
 	}
 
-	public void setCriteria(String criteria) {
-		this.criteria = criteria;
+	public void setCriteriaId(String criteriaId) {
+		this.criteriaId = criteriaId;
 	}
 
 	public String getDescription() {

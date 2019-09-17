@@ -41,7 +41,7 @@ public class CountrySpecificFields {
 	@Column(name = "\"SEQ\"", columnDefinition = "VARCHAR(32)")
 	private String seq;
 
-	@Column(name = "\"DESCRIPTION\"", columnDefinition = "VARCHAR(32)")
+	@Column(name = "\"DESCRIPTION\"", columnDefinition = "VARCHAR(128)")
 	private String description;
 
 	@ManyToOne(cascade = CascadeType.ALL)

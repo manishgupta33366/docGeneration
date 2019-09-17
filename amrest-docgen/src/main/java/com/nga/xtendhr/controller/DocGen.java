@@ -42,6 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.nga.xtendhr.connection.BatchRequest;
 import com.nga.xtendhr.model.CodelistText;
 import com.nga.xtendhr.model.CountrySpecificFields;
+import com.nga.xtendhr.model.Criteria;
 import com.nga.xtendhr.model.Entities;
 import com.nga.xtendhr.model.Fields;
 import com.nga.xtendhr.model.MapCountryCompanyGroup;
@@ -49,12 +50,12 @@ import com.nga.xtendhr.model.MapGroupTemplates;
 import com.nga.xtendhr.model.MapRuleFields;
 import com.nga.xtendhr.model.MapTemplateFields;
 import com.nga.xtendhr.model.Rules;
-import com.nga.xtendhr.model.TemplateCriteriaGeneration;
 import com.nga.xtendhr.model.TemplateFieldTag;
 import com.nga.xtendhr.model.Templates;
 import com.nga.xtendhr.service.CodelistService;
 import com.nga.xtendhr.service.CodelistTextService;
 import com.nga.xtendhr.service.CountrySpecificFieldsService;
+import com.nga.xtendhr.service.CriteriaService;
 import com.nga.xtendhr.service.EntitiesService;
 import com.nga.xtendhr.service.FieldsService;
 import com.nga.xtendhr.service.MapCountryCompanyGroupService;
@@ -63,7 +64,6 @@ import com.nga.xtendhr.service.MapRuleFieldsService;
 import com.nga.xtendhr.service.MapTemplateFieldsService;
 import com.nga.xtendhr.service.RulesService;
 import com.nga.xtendhr.service.SFDataMappingService;
-import com.nga.xtendhr.service.TemplateCriteriaGenerationService;
 import com.nga.xtendhr.service.TemplateService;
 import com.nga.xtendhr.utility.CommonFunctions;
 import com.nga.xtendhr.utility.CommonVariables;
@@ -94,7 +94,7 @@ public class DocGen {
 	MapGroupTemplatesService mapGroupTemplateService;
 
 	@Autowired
-	TemplateCriteriaGenerationService templateCriteriaGenerationService;
+	CriteriaService criteriaService;
 
 	@Autowired
 	FieldsService fieldsService;
@@ -476,29 +476,28 @@ public class DocGen {
 		List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupID);
 		// Now Iterating for each template assigned to the provided group
 		Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
-		String generatedCriteria;
-		String templateID;
-		List<Templates> tempTemplate;
+		Boolean criteriaValid;
+		Templates tempTemplate;
 		JSONArray response = new JSONArray();
 		MapGroupTemplates tempMapGroupTemplate;
 		JSONObject tempTemplateJsonObject;
 		while (iterator.hasNext()) {
 			tempMapGroupTemplate = iterator.next();
-
+			tempTemplate = tempMapGroupTemplate.getTemplate();
 			// Generating criteria for each template to check if its valid for the loggedIn
 			// user
-			templateID = tempMapGroupTemplate.getTemplateID();
-			generatedCriteria = generateCriteria(templateID, session, false); // forDirectReport false
-			tempTemplate = templateService.findByIdAndCriteria(templateID, generatedCriteria);
-			if (tempTemplate.size() > 0) {
+			criteriaValid = checkCriteria(tempTemplate.getCriteriaId(), session, false); // forDirectReport
+																							// false
+
+			if (criteriaValid) {
 				// check if the template is available in Azure
 				if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
-					tempTemplateJsonObject = new JSONObject(tempTemplate.get(0).toString());
+					tempTemplateJsonObject = new JSONObject(tempTemplate.toString());
 					tempTemplateJsonObject.put("availableInAzure", false);
 					response.put(tempTemplateJsonObject.toString());
 					continue;
 				}
-				response.put(tempTemplate.get(0).toString());
+				response.put(tempTemplate.toString());
 			}
 		}
 		return response.toString();
@@ -703,29 +702,27 @@ public class DocGen {
 		List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupID);
 		// Now Iterating for each template assigned to the provided group
 		Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
-		String generatedCriteria;
-		String templateID;
-		List<Templates> tempTemplate;
+		Templates tempTemplate;
 		JSONArray response = new JSONArray();
 		MapGroupTemplates tempMapGroupTemplate;
 		JSONObject tempTemplateJsonObject;
+		Boolean criteriaValid;
 		while (iterator.hasNext()) {
 			tempMapGroupTemplate = iterator.next();
-
+			tempTemplate = tempMapGroupTemplate.getTemplate();
 			// Generating criteria for each template to check if its valid for the loggedIn
 			// user
-			templateID = tempMapGroupTemplate.getTemplateID();
-			generatedCriteria = generateCriteria(templateID, session, false); // forDirectReport false
-			tempTemplate = templateService.findByIdAndCriteria(templateID, generatedCriteria);
-			if (tempTemplate.size() > 0) {
+			criteriaValid = checkCriteria(tempTemplate.getCriteriaId(), session, false); // forDirectReport
+																							// false
+			if (criteriaValid) {
 				// check if the template is available in Azure
 				if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
-					tempTemplateJsonObject = new JSONObject(tempTemplate.get(0).toString());
+					tempTemplateJsonObject = new JSONObject(tempTemplate.toString());
 					tempTemplateJsonObject.put("availableInAzure", false);
 					response.put(tempTemplateJsonObject.toString());
 					continue;
 				}
-				response.put(tempTemplate.get(0).toString());
+				response.put(tempTemplate.toString());
 			}
 		}
 		return response.toString();
@@ -1233,9 +1230,9 @@ public class DocGen {
 		List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupID);
 		// Now Iterating for each template assigned to the provided group
 		Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
-		String generatedCriteria;
+		Boolean criteriaValid;
 		String templateID;
-		List<Templates> tempTemplate;
+		Templates tempTemplate;
 		JSONArray response = new JSONArray();
 		MapGroupTemplates tempMapGroupTemplate;
 		JSONObject tempTemplateJsonObject;
@@ -1244,18 +1241,17 @@ public class DocGen {
 
 			// Generating criteria for each template to check if its valid for the loggedIn
 			// user
-			templateID = tempMapGroupTemplate.getTemplateID();
-			generatedCriteria = generateCriteria(templateID, session, false); // forDirectReport false
-			tempTemplate = templateService.findByIdAndCriteria(templateID, generatedCriteria);
-			if (tempTemplate.size() > 0) {
+			tempTemplate = tempMapGroupTemplate.getTemplate();
+			criteriaValid = checkCriteria(tempTemplate.getCriteriaId(), session, false); // forDirectReport false
+			if (criteriaValid) {
 				// check if the template is available in Azure
 				if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
-					tempTemplateJsonObject = new JSONObject(tempTemplate.get(0).toString());
+					tempTemplateJsonObject = new JSONObject(tempTemplate.toString());
 					tempTemplateJsonObject.put("availableInAzure", false);
 					response.put(tempTemplateJsonObject.toString());
 					continue;
 				}
-				response.put(tempTemplate.get(0).toString());
+				response.put(tempTemplate.toString());
 			}
 		}
 		return response.toString();
@@ -1327,9 +1323,9 @@ public class DocGen {
 		List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupID);
 		// Now Iterating for each template assigned to the provided group
 		Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
-		String generatedCriteria;
+		Boolean criteriaValid;
 		String templateID;
-		List<Templates> tempTemplate;
+		Templates tempTemplate;
 		JSONArray response = new JSONArray();
 		MapGroupTemplates tempMapGroupTemplate;
 		JSONObject tempTemplateJsonObject;
@@ -1338,18 +1334,20 @@ public class DocGen {
 
 			// Generating criteria for each template to check if its valid for the loggedIn
 			// user
-			templateID = tempMapGroupTemplate.getTemplateID();
-			generatedCriteria = generateCriteria(templateID, session, false); // forDirectReport false
-			tempTemplate = templateService.findByIdAndCriteria(templateID, generatedCriteria);
-			if (tempTemplate.size() > 0) {
+			tempTemplate = tempMapGroupTemplate.getTemplate();
+			// Generating criteria for each template to check if its valid for the user
+			// supplied
+			criteriaValid = checkCriteria(tempTemplate.getCriteriaId(), session, true); // forDirectReport
+			// true
+			if (criteriaValid) {
 				// check if the template is available in Azure
 				if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
-					tempTemplateJsonObject = new JSONObject(tempTemplate.get(0).toString());
+					tempTemplateJsonObject = new JSONObject(tempTemplate.toString());
 					tempTemplateJsonObject.put("availableInAzure", false);
 					response.put(tempTemplateJsonObject.toString());
 					continue;
 				}
-				response.put(tempTemplate.get(0).toString());
+				response.put(tempTemplate.toString());
 			}
 		}
 		return response.toString();
@@ -1453,23 +1451,23 @@ public class DocGen {
 	/*
 	 *** Helper functions Start***
 	 */
-	private String generateCriteria(String templateID, HttpSession session, Boolean forDirectReport)
+	private Boolean checkCriteria(String criteriaID, HttpSession session, Boolean forDirectReport)
 			throws NamingException, BatchException, ClientProtocolException, UnsupportedOperationException,
 			URISyntaxException, IOException, NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException {
-		List<TemplateCriteriaGeneration> templateCriteriaGeneration = templateCriteriaGenerationService
-				.findByTemplateID(templateID); // This will get fields IDs required to generate criteria
+//This function is required to check if the provided criteria is valid for the user or not
+		List<Criteria> criteriaList = criteriaService.findById(criteriaID);
+		// This will get fields IDs required to confirm criteria
 
-		// Now Iterating for each field mapped for Criteria generation
-		Iterator<TemplateCriteriaGeneration> iterator = templateCriteriaGeneration.iterator();
-		String criteria = "";
+		// Now Iterating for each field mapped to Criteria generation
+		Iterator<Criteria> iterator = criteriaList.iterator();
+		Criteria tempCriteria;
 		while (iterator.hasNext()) {
-			criteria = criteria + getFieldValue(iterator.next().getField(), session, forDirectReport, null) + "|";
+			tempCriteria = iterator.next();
+			if (!getFieldValue(tempCriteria.getField(), session, forDirectReport, null).equals(tempCriteria.getValue()))
+				return false;
 		}
-		criteria = criteria.length() > 0 ? criteria.substring(0, criteria.length() - 1) : "";
-		logger.debug("criteria: " + criteria + " for  templateID: " + templateID + " ::: forDirectReport: "
-				+ forDirectReport);
-		return criteria;
+		return true;
 	}
 
 	private String getFieldValue(Fields field, HttpSession session, Boolean forDirectReport, String fieldBasedOnCountry)
