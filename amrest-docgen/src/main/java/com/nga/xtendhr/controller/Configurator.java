@@ -279,9 +279,7 @@ public class Configurator {
 						HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 
-			mapCountryCompanyGroupService.findByCountry(countryID);
-
-			return ResponseEntity.ok().body(templateCriteriaGenerationService.getDistinctFields());
+			return ResponseEntity.ok().body(mapCountryCompanyGroupService.findByCountry(countryID));
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
