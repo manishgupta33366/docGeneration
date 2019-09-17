@@ -215,9 +215,9 @@ public class Configurator {
 	@RequestMapping(value = "/uploadTemplate", method = RequestMethod.POST)
 	public ResponseEntity<?> upload(@RequestParam(name = "templateName") String templateName,
 			@RequestParam(name = "description") String description, @RequestParam(name = "criteria") String criteria,
-			@RequestParam(name = "displayName") String displayName, @RequestParam(name = "groupId") String groupId,
-			@RequestParam(name = "companyId") String CompanyId, @RequestParam("file") MultipartFile multipartFile,
-			HttpSession session) {
+			@RequestParam(name = "displayName") String displayName, @RequestParam(name = "countryId") String countryId,
+			@RequestParam(name = "companyId") String companyId, @RequestParam(name = "groupId") String groupId,
+			@RequestParam("file") MultipartFile multipartFile, HttpSession session) {
 		// String filename = file.getOriginalFilename();
 		try {
 
@@ -236,6 +236,11 @@ public class Configurator {
 						"Error! You are not authorized to access this resource! This event has been logged!",
 						HttpStatus.INTERNAL_SERVER_ERROR);
 			}
+
+			if (mapCountryCompanyGroupService.findByGroupCountryCompany(groupId, countryId, companyId).size() == 0)
+				return new ResponseEntity<>(
+						"Error! Failed! No corresponding entry for provided Country Company and Group.",
+						HttpStatus.INTERNAL_SERVER_ERROR);
 			// byte bytesArr[] = null;
 			String fileName = multipartFile.getOriginalFilename();
 
@@ -268,7 +273,7 @@ public class Configurator {
 			 */
 			else if (session.getAttribute("adminLoginStatus") == null) {
 				logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
-						+ ", which is not an admin in SF, tried to access TableNames in configurator App.");
+						+ ", which is not an admin in SF, tried to access getCompaniesAndGroupsFromCountry Endpoint in configurator App.");
 				return new ResponseEntity<>(
 						"Error! You are not authorized to access this resource! This event has been logged!",
 						HttpStatus.INTERNAL_SERVER_ERROR);
@@ -296,7 +301,7 @@ public class Configurator {
 			 */
 			else if (session.getAttribute("adminLoginStatus") == null) {
 				logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
-						+ ", which is not an admin in SF, tried to access TableNames in configurator App.");
+						+ ", which is not an admin in SF, tried to access getCriteriaFields Endpoint in configurator App.");
 				return new ResponseEntity<>(
 						"Error! You are not authorized to access this resource! This event has been logged!",
 						HttpStatus.INTERNAL_SERVER_ERROR);
