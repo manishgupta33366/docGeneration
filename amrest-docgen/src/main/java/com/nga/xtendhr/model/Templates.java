@@ -31,9 +31,6 @@ public class Templates {
 	@Column(name = "\"NAME\"", columnDefinition = "VARCHAR(64)")
 	private String name;
 
-	@Column(name = "\"CRITERIA.ID\"", columnDefinition = "VARCHAR(128)")
-	private String criteriaId;
-
 	@Column(name = "\"DESCRIPTION\"", columnDefinition = "VARCHAR(128)")
 	private String description;
 
@@ -62,14 +59,6 @@ public class Templates {
 
 	public void setName(String name) {
 		this.name = name;
-	}
-
-	public String getCriteriaId() {
-		return criteriaId;
-	}
-
-	public void setCriteriaId(String criteriaId) {
-		this.criteriaId = criteriaId;
 	}
 
 	public String getDescription() {

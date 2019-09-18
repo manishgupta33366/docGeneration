@@ -38,9 +38,20 @@ public class TemplateCriteriaGeneration {
 	@Column(name = "\"SEQ\"", columnDefinition = "INTEGER")
 	private Integer seq;
 
+	@Column(name = "\"VALUE\"", columnDefinition = "VARCHAR(32)")
+	private String value;
+
 	@ManyToOne(cascade = CascadeType.ALL)
 	@JoinColumn(name = "\"FIELD.ID\"", referencedColumnName = "\"ID\"", insertable = false, updatable = false)
 	private Fields field;
+
+	public String getValue() {
+		return value;
+	}
+
+	public void setValue(String value) {
+		this.value = value;
+	}
 
 	public String getTemplateID() {
 		return templateID;

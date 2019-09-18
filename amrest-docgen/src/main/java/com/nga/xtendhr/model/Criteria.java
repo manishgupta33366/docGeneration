@@ -1,11 +1,10 @@
 package com.nga.xtendhr.model;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 
 import com.nga.xtendhr.config.DBConfiguration;
@@ -21,6 +20,8 @@ import com.nga.xtendhr.config.DBConfiguration;
 
 @Entity
 @Table(name = DBConfiguration.CRITERIA, schema = DBConfiguration.SCHEMA_NAME)
+@NamedQueries({ @NamedQuery(name = "Criteria.selectAll", query = "SELECT C FROM Criteria C") })
+
 public class Criteria {
 
 	@Id
@@ -30,22 +31,8 @@ public class Criteria {
 	@Column(name = "\"NAME\"", columnDefinition = "VARCHAR(32)")
 	private String name;
 
-	@Id
-	@Column(name = "\"FIELD.ID\"", columnDefinition = "VARCHAR(32)")
-	private String fieldId;
-
-	@Column(name = "\"VALUE\"", columnDefinition = "VARCHAR(32)")
-	private String value;
-
-	@Column(name = "\"SEQ\"", columnDefinition = "INTEGER")
-	private String seq;
-
 	@Column(name = "\"DESCRIPTION\"", columnDefinition = "VARCHAR(128)")
 	private String description;
-
-	@ManyToOne(cascade = CascadeType.ALL)
-	@JoinColumn(name = "\"FIELD.ID\"", referencedColumnName = "\"ID\"", insertable = false, updatable = false)
-	private Fields field;
 
 	public String getId() {
 		return id;
@@ -63,44 +50,12 @@ public class Criteria {
 		this.name = name;
 	}
 
-	public String getFieldId() {
-		return fieldId;
-	}
-
-	public void setFieldId(String fieldId) {
-		this.fieldId = fieldId;
-	}
-
-	public String getValue() {
-		return value;
-	}
-
-	public void setValue(String value) {
-		this.value = value;
-	}
-
-	public String getSeq() {
-		return seq;
-	}
-
-	public void setSeq(String seq) {
-		this.seq = seq;
-	}
-
 	public String getDescription() {
 		return description;
 	}
 
 	public void setDescription(String description) {
 		this.description = description;
-	}
-
-	public Fields getField() {
-		return field;
-	}
-
-	public void setField(Fields field) {
-		this.field = field;
 	}
 
 }

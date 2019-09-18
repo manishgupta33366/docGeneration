@@ -44,12 +44,4 @@ public class CriteriaServiceImp implements CriteriaService {
 		List<Criteria> items = query.getResultList();
 		return items;
 	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public List<Criteria> findById(String id) {
-		Query query = em.createNamedQuery("Criteria.FindByID").setParameter("id", id);
-		List<Criteria> items = query.getResultList();
-		return items;
-	}
 }

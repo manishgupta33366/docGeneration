@@ -12,6 +12,4 @@ public interface CriteriaService {
 	public void delete(Criteria item);
 
 	public List<Criteria> findAll();
-
-	public List<Criteria> findById(String id);
 }
