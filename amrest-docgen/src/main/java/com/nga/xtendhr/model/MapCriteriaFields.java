@@ -67,7 +67,7 @@ public class MapCriteriaFields {
 	public String toString() {// overriding the toString() method
 		JSONObject obj = new JSONObject();
 		obj.put("criteriaId", this.getCriteriaId());
-		obj.put("fieldId", this.getFieldId());
+		obj.put("field", this.getField().toString());
 		return obj.toString();
 	}
 

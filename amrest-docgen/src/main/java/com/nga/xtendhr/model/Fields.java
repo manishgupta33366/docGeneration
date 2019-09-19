@@ -10,6 +10,8 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 
+import org.json.JSONObject;
+
 import com.nga.xtendhr.config.DBConfiguration;
 
 /*
@@ -140,4 +142,16 @@ public class Fields {
 		this.defaultValue = defaultValue;
 	}
 
+	public String toString() {// overriding the toString() method
+		JSONObject obj = new JSONObject();
+		obj.put("id", this.getId());
+		obj.put("technicalName", this.getTechnicalName());
+		obj.put("entityID", this.getEntityID());
+		obj.put("selectOption", this.getSelectOption());
+		obj.put("valueFromPath", this.getValueFromPath());
+		obj.put("ruleID", this.getRuleID());
+		obj.put("defaultValue", this.getDefaultValue());
+		obj.put("description", this.getDescription());
+		return obj.toString();
+	}
 }
