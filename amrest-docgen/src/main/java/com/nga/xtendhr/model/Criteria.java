@@ -7,6 +7,8 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 
+import org.json.JSONObject;
+
 import com.nga.xtendhr.config.DBConfiguration;
 
 /*
@@ -58,4 +60,11 @@ public class Criteria {
 		this.description = description;
 	}
 
+	public String toString() {// overriding the toString() method
+		JSONObject obj = new JSONObject();
+		obj.put("id", this.getId());
+		obj.put("name", this.getName());
+		obj.put("description", this.getDescription());
+		return obj.toString();
+	}
 }

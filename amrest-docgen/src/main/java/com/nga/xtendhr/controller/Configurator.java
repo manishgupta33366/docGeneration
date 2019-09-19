@@ -256,9 +256,9 @@ public class Configurator {
 				return ResponseEntity.ok().body(response.toString());
 			default:
 				// code block
+				return ResponseEntity.ok().body(configurableTablesService.findAll());
 			}
 
-			return ResponseEntity.ok().body(configurableTablesService.findAll());
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);

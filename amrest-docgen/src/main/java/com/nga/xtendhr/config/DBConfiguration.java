@@ -27,10 +27,10 @@ public class DBConfiguration {
 	public static final String TEMPLATE_FIELD_TAG = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGEN_TEMPALTE_FIELD_TAG\"";
 	public static final String COUNTRY_SPECIFIC_FIELDS = "\"" + ARTIFACT_PATH + TABLE_PATH
 			+ "DGEN_COUNTRY_SPECIFIC_FIELDS\"";
-	public static final String CRITERIA = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGEN_CRITERIA\"";
+	public static final String CRITERIA = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGENC_CRITERIA\"";
 	public static final String SF_DATA_MAPPING = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGEN_SF_DATA_MAPPING\"";
 	public static final String MAP_CRITERIA_FIELDS = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGENC_MAP_CRITERIA_FIELDS\"";
 	public static final String MAP_TEMPLATE_CRITERIA_VALUES = "\"" + ARTIFACT_PATH + TABLE_PATH
-			+ "DGEN_MAP_TEMPLATE_CRITERIA_VALUES\"";
+			+ "DGENC_MAP_TEMPLATE_CRITERIA_VALUES\"";
 
 }

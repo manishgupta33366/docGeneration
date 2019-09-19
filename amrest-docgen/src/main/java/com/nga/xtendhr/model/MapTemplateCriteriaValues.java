@@ -10,6 +10,8 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 
+import org.json.JSONObject;
+
 import com.nga.xtendhr.config.DBConfiguration;
 
 /*
@@ -87,4 +89,12 @@ public class MapTemplateCriteriaValues {
 		this.value = value;
 	}
 
+	public String toString() {// overriding the toString() method
+		JSONObject obj = new JSONObject();
+		obj.put("templateId", this.getTemplateId());
+		obj.put("criteriaId", this.getCriteriaId());
+		obj.put("fieldId", this.getFieldId());
+		obj.put("value", this.getValue());
+		return obj.toString();
+	}
 }
