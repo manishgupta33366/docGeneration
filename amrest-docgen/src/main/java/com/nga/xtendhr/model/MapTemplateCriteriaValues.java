@@ -42,9 +42,35 @@ public class MapTemplateCriteriaValues {
 	@Column(name = "\"FIELD.ID\"", columnDefinition = "VARCHAR(32)")
 	private String fieldId;
 
+	@Column(name = "\"VALUE\"", columnDefinition = "VARCHAR(32)")
+	private String value;
+
+	@Column(name = "\"OPERATOR.ID\"", columnDefinition = "VARCHAR(32)")
+	private String operatorId;
+
 	@ManyToOne(cascade = CascadeType.ALL)
 	@JoinColumn(name = "\"FIELD.ID\"", referencedColumnName = "\"ID\"", insertable = false, updatable = false)
 	private Fields field;
+
+	@ManyToOne(cascade = CascadeType.ALL)
+	@JoinColumn(name = "\"OPERATOR.ID\"", referencedColumnName = "\"ID\"", insertable = false, updatable = false)
+	private Operators operator;
+
+	public Operators getOperator() {
+		return operator;
+	}
+
+	public void setOperator(Operators operator) {
+		this.operator = operator;
+	}
+
+	public String getOperatorId() {
+		return operatorId;
+	}
+
+	public void setOperatorId(String operatorId) {
+		this.operatorId = operatorId;
+	}
 
 	public Fields getField() {
 		return field;
@@ -61,9 +87,6 @@ public class MapTemplateCriteriaValues {
 	public void setCriteriaId(String criteriaId) {
 		this.criteriaId = criteriaId;
 	}
-
-	@Column(name = "\"VALUE\"", columnDefinition = "VARCHAR(32)")
-	private String value;
 
 	public String getTemplateId() {
 		return templateId;
@@ -95,6 +118,7 @@ public class MapTemplateCriteriaValues {
 		obj.put("criteriaId", this.getCriteriaId());
 		obj.put("fieldId", this.getFieldId());
 		obj.put("value", this.getValue());
+		obj.put("operator", this.getOperator().toString());
 		return obj.toString();
 	}
 }

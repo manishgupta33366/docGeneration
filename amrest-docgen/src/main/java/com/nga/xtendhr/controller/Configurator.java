@@ -29,9 +29,11 @@ import com.nga.xtendhr.model.Countries;
 import com.nga.xtendhr.model.Criteria;
 import com.nga.xtendhr.model.Groups;
 import com.nga.xtendhr.model.MapCriteriaFields;
+import com.nga.xtendhr.model.MapFieldOperators;
 import com.nga.xtendhr.model.MapGroupTemplates;
 import com.nga.xtendhr.model.MapTemplateCriteriaValues;
 import com.nga.xtendhr.model.MapTemplateFields;
+import com.nga.xtendhr.model.Operators;
 import com.nga.xtendhr.model.Templates;
 import com.nga.xtendhr.service.CodelistService;
 import com.nga.xtendhr.service.CodelistTextService;
@@ -45,10 +47,12 @@ import com.nga.xtendhr.service.FieldsService;
 import com.nga.xtendhr.service.GroupsService;
 import com.nga.xtendhr.service.MapCountryCompanyGroupService;
 import com.nga.xtendhr.service.MapCriteriaFieldsService;
+import com.nga.xtendhr.service.MapFieldOperatorsService;
 import com.nga.xtendhr.service.MapGroupTemplatesService;
 import com.nga.xtendhr.service.MapRuleFieldsService;
 import com.nga.xtendhr.service.MapTemplateCriteriaValuesService;
 import com.nga.xtendhr.service.MapTemplateFieldsService;
+import com.nga.xtendhr.service.OperatorsService;
 import com.nga.xtendhr.service.RulesService;
 import com.nga.xtendhr.service.TemplateService;
 import com.nga.xtendhr.utility.WordFileProcessing;
@@ -112,6 +116,12 @@ public class Configurator {
 	@Autowired
 	MapTemplateCriteriaValuesService mapTemplateCriteriaValuesService;
 
+	@Autowired
+	OperatorsService operatorsService;
+
+	@Autowired
+	MapFieldOperatorsService mapFieldOperatorsService;
+
 	@GetMapping(value = "/getConfigurableTables")
 	public ResponseEntity<?> getTableNames(HttpServletRequest request) {
 
@@ -141,7 +151,8 @@ public class Configurator {
 	}
 
 	@GetMapping(value = "/getTableData")
-	public ResponseEntity<?> getTableData(@RequestParam(name = "tableID") String tableID, HttpServletRequest request) {
+	public ResponseEntity<?> getTableData(@RequestParam(name = "tableID") String tableID,
+			@RequestParam(value = "tableId", required = false) String tableId, HttpServletRequest request) {
 		try {
 			HttpSession session = request.getSession(false);// false is not create new session and use the existing
 			if (session.getAttribute("loginStatus") == null) {
@@ -254,6 +265,38 @@ public class Configurator {
 				response.put("columns", configurableColumns);
 				response.put("data", responseDataArray);
 				return ResponseEntity.ok().body(response.toString());
+			case DBConfiguration.OPERATORS:
+				List<Operators> operators = operatorsService.findAll();
+				for (int i = 0; i < operators.size(); i++) {
+					tempObj = new JSONObject();
+					tempCountryJsonObj = new JSONObject(operators.get(i).toString());
+					for (int j = 0; j < columnNames.size(); j++) {
+						tempObj.put(columnNames.get(j), tempCountryJsonObj.get(columnNames.get(j)));
+					}
+					responseDataArray.put(tempObj);
+				}
+				response.put("columns", configurableColumns);
+				response.put("data", responseDataArray);
+				return ResponseEntity.ok().body(response.toString());
+			case DBConfiguration.MAP_FIELD_OPERATORS:
+				List<MapFieldOperators> mapFieldOperators;
+				if (tableId == null) {
+					mapFieldOperators = mapFieldOperatorsService.findAll();
+				} else {
+					mapFieldOperators = mapFieldOperatorsService.findByFieldId(tableId);
+				}
+				for (int i = 0; i < mapFieldOperators.size(); i++) {
+					tempObj = new JSONObject();
+					tempCountryJsonObj = new JSONObject(mapFieldOperators.get(i).toString());
+					for (int j = 0; j < columnNames.size(); j++) {
+						tempObj.put(columnNames.get(j), tempCountryJsonObj.get(columnNames.get(j)));
+					}
+					responseDataArray.put(tempObj);
+				}
+				response.put("columns", configurableColumns);
+				response.put("data", responseDataArray);
+				return ResponseEntity.ok().body(response.toString());
+
 			default:
 				// code block
 				return ResponseEntity.ok().body(configurableTablesService.findAll());
@@ -343,6 +386,7 @@ public class Configurator {
 				mapTemplateCriteriaValues.setCriteriaId(tempObj.getString("criteriaId"));
 				mapTemplateCriteriaValues.setFieldId(tempObj.getString("fieldId"));
 				mapTemplateCriteriaValues.setValue(tempObj.getString("value"));
+				mapTemplateCriteriaValues.setOperatorId(tempObj.getString("operatorId"));
 				mapTemplateCriteriaValuesService.create(mapTemplateCriteriaValues);
 			}
 			return ResponseEntity.ok().body("Success! All criteria fields Mapped.");

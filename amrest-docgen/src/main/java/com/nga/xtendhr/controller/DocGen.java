@@ -1465,9 +1465,30 @@ public class DocGen {
 		MapTemplateCriteriaValues tempMapTemplateCriteriaValues;
 		while (iterator.hasNext()) {
 			tempMapTemplateCriteriaValues = iterator.next();
-			if (!getFieldValue(tempMapTemplateCriteriaValues.getField(), session, forDirectReport, null)
-					.equals(tempMapTemplateCriteriaValues.getValue()))
-				return false;
+
+			switch (tempMapTemplateCriteriaValues.getOperator().getSign()) {
+			case "==":
+				if (!getFieldValue(tempMapTemplateCriteriaValues.getField(), session, forDirectReport, null)
+						.equals(tempMapTemplateCriteriaValues.getValue()))
+					return false;
+			case ">":
+				if (!(Integer.parseInt(getFieldValue(tempMapTemplateCriteriaValues.getField(), session, forDirectReport,
+						null)) > Integer.parseInt(tempMapTemplateCriteriaValues.getValue())))
+					return false;
+			case "<":
+				if (!(Integer.parseInt(getFieldValue(tempMapTemplateCriteriaValues.getField(), session, forDirectReport,
+						null)) < Integer.parseInt(tempMapTemplateCriteriaValues.getValue())))
+					return false;
+			case ">=":
+				if (!(Integer.parseInt(getFieldValue(tempMapTemplateCriteriaValues.getField(), session, forDirectReport,
+						null)) >= Integer.parseInt(tempMapTemplateCriteriaValues.getValue())))
+					return false;
+			case "<=":
+				if (!(Integer.parseInt(getFieldValue(tempMapTemplateCriteriaValues.getField(), session, forDirectReport,
+						null)) <= Integer.parseInt(tempMapTemplateCriteriaValues.getValue())))
+					return false;
+			}
+
 		}
 		return true;
 	}
