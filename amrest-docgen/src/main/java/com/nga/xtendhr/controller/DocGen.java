@@ -455,50 +455,57 @@ public class DocGen {
 		 *** Security Check *** Checking if groupID passed from UI is actually available
 		 * for the userID provided from the UI
 		 */
-		String groupID = requestData.getString("groupID");// groupID passed from UI
-		String loggerInUser = (String) session.getAttribute("loggedInUser");
-		Boolean groupAvailableCheck = mapCountryCompanyGroupService
-				.findByGroupCountryCompany(groupID, directReportCountryID, directReportCompanyID).size() == 1 ? true
-						: false;
-		if (!groupAvailableCheck) {
-			logger.error("Unauthorized access! User: " + loggerInUser
-					+ " Tried accessing templates of group that is not available for user provided from UI userID:"
-					+ requestData.getString("userID") + " groupID: " + groupID);
-			return "You are not authorized to access this data! This event has been logged!";
-		}
+		JSONArray groupIdArray = requestData.getJSONArray("groupID");
+		JSONObject response = new JSONObject();
+		String groupID;
+		for (int i = 0; i < groupIdArray.length(); i++) {
+			groupID = groupIdArray.getString(i);// groupID passed from UI
 
-		// get available Templates in Azure from Session
-		@SuppressWarnings("unchecked")
-		Map<String, JSONObject> templatesAvailableInAzure = (Map<String, JSONObject>) session
-				.getAttribute("availableTemplatesForDirectReport");
-
-		// Now getting templates those are available for the userID provided from UI
-		List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupID);
-		// Now Iterating for each template assigned to the provided group
-		Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
-		Boolean criteriaSatisfied;
-		String templateID;
-		Templates tempTemplate;
-		JSONArray response = new JSONArray();
-		MapGroupTemplates tempMapGroupTemplate;
-		JSONObject tempTemplateJsonObject;
-		while (iterator.hasNext()) {
-			tempMapGroupTemplate = iterator.next();
-			tempTemplate = tempMapGroupTemplate.getTemplate();
-			// Generating criteria for each template to check if its valid for the loggedIn
-			// user
-			templateID = tempMapGroupTemplate.getTemplateID();
-			criteriaSatisfied = checkCriteria(templateID, session, true); // forDirectReport true
-			if (criteriaSatisfied) {
-				// check if the template is available in Azure
-				if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
-					tempTemplateJsonObject = new JSONObject(tempTemplate.toString());
-					tempTemplateJsonObject.put("availableInAzure", false);
-					response.put(tempTemplateJsonObject.toString());
-					continue;
-				}
-				response.put(tempTemplate.toString());
+			String loggerInUser = (String) session.getAttribute("loggedInUser");
+			Boolean groupAvailableCheck = mapCountryCompanyGroupService
+					.findByGroupCountryCompany(groupID, directReportCountryID, directReportCompanyID).size() == 1 ? true
+							: false;
+			if (!groupAvailableCheck) {
+				logger.error("Unauthorized access! User: " + loggerInUser
+						+ " Tried accessing templates of group that is not available for user provided from UI userID:"
+						+ requestData.getString("userID") + " groupID: " + groupID);
+				return "You are not authorized to access this data! This event has been logged!";
 			}
+
+			// get available Templates in Azure from Session
+			@SuppressWarnings("unchecked")
+			Map<String, JSONObject> templatesAvailableInAzure = (Map<String, JSONObject>) session
+					.getAttribute("availableTemplatesForDirectReport");
+
+			// Now getting templates those are available for the userID provided from UI
+			List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupID);
+			// Now Iterating for each template assigned to the provided group
+			Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
+			Boolean criteriaSatisfied;
+			String templateID;
+			Templates tempTemplate;
+			JSONArray tempResponse = new JSONArray();
+			MapGroupTemplates tempMapGroupTemplate;
+			JSONObject tempTemplateJsonObject;
+			while (iterator.hasNext()) {
+				tempMapGroupTemplate = iterator.next();
+				tempTemplate = tempMapGroupTemplate.getTemplate();
+				// Generating criteria for each template to check if its valid for the loggedIn
+				// user
+				templateID = tempMapGroupTemplate.getTemplateID();
+				criteriaSatisfied = checkCriteria(templateID, session, true); // forDirectReport true
+				if (criteriaSatisfied) {
+					// check if the template is available in Azure
+					if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
+						tempTemplateJsonObject = new JSONObject(tempTemplate.toString());
+						tempTemplateJsonObject.put("availableInAzure", false);
+						tempResponse.put(tempTemplateJsonObject.toString());
+						continue;
+					}
+					tempResponse.put(tempTemplate.toString());
+				}
+			}
+			response.put(groupID, tempResponse);
 		}
 		return response.toString();
 	}
@@ -685,46 +692,54 @@ public class DocGen {
 		String countryID = ruleData.getString(mapRuleField.get(0).getField().getTechnicalName());
 		String companyID = ruleData.getString(mapRuleField.get(1).getField().getTechnicalName());
 
-		JSONObject requestObj = new JSONObject((String) session.getAttribute("requestData"));
-		String groupID = requestObj.getString("groupID");// groupID passed from UI
+		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
 
-		Boolean groupAvailableCheck = mapCountryCompanyGroupService
-				.findByGroupCountryCompany(groupID, countryID, companyID).size() == 1 ? true : false;
-		if (!groupAvailableCheck) {
-			logger.error("Unauthorized access! User: " + (String) session.getAttribute("loggedInUser")
-					+ " Tried accessing templates of group that is not available for this user. groupID: " + groupID);
-			return "You are not authorized to access this data! This event has been logged!";
-		}
-		// get available Templates in Azure from Session
-		@SuppressWarnings("unchecked")
-		Map<String, JSONObject> templatesAvailableInAzure = (Map<String, JSONObject>) session
-				.getAttribute("availableTemplatesInAzure");
-		List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupID);
-		// Now Iterating for each template assigned to the provided group
-		Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
-		Boolean criteriaSatisfied;
-		String templateID;
-		Templates tempTemplate;
-		JSONArray response = new JSONArray();
-		MapGroupTemplates tempMapGroupTemplate;
-		JSONObject tempTemplateJsonObject;
-		while (iterator.hasNext()) {
-			tempMapGroupTemplate = iterator.next();
-			tempTemplate = tempMapGroupTemplate.getTemplate();
-			// Generating criteria for each template to check if its valid for the loggedIn
-			// user
-			templateID = tempMapGroupTemplate.getTemplateID();
-			criteriaSatisfied = checkCriteria(templateID, session, false); // forDirectReport false
-			if (criteriaSatisfied) {
-				// check if the template is available in Azure
-				if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
-					tempTemplateJsonObject = new JSONObject(tempTemplate.toString());
-					tempTemplateJsonObject.put("availableInAzure", false);
-					response.put(tempTemplateJsonObject.toString());
-					continue;
-				}
-				response.put(tempTemplate.toString());
+		JSONArray groupIdArray = requestData.getJSONArray("groupID");
+		JSONObject response = new JSONObject();
+		String groupID;
+		for (int i = 0; i < groupIdArray.length(); i++) {
+			groupID = groupIdArray.getString(i);// groupID passed from UI
+
+			Boolean groupAvailableCheck = mapCountryCompanyGroupService
+					.findByGroupCountryCompany(groupID, countryID, companyID).size() == 1 ? true : false;
+			if (!groupAvailableCheck) {
+				logger.error("Unauthorized access! User: " + (String) session.getAttribute("loggedInUser")
+						+ " Tried accessing templates of group that is not available for this user. groupID: "
+						+ groupID);
+				return "You are not authorized to access this data! This event has been logged!";
 			}
+			// get available Templates in Azure from Session
+			@SuppressWarnings("unchecked")
+			Map<String, JSONObject> templatesAvailableInAzure = (Map<String, JSONObject>) session
+					.getAttribute("availableTemplatesInAzure");
+			List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupID);
+			// Now Iterating for each template assigned to the provided group
+			Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
+			Boolean criteriaSatisfied;
+			String templateID;
+			Templates tempTemplate;
+			JSONArray tempResponse = new JSONArray();
+			MapGroupTemplates tempMapGroupTemplate;
+			JSONObject tempTemplateJsonObject;
+			while (iterator.hasNext()) {
+				tempMapGroupTemplate = iterator.next();
+				tempTemplate = tempMapGroupTemplate.getTemplate();
+				// Generating criteria for each template to check if its valid for the loggedIn
+				// user
+				templateID = tempMapGroupTemplate.getTemplateID();
+				criteriaSatisfied = checkCriteria(templateID, session, false); // forDirectReport false
+				if (criteriaSatisfied) {
+					// check if the template is available in Azure
+					if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
+						tempTemplateJsonObject = new JSONObject(tempTemplate.toString());
+						tempTemplateJsonObject.put("availableInAzure", false);
+						tempResponse.put(tempTemplateJsonObject.toString());
+						continue;
+					}
+					tempResponse.put(tempTemplate.toString());
+				}
+			}
+			response.put(groupID, tempResponse);
 		}
 		return response.toString();
 	}
@@ -1215,46 +1230,52 @@ public class DocGen {
 		String companyID = ruleData.getString(mapRuleField.get(1).getField().getTechnicalName());
 		Boolean isManager = Boolean.parseBoolean(ruleData.getString(mapRuleField.get(2).getField().getTechnicalName()));
 
-		JSONObject requestObj = new JSONObject((String) session.getAttribute("requestData"));
-		String groupID = requestObj.getString("groupID");// groupID passed from UI
-
-		Boolean groupAvailableCheck = mapCountryCompanyGroupService
-				.findByGroupCountryCompany(groupID, countryID, companyID, isManager).size() == 1 ? true : false;
-		if (!groupAvailableCheck) {
-			logger.error("Unauthorized access! User: " + (String) session.getAttribute("loggedInUser")
-					+ " Tried accessing templates of group that is not available for this user. groupID: " + groupID);
-			return "You are not authorized to access this data! This event has been logged!";
-		}
-		// get available Templates in Azure from Session
-		@SuppressWarnings("unchecked")
-		Map<String, JSONObject> templatesAvailableInAzure = (Map<String, JSONObject>) session
-				.getAttribute("availableTemplatesInAzure");
-		List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupID);
-		// Now Iterating for each template assigned to the provided group
-		Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
-		Boolean criteriaSatisfied;
-		String templateID;
-		Templates tempTemplate;
-		JSONArray response = new JSONArray();
-		MapGroupTemplates tempMapGroupTemplate;
-		JSONObject tempTemplateJsonObject;
-		while (iterator.hasNext()) {
-			tempMapGroupTemplate = iterator.next();
-			tempTemplate = tempMapGroupTemplate.getTemplate();
-			// Generating criteria for each template to check if its valid for the loggedIn
-			// user
-			templateID = tempMapGroupTemplate.getTemplateID();
-			criteriaSatisfied = checkCriteria(templateID, session, false); // forDirectReport false
-			if (criteriaSatisfied) {
-				// check if the template is available in Azure
-				if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
-					tempTemplateJsonObject = new JSONObject(tempTemplate.toString());
-					tempTemplateJsonObject.put("availableInAzure", false);
-					response.put(tempTemplateJsonObject.toString());
-					continue;
-				}
-				response.put(tempTemplate.toString());
+		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
+		JSONArray groupIdArray = requestData.getJSONArray("groupID");
+		JSONObject response = new JSONObject();
+		String groupID;
+		for (int i = 0; i < groupIdArray.length(); i++) {
+			groupID = groupIdArray.getString(i);// groupID passed from UI
+			Boolean groupAvailableCheck = mapCountryCompanyGroupService
+					.findByGroupCountryCompany(groupID, countryID, companyID, isManager).size() == 1 ? true : false;
+			if (!groupAvailableCheck) {
+				logger.error("Unauthorized access! User: " + (String) session.getAttribute("loggedInUser")
+						+ " Tried accessing templates of group that is not available for this user. groupID: "
+						+ groupID);
+				return "You are not authorized to access this data! This event has been logged!";
 			}
+			// get available Templates in Azure from Session
+			@SuppressWarnings("unchecked")
+			Map<String, JSONObject> templatesAvailableInAzure = (Map<String, JSONObject>) session
+					.getAttribute("availableTemplatesInAzure");
+			List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupID);
+			// Now Iterating for each template assigned to the provided group
+			Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
+			Boolean criteriaSatisfied;
+			String templateID;
+			Templates tempTemplate;
+			JSONArray tempResponse = new JSONArray();
+			MapGroupTemplates tempMapGroupTemplate;
+			JSONObject tempTemplateJsonObject;
+			while (iterator.hasNext()) {
+				tempMapGroupTemplate = iterator.next();
+				tempTemplate = tempMapGroupTemplate.getTemplate();
+				// Generating criteria for each template to check if its valid for the loggedIn
+				// user
+				templateID = tempMapGroupTemplate.getTemplateID();
+				criteriaSatisfied = checkCriteria(templateID, session, false); // forDirectReport false
+				if (criteriaSatisfied) {
+					// check if the template is available in Azure
+					if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
+						tempTemplateJsonObject = new JSONObject(tempTemplate.toString());
+						tempTemplateJsonObject.put("availableInAzure", false);
+						tempResponse.put(tempTemplateJsonObject.toString());
+						continue;
+					}
+					tempResponse.put(tempTemplate.toString());
+				}
+			}
+			response.put(groupID, tempResponse);
 		}
 		return response.toString();
 	}
@@ -1305,50 +1326,57 @@ public class DocGen {
 		 *** Security Check *** Checking if groupID passed from UI is actually available
 		 * for the userID provided from the UI
 		 */
-		String groupID = requestData.getString("groupID");// groupID passed from UI
-		Boolean groupAvailableCheck = mapCountryCompanyGroupService
-				.findByGroupCountryCompany(groupID, directReportCountryID, directReportCompanyID, false).size() == 1
-						? true
-						: false;
-		if (!groupAvailableCheck) {
-			logger.error("Unauthorized access! User: " + loggerInUser
-					+ " Tried accessing templates of group that is not available for user provided from UI userID:"
-					+ requestData.getString("userID") + " groupID: " + groupID);
-			return "You are not authorized to access this data! This event has been logged!";
-		}
+		JSONArray groupIdArray = requestData.getJSONArray("groupID");
+		JSONObject response = new JSONObject();
+		String groupID;
+		for (int i = 0; i < groupIdArray.length(); i++) {
+			groupID = groupIdArray.getString(i);// groupID passed from UI
 
-		// get available Templates in Azure from Session
-		@SuppressWarnings("unchecked")
-		Map<String, JSONObject> templatesAvailableInAzure = (Map<String, JSONObject>) session
-				.getAttribute("availableTemplatesForDirectReport");
-
-		// Now getting templates those are available for the userID provided from UI
-		List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupID);
-		// Now Iterating for each template assigned to the provided group
-		Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
-		Boolean criteriaSatisfied;
-		String templateID;
-		Templates tempTemplate;
-		JSONArray response = new JSONArray();
-		MapGroupTemplates tempMapGroupTemplate;
-		JSONObject tempTemplateJsonObject;
-		while (iterator.hasNext()) {
-			tempMapGroupTemplate = iterator.next();
-			tempTemplate = tempMapGroupTemplate.getTemplate();
-			// Generating criteria for each template to check if its valid for the loggedIn
-			// user
-			templateID = tempMapGroupTemplate.getTemplateID();
-			criteriaSatisfied = checkCriteria(templateID, session, true); // forDirectReport false
-			if (criteriaSatisfied) {
-				// check if the template is available in Azure
-				if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
-					tempTemplateJsonObject = new JSONObject(tempTemplate.toString());
-					tempTemplateJsonObject.put("availableInAzure", false);
-					response.put(tempTemplateJsonObject.toString());
-					continue;
-				}
-				response.put(tempTemplate.toString());
+			Boolean groupAvailableCheck = mapCountryCompanyGroupService
+					.findByGroupCountryCompany(groupID, directReportCountryID, directReportCompanyID, false).size() == 1
+							? true
+							: false;
+			if (!groupAvailableCheck) {
+				logger.error("Unauthorized access! User: " + loggerInUser
+						+ " Tried accessing templates of group that is not available for user provided from UI userID:"
+						+ requestData.getString("userID") + " groupID: " + groupID);
+				return "You are not authorized to access this data! This event has been logged!";
 			}
+
+			// get available Templates in Azure from Session
+			@SuppressWarnings("unchecked")
+			Map<String, JSONObject> templatesAvailableInAzure = (Map<String, JSONObject>) session
+					.getAttribute("availableTemplatesForDirectReport");
+
+			// Now getting templates those are available for the userID provided from UI
+			List<MapGroupTemplates> mapGroupTemplate = mapGroupTemplateService.findByGroupID(groupID);
+			// Now Iterating for each template assigned to the provided group
+			Iterator<MapGroupTemplates> iterator = mapGroupTemplate.iterator();
+			Boolean criteriaSatisfied;
+			String templateID;
+			Templates tempTemplate;
+			JSONArray tempResponse = new JSONArray();
+			MapGroupTemplates tempMapGroupTemplate;
+			JSONObject tempTemplateJsonObject;
+			while (iterator.hasNext()) {
+				tempMapGroupTemplate = iterator.next();
+				tempTemplate = tempMapGroupTemplate.getTemplate();
+				// Generating criteria for each template to check if its valid for the loggedIn
+				// user
+				templateID = tempMapGroupTemplate.getTemplateID();
+				criteriaSatisfied = checkCriteria(templateID, session, true); // forDirectReport false
+				if (criteriaSatisfied) {
+					// check if the template is available in Azure
+					if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
+						tempTemplateJsonObject = new JSONObject(tempTemplate.toString());
+						tempTemplateJsonObject.put("availableInAzure", false);
+						tempResponse.put(tempTemplateJsonObject.toString());
+						continue;
+					}
+					tempResponse.put(tempTemplate.toString());
+				}
+			}
+			response.put(groupID, tempResponse);
 		}
 		return response.toString();
 	}

@@ -1,8 +1,11 @@
 package com.nga.xtendhr.model;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
@@ -33,6 +36,10 @@ public class MapFieldOperators {
 	@Column(name = "\"OPERATOR.ID\"", columnDefinition = "VARCHAR(32)")
 	private String operatorId;
 
+	@ManyToOne(cascade = CascadeType.ALL)
+	@JoinColumn(name = "\"OPERATOR.ID\"", referencedColumnName = "\"ID\"", insertable = false, updatable = false)
+	private Operators operator;
+
 	public String getFieldId() {
 		return fieldId;
 	}
@@ -49,10 +56,18 @@ public class MapFieldOperators {
 		this.operatorId = operatorId;
 	}
 
+	public Operators getOperator() {
+		return operator;
+	}
+
+	public void setOperator(Operators operator) {
+		this.operator = operator;
+	}
+
 	public String toString() {// overriding the toString() method
 		JSONObject obj = new JSONObject();
 		obj.put("fieldId", this.getFieldId());
-		obj.put("operatorId", this.getOperatorId());
+		obj.put("operator", this.getOperator().toString());
 		return obj.toString();
 	}
 }

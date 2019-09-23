@@ -14,8 +14,10 @@ com\nga\xtendhr\model\ConfigurableColumns.class
 com\nga\xtendhr\config\AppConfig.class
 com\nga\xtendhr\service\MapCriteriaFieldsService.class
 com\nga\xtendhr\connection\ConnectionWithJWT.class
+com\nga\xtendhr\service\MapFieldOperatorsServiceImp.class
 com\nga\xtendhr\connection\BatchRequest.class
 com\nga\xtendhr\model\TemplateFieldTag.class
+com\nga\xtendhr\service\MapFieldOperatorsService.class
 com\nga\xtendhr\service\CountryServiceImp.class
 com\nga\xtendhr\service\GroupsService.class
 com\nga\xtendhr\service\CodelistServiceImp.class
@@ -28,6 +30,7 @@ com\nga\xtendhr\controller\ApplicationTest.class
 com\nga\xtendhr\service\MapCriteriaFieldsServiceImp.class
 com\nga\xtendhr\utility\CommonFunctions.class
 com\nga\xtendhr\service\SFDataMappingService.class
+com\nga\xtendhr\model\Operators.class
 com\nga\xtendhr\controller\DocGen$hunLocale.class
 com\nga\xtendhr\service\MapCountryCompanyGroupService.class
 com\nga\xtendhr\model\CountrySpecificFields.class
@@ -47,9 +50,11 @@ com\nga\xtendhr\service\MapTemplateCriteriaValuesServiceImp.class
 com\nga\xtendhr\service\ConfigurableColumnsServiceImp.class
 com\nga\xtendhr\service\GroupsSeveiceImp.class
 com\nga\xtendhr\model\TemplateCriteriaGeneration.class
+com\nga\xtendhr\service\OperatorsService.class
 com\nga\xtendhr\service\TemplateServiceImp.class
 com\nga\xtendhr\service\CompaniesServiceImp.class
 com\nga\xtendhr\service\EntitiesService.class
+com\nga\xtendhr\service\OperatorsServiceImp.class
 com\nga\xtendhr\model\ConfigurableTables.class
 com\nga\xtendhr\model\CodelistText.class
 com\nga\xtendhr\service\CodelistService.class
@@ -75,5 +80,6 @@ com\nga\xtendhr\service\CountrySpecificFieldsService.class
 com\nga\xtendhr\service\CountrySpecificFieldsServiceImp.class
 com\nga\xtendhr\service\MapRuleFieldsService.class
 com\nga\xtendhr\service\TemplateCriteriaGenerationService.class
+com\nga\xtendhr\model\MapFieldOperators.class
 com\nga\xtendhr\model\MapTemplateCriteriaValues.class
 com\nga\xtendhr\service\RulesService.class

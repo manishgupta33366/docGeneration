@@ -29,6 +29,7 @@ C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\Co
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\ConfigurableColumns.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\CompaniesService.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\MapCriteriaFieldsServiceImp.java
+C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\MapFieldOperatorsServiceImp.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\connection\BatchRequest.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\CountrySpecificFieldsServiceImp.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\TemplateServiceImp.java
@@ -38,6 +39,8 @@ C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\controll
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\Groups.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\MapCriteriaFields.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\MapRuleFields.java
+C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\OperatorsServiceImp.java
+C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\OperatorsService.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\Codelist.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\ConfigurableTablesService.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\MapRuleFieldsService.java
@@ -65,8 +68,10 @@ C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\utility\CommonVariables.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\RulesServiceImp.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\controller\ApplicationTest.java
+C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\MapFieldOperators.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\MapGroupTemplates.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\MapRuleFieldsServiceImp.java
+C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\Operators.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\connection\ConnectionWithJWT.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\EntitiesService.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\Templates.java
@@ -75,4 +80,5 @@ C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\model\Te
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\MapGroupTemplateServiceimp.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\SFDataMappingImp.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\GroupsSeveiceImp.java
+C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\MapFieldOperatorsService.java
 C:\Users\manishg\git\docgen\amrest-docgen\src\main\java\com\nga\xtendhr\service\FieldsServiceImp.java
