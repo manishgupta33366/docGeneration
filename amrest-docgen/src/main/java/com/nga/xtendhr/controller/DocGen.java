@@ -208,7 +208,8 @@ public class DocGen {
 				return new ResponseEntity<>("Session timeout! Please Login again!", HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 			logger.debug("ruleID: " + ruleID + " ::: requestData:" + requestData);
-			session.setAttribute("requestData", requestData);
+			session.setAttribute("requestData", requestData); // Saving groups in session as its required in
+																// checkAvailable Templates Function
 			String ruleName = rulesService.findByRuleID(ruleID).get(0).getName();
 			// Calling function dynamically
 			// more Info here: https://www.baeldung.com/java-method-reflection
@@ -755,14 +756,19 @@ public class DocGen {
 				getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport, null));
 		logger.debug("Available Groups:" + availableGroups.toString() + " ::: forDirectReport" + forDirectReport);
 		String groupID;
+		JSONObject tempAvailableTemplatesObj;
 		for (int i = 0; i < availableGroups.length(); i++) {
 			// saving group ID in Session requestData attribute as its expected in Get
 			// Templates function
 			groupID = new JSONObject(availableGroups.getString(i)).getString("id");
-			requestData.put("groupID", groupID);
+			requestData.put("groupID", new JSONArray().put(groupID));
 			session.setAttribute("requestData", requestData.toString());
-			availableTemplates = new JSONArray(
-					getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport, null));
+			tempAvailableTemplatesObj = new JSONObject(
+					getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport, null));// Object of
+																									// Available
+																									// Templates for the
+																									// groups
+			availableTemplates = tempAvailableTemplatesObj.getJSONArray(groupID);
 			logger.debug(
 					"Available templates:" + availableTemplates.toString() + " ::: forDirectReport" + forDirectReport);
 			for (int j = 0; j < availableTemplates.length(); j++) {
@@ -1495,26 +1501,39 @@ public class DocGen {
 			tempMapTemplateCriteriaValues = iterator.next();
 
 			switch (tempMapTemplateCriteriaValues.getOperator().getSign()) {
+
 			case "==":
 				if (!getFieldValue(tempMapTemplateCriteriaValues.getField(), session, forDirectReport, null)
 						.equals(tempMapTemplateCriteriaValues.getValue()))
 					return false;
+				break;
+
 			case ">":
 				if (!(Integer.parseInt(getFieldValue(tempMapTemplateCriteriaValues.getField(), session, forDirectReport,
 						null)) > Integer.parseInt(tempMapTemplateCriteriaValues.getValue())))
 					return false;
+				break;
+
 			case "<":
 				if (!(Integer.parseInt(getFieldValue(tempMapTemplateCriteriaValues.getField(), session, forDirectReport,
 						null)) < Integer.parseInt(tempMapTemplateCriteriaValues.getValue())))
 					return false;
+				break;
+
 			case ">=":
 				if (!(Integer.parseInt(getFieldValue(tempMapTemplateCriteriaValues.getField(), session, forDirectReport,
 						null)) >= Integer.parseInt(tempMapTemplateCriteriaValues.getValue())))
 					return false;
+				break;
+
 			case "<=":
 				if (!(Integer.parseInt(getFieldValue(tempMapTemplateCriteriaValues.getField(), session, forDirectReport,
 						null)) <= Integer.parseInt(tempMapTemplateCriteriaValues.getValue())))
 					return false;
+				break;
+
+			default:
+				break;
 			}
 
 		}
@@ -1842,14 +1861,17 @@ public class DocGen {
 				getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport, null));
 		logger.debug("Available Groups:" + availableGroups.toString() + " ::: forDirectReport" + forDirectReport);
 		String groupID;
+		JSONObject tempAvailableTemplatesObj;
 		for (int i = 0; i < availableGroups.length(); i++) {
 			// saving group ID in Session requestData attribute as its expected in Get
 			// Templates function
 			groupID = new JSONObject(availableGroups.getString(i)).getString("id");
-			requestData.put("groupID", groupID);
-			session.setAttribute("requestData", requestData.toString());
-			availableTemplates = new JSONArray(
+			requestData.put("groupID", new JSONArray().put(groupID));
+			session.setAttribute("requestData", requestData.toString()); // Saving groups in session as its required in
+																			// checkAvailable Templates Function
+			tempAvailableTemplatesObj = new JSONObject(
 					getFieldValue(mapRuleField.get(1).getField(), session, forDirectReport, null));
+			availableTemplates = tempAvailableTemplatesObj.getJSONArray(groupID);
 			logger.debug(
 					"Available templates:" + availableTemplates.toString() + " ::: forDirectReport" + forDirectReport);
 			for (int j = 0; j < availableTemplates.length(); j++) {
