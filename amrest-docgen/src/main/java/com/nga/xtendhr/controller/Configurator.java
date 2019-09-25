@@ -184,9 +184,10 @@ public class Configurator {
 			JSONArray responseDataArray = new JSONArray();
 			JSONObject tempObj = new JSONObject();
 			JSONObject tempCountryJsonObj = new JSONObject();
+			String locale = (String) session.getAttribute("locale");
 			switch (tablePath) {
 			case DBConfiguration.COUNTRIES:
-				List<Countries> countries = countryService.findAll();
+				List<Countries> countries = countryService.findAll(locale);
 				for (int i = 0; i < countries.size(); i++) {
 					tempObj = new JSONObject();
 					tempCountryJsonObj = new JSONObject(countries.get(i).toString());

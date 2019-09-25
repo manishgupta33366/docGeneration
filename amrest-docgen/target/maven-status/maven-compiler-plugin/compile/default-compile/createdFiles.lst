@@ -28,6 +28,7 @@ com\nga\xtendhr\utility\GetDestinationClient.class
 com\nga\xtendhr\model\Rules.class
 com\nga\xtendhr\controller\ApplicationTest.class
 com\nga\xtendhr\service\MapCriteriaFieldsServiceImp.class
+com\nga\xtendhr\service\TextServiceImp.class
 com\nga\xtendhr\utility\CommonFunctions.class
 com\nga\xtendhr\service\SFDataMappingService.class
 com\nga\xtendhr\model\Operators.class
@@ -56,6 +57,7 @@ com\nga\xtendhr\service\CompaniesServiceImp.class
 com\nga\xtendhr\service\EntitiesService.class
 com\nga\xtendhr\service\OperatorsServiceImp.class
 com\nga\xtendhr\model\ConfigurableTables.class
+com\nga\xtendhr\service\TextService.class
 com\nga\xtendhr\model\CodelistText.class
 com\nga\xtendhr\service\CodelistService.class
 com\nga\xtendhr\service\CodelistTextService.class
@@ -66,6 +68,7 @@ com\nga\xtendhr\model\SFDataMapping.class
 com\nga\xtendhr\utility\CommonVariables.class
 com\nga\xtendhr\model\Countries.class
 com\nga\xtendhr\model\Groups.class
+com\nga\xtendhr\model\Text.class
 com\nga\xtendhr\model\Companies.class
 com\nga\xtendhr\model\MapCountryCompanyGroup.class
 com\nga\xtendhr\service\MapGroupTemplateServiceimp.class

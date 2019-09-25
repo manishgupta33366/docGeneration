@@ -147,6 +147,7 @@ public class DocGen {
 				session.setAttribute("adminLoginStatus", "Success");
 				response.put("isAdmin", true);
 			}
+			session.setAttribute("locale", getLocale(session));
 			return ResponseEntity.ok().body(response.toString());// True to create a new session for the logged-in user
 																	// as its the initial call
 		} catch (Exception e) {
@@ -2009,6 +2010,15 @@ public class DocGen {
 		}
 		url = url.substring(0, url.length() - 5);
 		return url;
+	}
+
+	private String getLocale(HttpSession session) throws BatchException, ClientProtocolException,
+			UnsupportedOperationException, NoSuchMethodException, SecurityException, IllegalAccessException,
+			IllegalArgumentException, InvocationTargetException, NamingException, URISyntaxException, IOException {
+		String locale = getFieldValue(mapRuleFieldsService
+				.findByRuleID(rulesService.findByRuleName("getLocale").get(0).getId()).get(0).getField(), session,
+				false, null);
+		return locale;
 	}
 	/*
 	 *** Helper functions END***

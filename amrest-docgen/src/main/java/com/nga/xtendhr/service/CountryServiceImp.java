@@ -48,6 +48,14 @@ public class CountryServiceImp implements CountryService {
 		return items;
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<Countries> findAll(String locale) {
+		Query query = em.createNamedQuery("Countries.selectAllbasedOnLocale").setParameter("locale", locale);
+		List<Countries> items = query.getResultList();
+		return items;
+	}
+
 	@Override
 	public Countries findById(String id) {
 		Countries item = em.find(Countries.class, id);

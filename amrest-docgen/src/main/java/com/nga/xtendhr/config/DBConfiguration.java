@@ -34,4 +34,5 @@ public class DBConfiguration {
 			+ "DGENC_MAP_TEMPLATE_CRITERIA_VALUES\"";
 	public static final String OPERATORS = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGEN_OPERATORS\"";
 	public static final String MAP_FIELD_OPERATORS = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGENC_MAP_FIELD_OPERATORS\"";
+	public static final String TEXT = "\"" + ARTIFACT_PATH + TABLE_PATH + "DGEN_TEXT\"";
 }

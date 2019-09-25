@@ -18,4 +18,6 @@ public interface CountryService {
 	public Countries findById(String id);
 
 	public List<Countries> dynamicSelect(List<ConfigurableColumns> requiredColumns);
+
+	List<Countries> findAll(String locale);
 }
