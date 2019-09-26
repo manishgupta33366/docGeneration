@@ -52,6 +52,7 @@ import com.nga.xtendhr.model.MapTemplateFields;
 import com.nga.xtendhr.model.Rules;
 import com.nga.xtendhr.model.TemplateFieldTag;
 import com.nga.xtendhr.model.Templates;
+import com.nga.xtendhr.model.Text;
 import com.nga.xtendhr.service.CodelistService;
 import com.nga.xtendhr.service.CodelistTextService;
 import com.nga.xtendhr.service.CountrySpecificFieldsService;
@@ -65,6 +66,7 @@ import com.nga.xtendhr.service.MapTemplateFieldsService;
 import com.nga.xtendhr.service.RulesService;
 import com.nga.xtendhr.service.SFDataMappingService;
 import com.nga.xtendhr.service.TemplateService;
+import com.nga.xtendhr.service.TextService;
 import com.nga.xtendhr.utility.CommonFunctions;
 import com.nga.xtendhr.utility.CommonVariables;
 
@@ -125,6 +127,9 @@ public class DocGen {
 
 	@Autowired
 	MapTemplateCriteriaValuesService mapTemplateCriteriaValuesService;
+
+	@Autowired
+	TextService textService;
 
 	@GetMapping(value = "/login")
 	public ResponseEntity<?> login(HttpServletRequest request) {
@@ -418,8 +423,31 @@ public class DocGen {
 		Iterator<MapCountryCompanyGroup> iterator = mapCountryCompanyGroupService
 				.findByCountryCompanyAdmin(countryID, companyID).iterator();
 		JSONArray response = new JSONArray();
+		String locale = (String) session.getAttribute("locale");
+		MapCountryCompanyGroup tempMapCountryCompanyGroup;
+		List<Text> tempTextList;
+		JSONObject tempMapCountryCompanyGroupObj;
 		while (iterator.hasNext()) {
-			response.put(iterator.next().toString());
+			tempMapCountryCompanyGroup = iterator.next();
+			tempMapCountryCompanyGroupObj = new JSONObject(tempMapCountryCompanyGroup.toString());
+			tempTextList = textService.findByIdLocale(tempMapCountryCompanyGroup.getCountryID(), locale);
+			if (tempTextList.size() > 0) {
+				tempMapCountryCompanyGroupObj.put("country_text_per_Locale", tempTextList.get(0).getText());
+				tempMapCountryCompanyGroupObj.put("country_description_per_Locale",
+						tempTextList.get(0).getDescription());
+			}
+			tempTextList = textService.findByIdLocale(tempMapCountryCompanyGroup.getCompanyID(), locale);
+			if (tempTextList.size() > 0) {
+				tempMapCountryCompanyGroupObj.put("company_text_per_Locale", tempTextList.get(0).getText());
+				tempMapCountryCompanyGroupObj.put("company_description_per_Locale",
+						tempTextList.get(0).getDescription());
+			}
+			tempTextList = textService.findByIdLocale(tempMapCountryCompanyGroup.getGroupID(), locale);
+			if (tempTextList.size() > 0) {
+				tempMapCountryCompanyGroupObj.put("group_text_per_Locale", tempTextList.get(0).getText());
+				tempMapCountryCompanyGroupObj.put("group_description_per_Locale", tempTextList.get(0).getDescription());
+			}
+			response.put(tempMapCountryCompanyGroupObj);
 		}
 		return response.toString();
 	}
@@ -488,10 +516,21 @@ public class DocGen {
 			Templates tempTemplate;
 			JSONArray tempResponse = new JSONArray();
 			MapGroupTemplates tempMapGroupTemplate;
-			JSONObject tempTemplateJsonObject;
+
+			JSONObject tempTemplateObj;
+			List<Text> tempTextList;
+			String locale = (String) session.getAttribute("locale");
 			while (iterator.hasNext()) {
 				tempMapGroupTemplate = iterator.next();
 				tempTemplate = tempMapGroupTemplate.getTemplate();
+				tempTemplateObj = new JSONObject(tempTemplate.toString()); // object to save localeData and pass to
+																			// response array
+				tempTextList = textService.findByIdLocale(tempTemplate.getId(), locale);// fetching locale data of
+																						// template
+				if (tempTextList.size() > 0) {
+					tempTemplateObj.put("template_text_per_Locale", tempTextList.get(0).getText());
+					tempTemplateObj.put("template_description_per_Locale", tempTextList.get(0).getDescription());
+				}
 				// Generating criteria for each template to check if its valid for the loggedIn
 				// user
 				templateID = tempMapGroupTemplate.getTemplateID();
@@ -499,12 +538,11 @@ public class DocGen {
 				if (criteriaSatisfied) {
 					// check if the template is available in Azure
 					if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
-						tempTemplateJsonObject = new JSONObject(tempTemplate.toString());
-						tempTemplateJsonObject.put("availableInAzure", false);
-						tempResponse.put(tempTemplateJsonObject.toString());
+						tempTemplateObj.put("availableInAzure", false);
+						tempResponse.put(tempTemplateObj);
 						continue;
 					}
-					tempResponse.put(tempTemplate.toString());
+					tempResponse.put(tempTemplateObj);
 				}
 			}
 			response.put(groupID, tempResponse);
@@ -536,8 +574,31 @@ public class DocGen {
 		Iterator<MapCountryCompanyGroup> iterator = mapCountryCompanyGroupService
 				.findByCountryCompanyAdmin(countryID, companyID).iterator();
 		JSONArray response = new JSONArray();
+		String locale = (String) session.getAttribute("locale");
+		MapCountryCompanyGroup tempMapCountryCompanyGroup;
+		List<Text> tempTextList;
+		JSONObject tempMapCountryCompanyGroupObj;
 		while (iterator.hasNext()) {
-			response.put(iterator.next().toString());
+			tempMapCountryCompanyGroup = iterator.next();
+			tempMapCountryCompanyGroupObj = new JSONObject(tempMapCountryCompanyGroup.toString());
+			tempTextList = textService.findByIdLocale(tempMapCountryCompanyGroup.getCountryID(), locale);
+			if (tempTextList.size() > 0) {
+				tempMapCountryCompanyGroupObj.put("country_text_per_Locale", tempTextList.get(0).getText());
+				tempMapCountryCompanyGroupObj.put("country_description_per_Locale",
+						tempTextList.get(0).getDescription());
+			}
+			tempTextList = textService.findByIdLocale(tempMapCountryCompanyGroup.getCompanyID(), locale);
+			if (tempTextList.size() > 0) {
+				tempMapCountryCompanyGroupObj.put("company_text_per_Locale", tempTextList.get(0).getText());
+				tempMapCountryCompanyGroupObj.put("company_description_per_Locale",
+						tempTextList.get(0).getDescription());
+			}
+			tempTextList = textService.findByIdLocale(tempMapCountryCompanyGroup.getGroupID(), locale);
+			if (tempTextList.size() > 0) {
+				tempMapCountryCompanyGroupObj.put("group_text_per_Locale", tempTextList.get(0).getText());
+				tempMapCountryCompanyGroupObj.put("group_description_per_Locale", tempTextList.get(0).getDescription());
+			}
+			response.put(tempMapCountryCompanyGroupObj);
 		}
 		return response.toString();
 	}
@@ -722,23 +783,32 @@ public class DocGen {
 			Templates tempTemplate;
 			JSONArray tempResponse = new JSONArray();
 			MapGroupTemplates tempMapGroupTemplate;
-			JSONObject tempTemplateJsonObject;
+			JSONObject tempTemplateObj;
+			List<Text> tempTextList;
+			String locale = (String) session.getAttribute("locale");
 			while (iterator.hasNext()) {
 				tempMapGroupTemplate = iterator.next();
 				tempTemplate = tempMapGroupTemplate.getTemplate();
+				tempTemplateObj = new JSONObject(tempTemplate.toString()); // object to save localeData and pass to
+																			// response array
+				tempTextList = textService.findByIdLocale(tempTemplate.getId(), locale);// fetching locale data of
+																						// template
+				if (tempTextList.size() > 0) {
+					tempTemplateObj.put("template_text_per_Locale", tempTextList.get(0).getText());
+					tempTemplateObj.put("template_description_per_Locale", tempTextList.get(0).getDescription());
+				}
 				// Generating criteria for each template to check if its valid for the loggedIn
 				// user
 				templateID = tempMapGroupTemplate.getTemplateID();
-				criteriaSatisfied = checkCriteria(templateID, session, false); // forDirectReport false
+				criteriaSatisfied = checkCriteria(templateID, session, true); // forDirectReport true
 				if (criteriaSatisfied) {
 					// check if the template is available in Azure
 					if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
-						tempTemplateJsonObject = new JSONObject(tempTemplate.toString());
-						tempTemplateJsonObject.put("availableInAzure", false);
-						tempResponse.put(tempTemplateJsonObject.toString());
+						tempTemplateObj.put("availableInAzure", false);
+						tempResponse.put(tempTemplateObj);
 						continue;
 					}
-					tempResponse.put(tempTemplate.toString());
+					tempResponse.put(tempTemplateObj);
 				}
 			}
 			response.put(groupID, tempResponse);
@@ -863,8 +933,32 @@ public class DocGen {
 		Iterator<MapCountryCompanyGroup> iterator = mapCountryCompanyGroupService
 				.findByCountryCompany(countryID, companyID, isManager).iterator();
 		JSONArray response = new JSONArray();
+		String locale = (String) session.getAttribute("locale");
+		MapCountryCompanyGroup tempMapCountryCompanyGroup;
+		List<Text> tempTextList;
+		JSONObject tempMapCountryCompanyGroupObj;
 		while (iterator.hasNext()) {
-			response.put(iterator.next().toString());
+			tempMapCountryCompanyGroup = iterator.next();
+			tempMapCountryCompanyGroupObj = new JSONObject(tempMapCountryCompanyGroup.toString());
+			tempTextList = textService.findByIdLocale(tempMapCountryCompanyGroup.getCountryID(), locale);
+			if (tempTextList.size() > 0) {
+				tempMapCountryCompanyGroupObj.put("country_text_per_Locale", tempTextList.get(0).getText());
+				tempMapCountryCompanyGroupObj.put("country_description_per_Locale",
+						tempTextList.get(0).getDescription());
+			}
+			tempTextList = textService.findByIdLocale(tempMapCountryCompanyGroup.getCompanyID(), locale);
+			if (tempTextList.size() > 0) {
+				tempMapCountryCompanyGroupObj.put("company_text_per_Locale", tempTextList.get(0).getText());
+				tempMapCountryCompanyGroupObj.put("company_description_per_Locale",
+						tempTextList.get(0).getDescription());
+			}
+			tempTextList = textService.findByIdLocale(tempMapCountryCompanyGroup.getGroupID(), locale);
+			if (tempTextList.size() > 0) {
+				tempMapCountryCompanyGroupObj.put("group_text_per_Locale", tempTextList.get(0).getText());
+				tempMapCountryCompanyGroupObj.put("group_description_per_Locale", tempTextList.get(0).getDescription());
+			}
+			logger.debug("tempMapCountryCompanyGroupObj: " + tempMapCountryCompanyGroupObj.toString());
+			response.put(tempMapCountryCompanyGroupObj);
 		}
 		return response.toString();
 	}
@@ -1213,8 +1307,31 @@ public class DocGen {
 		Iterator<MapCountryCompanyGroup> iterator = mapCountryCompanyGroupService
 				.findByCountryCompany(countryID, companyID, false).iterator();
 		JSONArray response = new JSONArray();
+		String locale = (String) session.getAttribute("locale");
+		MapCountryCompanyGroup tempMapCountryCompanyGroup;
+		List<Text> tempTextList;
+		JSONObject tempMapCountryCompanyGroupObj;
 		while (iterator.hasNext()) {
-			response.put(iterator.next().toString());
+			tempMapCountryCompanyGroup = iterator.next();
+			tempMapCountryCompanyGroupObj = new JSONObject(tempMapCountryCompanyGroup.toString());
+			tempTextList = textService.findByIdLocale(tempMapCountryCompanyGroup.getCountryID(), locale);
+			if (tempTextList.size() > 0) {
+				tempMapCountryCompanyGroupObj.put("country_text_per_Locale", tempTextList.get(0).getText());
+				tempMapCountryCompanyGroupObj.put("country_description_per_Locale",
+						tempTextList.get(0).getDescription());
+			}
+			tempTextList = textService.findByIdLocale(tempMapCountryCompanyGroup.getCompanyID(), locale);
+			if (tempTextList.size() > 0) {
+				tempMapCountryCompanyGroupObj.put("company_text_per_Locale", tempTextList.get(0).getText());
+				tempMapCountryCompanyGroupObj.put("company_description_per_Locale",
+						tempTextList.get(0).getDescription());
+			}
+			tempTextList = textService.findByIdLocale(tempMapCountryCompanyGroup.getGroupID(), locale);
+			if (tempTextList.size() > 0) {
+				tempMapCountryCompanyGroupObj.put("group_text_per_Locale", tempTextList.get(0).getText());
+				tempMapCountryCompanyGroupObj.put("group_description_per_Locale", tempTextList.get(0).getDescription());
+			}
+			response.put(tempMapCountryCompanyGroupObj);
 		}
 		return response.toString();
 	}
@@ -1263,23 +1380,32 @@ public class DocGen {
 			Templates tempTemplate;
 			JSONArray tempResponse = new JSONArray();
 			MapGroupTemplates tempMapGroupTemplate;
-			JSONObject tempTemplateJsonObject;
+			JSONObject tempTemplateObj;
+			List<Text> tempTextList;
+			String locale = (String) session.getAttribute("locale");
 			while (iterator.hasNext()) {
 				tempMapGroupTemplate = iterator.next();
 				tempTemplate = tempMapGroupTemplate.getTemplate();
+				tempTemplateObj = new JSONObject(tempTemplate.toString()); // object to save localeData and pass to
+																			// response array
+				tempTextList = textService.findByIdLocale(tempTemplate.getId(), locale);// fetching locale data of
+																						// template
+				if (tempTextList.size() > 0) {
+					tempTemplateObj.put("template_text_per_Locale", tempTextList.get(0).getText());
+					tempTemplateObj.put("template_description_per_Locale", tempTextList.get(0).getDescription());
+				}
 				// Generating criteria for each template to check if its valid for the loggedIn
 				// user
 				templateID = tempMapGroupTemplate.getTemplateID();
-				criteriaSatisfied = checkCriteria(templateID, session, false); // forDirectReport false
+				criteriaSatisfied = checkCriteria(templateID, session, true); // forDirectReport true
 				if (criteriaSatisfied) {
 					// check if the template is available in Azure
 					if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
-						tempTemplateJsonObject = new JSONObject(tempTemplate.toString());
-						tempTemplateJsonObject.put("availableInAzure", false);
-						tempResponse.put(tempTemplateJsonObject.toString());
+						tempTemplateObj.put("availableInAzure", false);
+						tempResponse.put(tempTemplateObj);
 						continue;
 					}
-					tempResponse.put(tempTemplate.toString());
+					tempResponse.put(tempTemplateObj);
 				}
 			}
 			response.put(groupID, tempResponse);
@@ -1364,23 +1490,32 @@ public class DocGen {
 			Templates tempTemplate;
 			JSONArray tempResponse = new JSONArray();
 			MapGroupTemplates tempMapGroupTemplate;
-			JSONObject tempTemplateJsonObject;
+			JSONObject tempTemplateObj;
+			List<Text> tempTextList;
+			String locale = (String) session.getAttribute("locale");
 			while (iterator.hasNext()) {
 				tempMapGroupTemplate = iterator.next();
 				tempTemplate = tempMapGroupTemplate.getTemplate();
+				tempTemplateObj = new JSONObject(tempTemplate.toString()); // object to save localeData and pass to
+																			// response array
+				tempTextList = textService.findByIdLocale(tempTemplate.getId(), locale);// fetching locale data of
+																						// template
+				if (tempTextList.size() > 0) {
+					tempTemplateObj.put("template_text_per_Locale", tempTextList.get(0).getText());
+					tempTemplateObj.put("template_description_per_Locale", tempTextList.get(0).getDescription());
+				}
 				// Generating criteria for each template to check if its valid for the loggedIn
 				// user
 				templateID = tempMapGroupTemplate.getTemplateID();
-				criteriaSatisfied = checkCriteria(templateID, session, true); // forDirectReport false
+				criteriaSatisfied = checkCriteria(templateID, session, true); // forDirectReport true
 				if (criteriaSatisfied) {
 					// check if the template is available in Azure
 					if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
-						tempTemplateJsonObject = new JSONObject(tempTemplate.toString());
-						tempTemplateJsonObject.put("availableInAzure", false);
-						tempResponse.put(tempTemplateJsonObject.toString());
+						tempTemplateObj.put("availableInAzure", false);
+						tempResponse.put(tempTemplateObj);
 						continue;
 					}
-					tempResponse.put(tempTemplate.toString());
+					tempResponse.put(tempTemplateObj);
 				}
 			}
 			response.put(groupID, tempResponse);
