@@ -430,19 +430,19 @@ public class DocGen {
 		while (iterator.hasNext()) {
 			tempMapCountryCompanyGroup = iterator.next();
 			tempMapCountryCompanyGroupObj = new JSONObject(tempMapCountryCompanyGroup.toString());
-			tempTextList = textService.findByIdLocale(tempMapCountryCompanyGroup.getCountryID(), locale);
+			tempTextList = textService.findByRefrencedIdLocale(tempMapCountryCompanyGroup.getCountryID(), locale);
 			if (tempTextList.size() > 0) {
 				tempMapCountryCompanyGroupObj.put("country_text_per_Locale", tempTextList.get(0).getText());
 				tempMapCountryCompanyGroupObj.put("country_description_per_Locale",
 						tempTextList.get(0).getDescription());
 			}
-			tempTextList = textService.findByIdLocale(tempMapCountryCompanyGroup.getCompanyID(), locale);
+			tempTextList = textService.findByRefrencedIdLocale(tempMapCountryCompanyGroup.getCompanyID(), locale);
 			if (tempTextList.size() > 0) {
 				tempMapCountryCompanyGroupObj.put("company_text_per_Locale", tempTextList.get(0).getText());
 				tempMapCountryCompanyGroupObj.put("company_description_per_Locale",
 						tempTextList.get(0).getDescription());
 			}
-			tempTextList = textService.findByIdLocale(tempMapCountryCompanyGroup.getGroupID(), locale);
+			tempTextList = textService.findByRefrencedIdLocale(tempMapCountryCompanyGroup.getGroupID(), locale);
 			if (tempTextList.size() > 0) {
 				tempMapCountryCompanyGroupObj.put("group_text_per_Locale", tempTextList.get(0).getText());
 				tempMapCountryCompanyGroupObj.put("group_description_per_Locale", tempTextList.get(0).getDescription());
@@ -525,8 +525,9 @@ public class DocGen {
 				tempTemplate = tempMapGroupTemplate.getTemplate();
 				tempTemplateObj = new JSONObject(tempTemplate.toString()); // object to save localeData and pass to
 																			// response array
-				tempTextList = textService.findByIdLocale(tempTemplate.getId(), locale);// fetching locale data of
-																						// template
+				tempTextList = textService.findByRefrencedIdLocale(tempTemplate.getId(), locale);// fetching locale data
+																									// of
+				// template
 				if (tempTextList.size() > 0) {
 					tempTemplateObj.put("template_text_per_Locale", tempTextList.get(0).getText());
 					tempTemplateObj.put("template_description_per_Locale", tempTextList.get(0).getDescription());
@@ -581,19 +582,19 @@ public class DocGen {
 		while (iterator.hasNext()) {
 			tempMapCountryCompanyGroup = iterator.next();
 			tempMapCountryCompanyGroupObj = new JSONObject(tempMapCountryCompanyGroup.toString());
-			tempTextList = textService.findByIdLocale(tempMapCountryCompanyGroup.getCountryID(), locale);
+			tempTextList = textService.findByRefrencedIdLocale(tempMapCountryCompanyGroup.getCountryID(), locale);
 			if (tempTextList.size() > 0) {
 				tempMapCountryCompanyGroupObj.put("country_text_per_Locale", tempTextList.get(0).getText());
 				tempMapCountryCompanyGroupObj.put("country_description_per_Locale",
 						tempTextList.get(0).getDescription());
 			}
-			tempTextList = textService.findByIdLocale(tempMapCountryCompanyGroup.getCompanyID(), locale);
+			tempTextList = textService.findByRefrencedIdLocale(tempMapCountryCompanyGroup.getCompanyID(), locale);
 			if (tempTextList.size() > 0) {
 				tempMapCountryCompanyGroupObj.put("company_text_per_Locale", tempTextList.get(0).getText());
 				tempMapCountryCompanyGroupObj.put("company_description_per_Locale",
 						tempTextList.get(0).getDescription());
 			}
-			tempTextList = textService.findByIdLocale(tempMapCountryCompanyGroup.getGroupID(), locale);
+			tempTextList = textService.findByRefrencedIdLocale(tempMapCountryCompanyGroup.getGroupID(), locale);
 			if (tempTextList.size() > 0) {
 				tempMapCountryCompanyGroupObj.put("group_text_per_Locale", tempTextList.get(0).getText());
 				tempMapCountryCompanyGroupObj.put("group_description_per_Locale", tempTextList.get(0).getDescription());
@@ -791,8 +792,9 @@ public class DocGen {
 				tempTemplate = tempMapGroupTemplate.getTemplate();
 				tempTemplateObj = new JSONObject(tempTemplate.toString()); // object to save localeData and pass to
 																			// response array
-				tempTextList = textService.findByIdLocale(tempTemplate.getId(), locale);// fetching locale data of
-																						// template
+				tempTextList = textService.findByRefrencedIdLocale(tempTemplate.getId(), locale);// fetching locale data
+																									// of
+				// template
 				if (tempTextList.size() > 0) {
 					tempTemplateObj.put("template_text_per_Locale", tempTextList.get(0).getText());
 					tempTemplateObj.put("template_description_per_Locale", tempTextList.get(0).getDescription());
@@ -940,19 +942,19 @@ public class DocGen {
 		while (iterator.hasNext()) {
 			tempMapCountryCompanyGroup = iterator.next();
 			tempMapCountryCompanyGroupObj = new JSONObject(tempMapCountryCompanyGroup.toString());
-			tempTextList = textService.findByIdLocale(tempMapCountryCompanyGroup.getCountryID(), locale);
+			tempTextList = textService.findByRefrencedIdLocale(tempMapCountryCompanyGroup.getCountryID(), locale);
 			if (tempTextList.size() > 0) {
 				tempMapCountryCompanyGroupObj.put("country_text_per_Locale", tempTextList.get(0).getText());
 				tempMapCountryCompanyGroupObj.put("country_description_per_Locale",
 						tempTextList.get(0).getDescription());
 			}
-			tempTextList = textService.findByIdLocale(tempMapCountryCompanyGroup.getCompanyID(), locale);
+			tempTextList = textService.findByRefrencedIdLocale(tempMapCountryCompanyGroup.getCompanyID(), locale);
 			if (tempTextList.size() > 0) {
 				tempMapCountryCompanyGroupObj.put("company_text_per_Locale", tempTextList.get(0).getText());
 				tempMapCountryCompanyGroupObj.put("company_description_per_Locale",
 						tempTextList.get(0).getDescription());
 			}
-			tempTextList = textService.findByIdLocale(tempMapCountryCompanyGroup.getGroupID(), locale);
+			tempTextList = textService.findByRefrencedIdLocale(tempMapCountryCompanyGroup.getGroupID(), locale);
 			if (tempTextList.size() > 0) {
 				tempMapCountryCompanyGroupObj.put("group_text_per_Locale", tempTextList.get(0).getText());
 				tempMapCountryCompanyGroupObj.put("group_description_per_Locale", tempTextList.get(0).getDescription());
@@ -1314,19 +1316,19 @@ public class DocGen {
 		while (iterator.hasNext()) {
 			tempMapCountryCompanyGroup = iterator.next();
 			tempMapCountryCompanyGroupObj = new JSONObject(tempMapCountryCompanyGroup.toString());
-			tempTextList = textService.findByIdLocale(tempMapCountryCompanyGroup.getCountryID(), locale);
+			tempTextList = textService.findByRefrencedIdLocale(tempMapCountryCompanyGroup.getCountryID(), locale);
 			if (tempTextList.size() > 0) {
 				tempMapCountryCompanyGroupObj.put("country_text_per_Locale", tempTextList.get(0).getText());
 				tempMapCountryCompanyGroupObj.put("country_description_per_Locale",
 						tempTextList.get(0).getDescription());
 			}
-			tempTextList = textService.findByIdLocale(tempMapCountryCompanyGroup.getCompanyID(), locale);
+			tempTextList = textService.findByRefrencedIdLocale(tempMapCountryCompanyGroup.getCompanyID(), locale);
 			if (tempTextList.size() > 0) {
 				tempMapCountryCompanyGroupObj.put("company_text_per_Locale", tempTextList.get(0).getText());
 				tempMapCountryCompanyGroupObj.put("company_description_per_Locale",
 						tempTextList.get(0).getDescription());
 			}
-			tempTextList = textService.findByIdLocale(tempMapCountryCompanyGroup.getGroupID(), locale);
+			tempTextList = textService.findByRefrencedIdLocale(tempMapCountryCompanyGroup.getGroupID(), locale);
 			if (tempTextList.size() > 0) {
 				tempMapCountryCompanyGroupObj.put("group_text_per_Locale", tempTextList.get(0).getText());
 				tempMapCountryCompanyGroupObj.put("group_description_per_Locale", tempTextList.get(0).getDescription());
@@ -1388,8 +1390,9 @@ public class DocGen {
 				tempTemplate = tempMapGroupTemplate.getTemplate();
 				tempTemplateObj = new JSONObject(tempTemplate.toString()); // object to save localeData and pass to
 																			// response array
-				tempTextList = textService.findByIdLocale(tempTemplate.getId(), locale);// fetching locale data of
-																						// template
+				tempTextList = textService.findByRefrencedIdLocale(tempTemplate.getId(), locale);// fetching locale data
+																									// of
+				// template
 				if (tempTextList.size() > 0) {
 					tempTemplateObj.put("template_text_per_Locale", tempTextList.get(0).getText());
 					tempTemplateObj.put("template_description_per_Locale", tempTextList.get(0).getDescription());
@@ -1498,8 +1501,9 @@ public class DocGen {
 				tempTemplate = tempMapGroupTemplate.getTemplate();
 				tempTemplateObj = new JSONObject(tempTemplate.toString()); // object to save localeData and pass to
 																			// response array
-				tempTextList = textService.findByIdLocale(tempTemplate.getId(), locale);// fetching locale data of
-																						// template
+				tempTextList = textService.findByRefrencedIdLocale(tempTemplate.getId(), locale);// fetching locale data
+																									// of
+				// template
 				if (tempTextList.size() > 0) {
 					tempTemplateObj.put("template_text_per_Locale", tempTextList.get(0).getText());
 					tempTemplateObj.put("template_description_per_Locale", tempTextList.get(0).getDescription());
