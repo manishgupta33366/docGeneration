@@ -802,7 +802,7 @@ public class DocGen {
 				// Generating criteria for each template to check if its valid for the loggedIn
 				// user
 				templateID = tempMapGroupTemplate.getTemplateID();
-				criteriaSatisfied = checkCriteria(templateID, session, true); // forDirectReport true
+				criteriaSatisfied = checkCriteria(templateID, session, false); // forDirectReport false
 				if (criteriaSatisfied) {
 					// check if the template is available in Azure
 					if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
@@ -833,7 +833,7 @@ public class DocGen {
 		for (int i = 0; i < availableGroups.length(); i++) {
 			// saving group ID in Session requestData attribute as its expected in Get
 			// Templates function
-			groupID = new JSONObject(availableGroups.getString(i)).getString("id");
+			groupID = availableGroups.getJSONObject(i).getString("id");
 			requestData.put("groupID", new JSONArray().put(groupID));
 			session.setAttribute("requestData", requestData.toString());
 			tempAvailableTemplatesObj = new JSONObject(
@@ -845,8 +845,7 @@ public class DocGen {
 			logger.debug(
 					"Available templates:" + availableTemplates.toString() + " ::: forDirectReport" + forDirectReport);
 			for (int j = 0; j < availableTemplates.length(); j++) {
-				if (requestData.getString("templateID")
-						.equals(new JSONObject(availableTemplates.getString(j)).getString("id"))) {
+				if (requestData.getString("templateID").equals(availableTemplates.getJSONObject(j).getString("id"))) {
 					return true;
 				}
 			}
@@ -1400,7 +1399,7 @@ public class DocGen {
 				// Generating criteria for each template to check if its valid for the loggedIn
 				// user
 				templateID = tempMapGroupTemplate.getTemplateID();
-				criteriaSatisfied = checkCriteria(templateID, session, true); // forDirectReport true
+				criteriaSatisfied = checkCriteria(templateID, session, false); // forDirectReport false
 				if (criteriaSatisfied) {
 					// check if the template is available in Azure
 					if (!templatesAvailableInAzure.containsKey(tempMapGroupTemplate.getTemplate().getName())) {
@@ -2005,7 +2004,7 @@ public class DocGen {
 		for (int i = 0; i < availableGroups.length(); i++) {
 			// saving group ID in Session requestData attribute as its expected in Get
 			// Templates function
-			groupID = new JSONObject(availableGroups.getString(i)).getString("id");
+			groupID = availableGroups.getJSONObject(i).getString("id");
 			requestData.put("groupID", new JSONArray().put(groupID));
 			session.setAttribute("requestData", requestData.toString()); // Saving groups in session as its required in
 																			// checkAvailable Templates Function
@@ -2015,8 +2014,7 @@ public class DocGen {
 			logger.debug(
 					"Available templates:" + availableTemplates.toString() + " ::: forDirectReport" + forDirectReport);
 			for (int j = 0; j < availableTemplates.length(); j++) {
-				if (requestData.getString("templateID")
-						.equals(new JSONObject(availableTemplates.getString(j)).getString("id"))) {
+				if (requestData.getString("templateID").equals(availableTemplates.getJSONObject(j).getString("id"))) {
 					return true;
 				}
 			}
