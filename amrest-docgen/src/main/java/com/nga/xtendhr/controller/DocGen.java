@@ -324,7 +324,7 @@ public class DocGen {
 				// Entity name saved in KEY column
 				JSONObject response = new JSONObject(callSFSingle(tempMapRuleField.getKey(), url));
 				for (int i = 0; i < fieldsArray.length(); i++) {
-					field = fieldsService.findByID(fieldsArray.getString(i)).get(i);// get field from the fields table
+					field = fieldsService.findByID(fieldsArray.getString(i)).get(0);// get field from the fields table
 					fieldValue = getValueFromPath(field.getValueFromPath(), response, session, false, null);
 					responseObj.put(field.getTechnicalName(), fieldValue);
 				}
@@ -1050,7 +1050,7 @@ public class DocGen {
 			if (directReportData != "") {
 				tempHoldChildDirectReports = new JSONArray(directReportData);
 				for (int j = 0; j < tempHoldChildDirectReports.length(); j++) {
-					tempHoldChildDirectReports.getJSONObject(i).remove(keyToRemoveObj); // Removing object just make is
+					tempHoldChildDirectReports.getJSONObject(i).remove(keyToRemoveObj); // Removing object just make it
 																						// look
 																						// similar as of main obj
 					responseDirectReports.put(tempHoldChildDirectReports.get(j));
