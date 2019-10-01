@@ -451,10 +451,10 @@ public class DocGen {
 		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
 		getFieldValue(mapRuleField.get(0).getField(), session, true, null);// get data of direct report
 		String directReportCountryID = getFieldValue(mapRuleField.get(1).getField(), session, true, null);// forDirectReport
-		// true
+																											// true
 		String directReportCompanyID = getFieldValue(mapRuleField.get(2).getField(), session, true, null);// forDirectReport
-		// true
-		getFieldValue(mapRuleField.get(3).getField(), session, true, null);// get get Templates from Azure and set that
+																											// true
+		getFieldValue(mapRuleField.get(3).getField(), session, true, null);// get Templates from Azure and set that
 																			// in
 																			// session and forDirectReport true
 
@@ -849,7 +849,9 @@ public class DocGen {
 			 *
 			 */
 			MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
-			Boolean isManager = Boolean.parseBoolean(getFieldValue(mapRuleField.getField(), session, true, null));
+			Boolean isManager = Boolean.parseBoolean(getFieldValue(mapRuleField.getField(), session, false, null)); // For
+																													// directReport
+																													// false
 			logger.debug("Search User Rule: isManager: " + isManager);
 			if (session.getAttribute("adminLoginStatus") == null && !isManager) {
 				logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
@@ -897,7 +899,9 @@ public class DocGen {
 		 *
 		 */
 		MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
-		Boolean isManager = Boolean.parseBoolean(getFieldValue(mapRuleField.getField(), session, true, null));
+		Boolean isManager = Boolean.parseBoolean(getFieldValue(mapRuleField.getField(), session, false, null)); // For
+																												// directReport
+																												// false
 		logger.debug("getSelectedUserDetails Rule: isManager: " + isManager);
 		if (session.getAttribute("adminLoginStatus") == null && !isManager) {
 			logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
@@ -1502,9 +1506,9 @@ public class DocGen {
 		}
 
 		String directReportCountryID = getFieldValue(mapRuleField.get(2).getField(), session, true, null);// forDirectReport
-		// true
+																											// true
 		String directReportCompanyID = getFieldValue(mapRuleField.get(3).getField(), session, true, null);// forDirectReport
-		// true
+																											// true
 		getFieldValue(mapRuleField.get(4).getField(), session, true, null);// forDirectReport true
 
 		/*
@@ -1637,7 +1641,8 @@ public class DocGen {
 		 * report of the loggenIn user
 		 */
 		Boolean isDirectReport = Boolean
-				.parseBoolean(getFieldValue(mapRuleField.get(2).getField(), session, false, null));
+				.parseBoolean(getFieldValue(mapRuleField.get(2).getField(), session, false, null)); // For directReport
+																									// false
 
 		if (!isDirectReport) {
 			logger.error("Unauthorized access! User: " + loggerInUser + " Tried downloading doc of a user: " + userID
