@@ -340,7 +340,7 @@ public class DocGen {
 	@PostMapping(value = "/docGenAdmin/executePostCallRule")
 	public ResponseEntity<?> executeRule(@RequestParam(name = "ruleID") String ruleID, @RequestBody String requestData,
 			HttpServletRequest request) {
-
+		// rule to Post data from UI to a API
 		try {
 			HttpSession session = request.getSession(false);// false is not create new session and use the existing
 															// session
@@ -1038,7 +1038,8 @@ public class DocGen {
 		List<MapRuleFields> mapRuleField = mapRuleFieldsService.findByRuleID(ruleID);
 		// getting the Parent/root array containing directReports
 		JSONArray parentDirectReportArray = new JSONArray(
-				getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport, null));
+				getFieldValue(mapRuleField.get(0).getField(), session, forDirectReport, null)); // get DirectReports of
+																								// the user Two level
 		JSONArray responseDirectReports = new JSONArray();
 		JSONArray tempHoldChildDirectReports = new JSONArray();
 		String childDirectReportsPath = mapRuleField.get(1).getValueFromPath();// Path to fetch Child Direct Reports
@@ -1046,11 +1047,11 @@ public class DocGen {
 		String directReportData = ""; // copying
 		for (int i = 0; i < parentDirectReportArray.length(); i++) {
 			directReportData = getValueFromPath(childDirectReportsPath, parentDirectReportArray.getJSONObject(i),
-					session, forDirectReport, null);
+					session, forDirectReport, null);// fetching all the direct reports of a direct report
 			if (directReportData != "") {
 				tempHoldChildDirectReports = new JSONArray(directReportData);
 				for (int j = 0; j < tempHoldChildDirectReports.length(); j++) {
-					tempHoldChildDirectReports.getJSONObject(i).remove(keyToRemoveObj); // Removing object just make it
+					tempHoldChildDirectReports.getJSONObject(j).remove(keyToRemoveObj); // Removing object just make it
 																						// look
 																						// similar as of main obj
 					responseDirectReports.put(tempHoldChildDirectReports.get(j));
