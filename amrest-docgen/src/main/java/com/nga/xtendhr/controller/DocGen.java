@@ -230,11 +230,13 @@ public class DocGen {
 	/*
 	 *** For Admin Start***
 	 */
+
 	@GetMapping(value = "/docGenAdmin/searchUser")
 	public ResponseEntity<?> searchUser(@RequestParam(name = "searchString", required = false) String searchString,
 			HttpServletRequest request)
 			throws ClientProtocolException, IOException, URISyntaxException, NamingException {
 		try {
+
 			HttpSession session = request.getSession(false);// false is not create new session and use the existing
 															// session
 			if (session.getAttribute("loginStatus") == null) {
@@ -276,9 +278,7 @@ public class DocGen {
 		}
 	}
 
-	@PostMapping(value = "/docGenAdmin/executeGetUserDetailsRule")
-	public ResponseEntity<?> executeGetUserDetailsRule(@RequestParam(name = "ruleID") String ruleID,
-			@RequestBody String requestData, HttpServletRequest request)
+	public ResponseEntity<?> adminOnSearchUserSelect(String ruleID, HttpSession session, Boolean forDirectReport)
 			throws BatchException, JSONException, ClientProtocolException, UnsupportedOperationException,
 			NamingException, URISyntaxException, IOException, NoSuchMethodException, SecurityException,
 			IllegalAccessException, IllegalArgumentException, InvocationTargetException {
@@ -286,7 +286,6 @@ public class DocGen {
 			/*
 			 * Rule required to get data for a specific User (Accessible only by Admin)
 			 */
-			HttpSession session = request.getSession(false);
 			if (session.getAttribute("loginStatus") == null) {
 				return new ResponseEntity<>("Session timeout! Please Login again!", HttpStatus.INTERNAL_SERVER_ERROR);
 			}
@@ -303,8 +302,8 @@ public class DocGen {
 						HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 
-			JSONObject requestObj = new JSONObject(requestData);
-			String userID = requestObj.getString("userID");// userID passed from UI
+			JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
+			String userID = requestData.getString("userID");// userID passed from UI
 			List<MapRuleFields> mapRuleFields = mapRuleFieldsService.findByRuleID(ruleID);
 			Iterator<MapRuleFields> mapRuleFieldItr = mapRuleFields.iterator();
 			String url;
@@ -372,28 +371,6 @@ public class DocGen {
 			e.printStackTrace();
 			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-	}
-
-	String adminGetUserDetails(String ruleID, HttpSession session, Boolean forDirectReport)
-			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
-			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
-			NamingException, URISyntaxException, IOException {
-
-		JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
-		/*
-		 *** Security Check *** Checking if user trying to login is exactly an Admin or
-		 * not
-		 *
-		 */
-		if (session.getAttribute("adminLoginStatus") == null) {
-			logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
-					+ ", which is not an admin in SF, tried to access Groups of a user:"
-					+ requestData.getString("userID"));
-			return "Error! You are not authorized to access this resource! This event has been logged!";
-		}
-		JSONObject ruleData = getRuleData(ruleID, session, true);
-		return (ruleData.toString());
-
 	}
 
 	String adminGetGroupsOfDirectReport(String ruleID, HttpSession session, Boolean forDirectReport)
@@ -859,6 +836,78 @@ public class DocGen {
 	/*
 	 *** GET Rules Start***
 	 */
+
+	public ResponseEntity<?> searchUser(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws ClientProtocolException, IOException, URISyntaxException, NamingException {
+
+		// rule to search a user on UI, will work for both Admin and Manager
+		try {
+
+			/*
+			 *** Security Check *** Checking if user trying to login is exactly an
+			 * Admin/Manager or not
+			 *
+			 */
+			MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
+			Boolean isManager = Boolean.parseBoolean(getFieldValue(mapRuleField.getField(), session, true, null));
+			logger.debug("Search User Rule: isManager: " + isManager);
+			if (session.getAttribute("adminLoginStatus") == null && !isManager) {
+				logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
+						+ ", which is not an admin or a Manager in SF, tried to search a user.");
+				return new ResponseEntity<>(
+						"Error! You are not authorized to access this resource! This event has been logged!",
+						HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+
+			JSONObject requestData = new JSONObject((String) session.getAttribute("requestData"));
+
+			HttpResponse searchResponse;
+			String searchResponseJsonString;
+			JSONObject searchResponseResponseObject;
+			if (!requestData.has("searchString")) { // searchString is not sent from UI
+				searchResponse = CommonFunctions.getDestinationCLient(CommonVariables.sfDestination).callDestinationGET(
+						"/User",
+						"?$format=json&$select=userId,firstName,lastName&$filter=firstName ne null and lastName ne null");
+			} else { // searchString is passed from UI
+				String searchString = requestData.getString("searchString");// searchString passed from UI
+				searchString = searchString.toLowerCase();
+				String url = "?$format=json&$select=userId,firstName,lastName&$filter=substringof('<inputParameter>',tolower(firstName)) or substringof('<inputParameter>',tolower(lastName)) or substringof('<inputParameter>',tolower(userId))";
+				url = url.replace("<inputParameter>", searchString);
+				searchResponse = CommonFunctions.getDestinationCLient(CommonVariables.sfDestination)
+						.callDestinationGET("/User", url);
+			}
+			searchResponseJsonString = EntityUtils.toString(searchResponse.getEntity(), "UTF-8");
+			searchResponseResponseObject = new JSONObject(searchResponseJsonString);
+			return ResponseEntity.ok().body(searchResponseResponseObject.getJSONObject("d").toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity<>("Error!", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	String getSelectedUserDetails(String ruleID, HttpSession session, Boolean forDirectReport)
+			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NamingException, URISyntaxException, IOException {
+
+		// rule to details of a user on UI, will work for both Admin and Manager
+		/*
+		 *** Security Check *** Checking if user trying to login is exactly an
+		 * Admin/Manager or not
+		 *
+		 */
+		MapRuleFields mapRuleField = mapRuleFieldsService.findByRuleID(ruleID).get(0);
+		Boolean isManager = Boolean.parseBoolean(getFieldValue(mapRuleField.getField(), session, true, null));
+		logger.debug("getSelectedUserDetails Rule: isManager: " + isManager);
+		if (session.getAttribute("adminLoginStatus") == null && !isManager) {
+			logger.error("Unauthorized access! User:" + (String) session.getAttribute("loggedInUser")
+					+ ", which is not an admin or a Manager in SF, tried to search a user.");
+			return "Error! You are not authorized to access this resource! This event has been logged!";
+		}
+		JSONObject ruleData = getRuleData(ruleID, session, true);
+		return (ruleData.toString());
+
+	}
 
 	String calculateAge(String ruleID, HttpSession session, Boolean forDirectReport)
 			throws BatchException, ClientProtocolException, UnsupportedOperationException, NoSuchMethodException,
