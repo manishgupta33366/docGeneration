@@ -939,18 +939,28 @@ public class DocGen {
 		Calendar cal = Calendar.getInstance();
 		long dateToFormat = cal.getTimeInMillis(); // current date and time
 		Date date;
+		Locale locale;
+		SimpleDateFormat sdf;
+		String seprator1 = mapRuleField.get(0).getKey();
+		String seprator2 = mapRuleField.get(1).getKey();
 		switch (language) { // switch for custom or default date format
 		case "HUN":
 			date = new Date(dateToFormat);
 			cal.setTime(date);
-			return (cal.get(Calendar.YEAR) + ". " + hunLocale.values()[cal.get(Calendar.MONTH)] + " "
+			return (cal.get(Calendar.YEAR) + seprator1 + hunLocale.values()[cal.get(Calendar.MONTH)] + seprator2
 					+ cal.get(Calendar.DAY_OF_MONTH));
+
+		case "DE":
+			locale = new Locale(language); // as for DE required format is DD.MM.YYYY and our default is MMMM dd, yyyy
+			date = new Date(dateToFormat);
+			sdf = new SimpleDateFormat("dd" + seprator1 + "MM" + seprator2 + "yyyy", locale);
+			System.out.println(sdf.format(date));
 
 		default:
 			// works with default languages like: fr, en, sv, es, etc
-			Locale locale = new Locale(language);
+			locale = new Locale(language);
 			date = new Date(dateToFormat);
-			SimpleDateFormat sdf = new SimpleDateFormat("MMMM dd, yyyy", locale);
+			sdf = new SimpleDateFormat("MMMM dd, yyyy", locale);
 			return (sdf.format(date));
 		}
 	}
@@ -1197,22 +1207,28 @@ public class DocGen {
 		if (dateToFormat.equals("")) // return if value returned is ""
 			return "";
 		dateToFormat = dateToFormat.substring(dateToFormat.indexOf("(") + 1, dateToFormat.indexOf(")"));
-
+		String seprator1 = mapRuleField.get(0).getKey();
+		String seprator2 = mapRuleField.get(1).getKey();
 		Date date;
-
+		Locale locale;
+		SimpleDateFormat sdf;
 		switch (language) {
 		case "HUN":
 			date = new Date(Long.parseLong(dateToFormat));
 			Calendar cal = Calendar.getInstance();
 			cal.setTime(date);
-			return (cal.get(Calendar.YEAR) + ". " + hunLocale.values()[cal.get(Calendar.MONTH)] + " "
+			return (cal.get(Calendar.YEAR) + seprator1 + hunLocale.values()[cal.get(Calendar.MONTH)] + seprator2
 					+ cal.get(Calendar.DAY_OF_MONTH));
-
-		default:
-			// works with default languages like: fr, en, sv, es, etc
-			Locale locale = new Locale(language);
+		case "DE":
+			locale = new Locale(language); // as for DE required format is DD.MM.YYYY and our default is MMMM dd, yyyy
 			date = new Date(Long.parseLong(dateToFormat));
-			SimpleDateFormat sdf = new SimpleDateFormat("MMMM dd, yyyy", locale);
+			sdf = new SimpleDateFormat("dd" + seprator1 + "MM" + seprator2 + "yyyy", locale);
+			System.out.println(sdf.format(date));
+		default:
+			// works with default languages like: fr, en, sv, es, de etc
+			locale = new Locale(language);
+			date = new Date(Long.parseLong(dateToFormat));
+			sdf = new SimpleDateFormat("MMMM dd, yyyy", locale);
 			return (sdf.format(date));
 
 		}
@@ -1263,20 +1279,27 @@ public class DocGen {
 
 		Date date = new Date(Long.parseLong(dateToFormat));
 		SimpleDateFormat sdf_YYYY = new SimpleDateFormat("yyyy");
-
+		Date decMonth = new Date(1577786942000L);
+		Locale locale;
+		SimpleDateFormat sdf_MMDD;
+		String seprator1 = mapRuleField.get(0).getKey();
+		String seprator2 = mapRuleField.get(1).getKey();
 		switch (language) {
 		case "HUN":
 			Calendar cal = Calendar.getInstance();
 			cal.setTime(date);
 			return (Integer.parseInt(sdf_YYYY.format(date))
 					+ Integer.parseInt(getFieldValue(mapRuleField.get(2).getField(), session, forDirectReport, null))
-					+ ". " + hunLocale.values()[11] + " " + 31);
-
+					+ seprator1 + hunLocale.values()[11] + seprator2 + 31);
+		case "DE": // as for DE required format is DD.MM.YYYY and our default is MMMM dd, yyyy
+			locale = new Locale(language);
+			sdf_MMDD = new SimpleDateFormat("dd" + seprator1 + "MM", locale);
+			return (sdf_MMDD.format(decMonth) + seprator2 + (Integer.parseInt(sdf_YYYY.format(date))
+					+ Integer.parseInt(getFieldValue(mapRuleField.get(2).getField(), session, forDirectReport, null))));
 		default:
 			// works with default languages like: fr, en, sv, es, etc
-			Date decMonth = new Date(1577786942000L);
-			Locale locale = new Locale(language);
-			SimpleDateFormat sdf_MMDD = new SimpleDateFormat("MMMM dd,", locale);
+			locale = new Locale(language);
+			sdf_MMDD = new SimpleDateFormat("MMMM dd,", locale);
 			return (sdf_MMDD.format(decMonth) + " " + (Integer.parseInt(sdf_YYYY.format(date))
 					+ Integer.parseInt(getFieldValue(mapRuleField.get(2).getField(), session, forDirectReport, null))));
 		}
@@ -1360,28 +1383,45 @@ public class DocGen {
 		String countryID = getFieldValue(mapRuleField.get(2).getField(), session, true, null);// forDirectReport true
 		String companyID = getFieldValue(mapRuleField.get(3).getField(), session, true, null);// forDirectReport true
 		Iterator<MapCountryCompanyGroup> iterator = mapCountryCompanyGroupService
-				.findByCountryCompany(countryID, companyID, false).iterator();
+				.findByCountryCompany(countryID, companyID, true).iterator(); // Retrieving MapCountryCompanyGroup based
+																				// on CountryID CompanyID and Manager
+																				// true (sMss)
 		JSONArray response = new JSONArray();
-		String locale = (String) session.getAttribute("locale");
+		String locale = (String) session.getAttribute("locale"); // to Fetch local specific data from Text Table
 		MapCountryCompanyGroup tempMapCountryCompanyGroup;
 		List<Text> tempTextList;
 		JSONObject tempMapCountryCompanyGroupObj;
 		while (iterator.hasNext()) {
 			tempMapCountryCompanyGroup = iterator.next();
 			tempMapCountryCompanyGroupObj = new JSONObject(tempMapCountryCompanyGroup.toString());
-			tempTextList = textService.findByRefrencedIdLocale(tempMapCountryCompanyGroup.getCountryID(), locale);
+			tempTextList = textService.findByRefrencedIdLocale(tempMapCountryCompanyGroup.getCountryID(), locale); // Fetching
+																													// locale
+																													// specific
+																													// data
+																													// for
+																													// country
 			if (tempTextList.size() > 0) {
 				tempMapCountryCompanyGroupObj.put("country_text_per_Locale", tempTextList.get(0).getText());
 				tempMapCountryCompanyGroupObj.put("country_description_per_Locale",
 						tempTextList.get(0).getDescription());
 			}
-			tempTextList = textService.findByRefrencedIdLocale(tempMapCountryCompanyGroup.getCompanyID(), locale);
+			tempTextList = textService.findByRefrencedIdLocale(tempMapCountryCompanyGroup.getCompanyID(), locale);// Fetching
+																													// locale
+																													// specific
+																													// data
+																													// for
+																													// company
 			if (tempTextList.size() > 0) {
 				tempMapCountryCompanyGroupObj.put("company_text_per_Locale", tempTextList.get(0).getText());
 				tempMapCountryCompanyGroupObj.put("company_description_per_Locale",
 						tempTextList.get(0).getDescription());
 			}
-			tempTextList = textService.findByRefrencedIdLocale(tempMapCountryCompanyGroup.getGroupID(), locale);
+			tempTextList = textService.findByRefrencedIdLocale(tempMapCountryCompanyGroup.getGroupID(), locale);// Fetching
+																												// locale
+																												// specific
+																												// data
+																												// for
+																												// group
 			if (tempTextList.size() > 0) {
 				tempMapCountryCompanyGroupObj.put("group_text_per_Locale", tempTextList.get(0).getText());
 				tempMapCountryCompanyGroupObj.put("group_description_per_Locale", tempTextList.get(0).getDescription());
@@ -1522,7 +1562,7 @@ public class DocGen {
 			groupID = groupIdArray.getString(i);// groupID passed from UI
 
 			Boolean groupAvailableCheck = mapCountryCompanyGroupService
-					.findByGroupCountryCompany(groupID, directReportCountryID, directReportCompanyID, false).size() == 1
+					.findByGroupCountryCompany(groupID, directReportCountryID, directReportCompanyID, true).size() == 1
 							? true
 							: false;
 			if (!groupAvailableCheck) {
