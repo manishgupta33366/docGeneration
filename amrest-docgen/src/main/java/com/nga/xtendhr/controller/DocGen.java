@@ -954,10 +954,10 @@ public class DocGen {
 			locale = new Locale(language); // as for DE required format is DD.MM.YYYY and our default is MMMM dd, yyyy
 			date = new Date(dateToFormat);
 			sdf = new SimpleDateFormat("dd" + seprator1 + "MM" + seprator2 + "yyyy", locale);
-			System.out.println(sdf.format(date));
+			return (sdf.format(date));
 
 		default:
-			// works with default languages like: fr, en, sv, es, etc
+			// works with default languages like: fr, en, sv, es, de, etc
 			locale = new Locale(language);
 			date = new Date(dateToFormat);
 			sdf = new SimpleDateFormat("MMMM dd, yyyy", locale);
@@ -1223,7 +1223,7 @@ public class DocGen {
 			locale = new Locale(language); // as for DE required format is DD.MM.YYYY and our default is MMMM dd, yyyy
 			date = new Date(Long.parseLong(dateToFormat));
 			sdf = new SimpleDateFormat("dd" + seprator1 + "MM" + seprator2 + "yyyy", locale);
-			System.out.println(sdf.format(date));
+			return (sdf.format(date));
 		default:
 			// works with default languages like: fr, en, sv, es, de etc
 			locale = new Locale(language);
