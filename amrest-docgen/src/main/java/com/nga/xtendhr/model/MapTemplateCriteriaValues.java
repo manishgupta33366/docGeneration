@@ -35,10 +35,6 @@ public class MapTemplateCriteriaValues {
 	private String templateId;
 
 	@Id
-	@Column(name = "\"CRITERIA.ID\"", columnDefinition = "VARCHAR(32)")
-	private String criteriaId;
-
-	@Id
 	@Column(name = "\"FIELD.ID\"", columnDefinition = "VARCHAR(32)")
 	private String fieldId;
 
@@ -80,14 +76,6 @@ public class MapTemplateCriteriaValues {
 		this.field = field;
 	}
 
-	public String getCriteriaId() {
-		return criteriaId;
-	}
-
-	public void setCriteriaId(String criteriaId) {
-		this.criteriaId = criteriaId;
-	}
-
 	public String getTemplateId() {
 		return templateId;
 	}
@@ -115,7 +103,6 @@ public class MapTemplateCriteriaValues {
 	public String toString() {// overriding the toString() method
 		JSONObject obj = new JSONObject();
 		obj.put("templateId", this.getTemplateId());
-		obj.put("criteriaId", this.getCriteriaId());
 		obj.put("fieldId", this.getFieldId());
 		obj.put("value", this.getValue());
 		obj.put("operator", this.getOperator().toString());

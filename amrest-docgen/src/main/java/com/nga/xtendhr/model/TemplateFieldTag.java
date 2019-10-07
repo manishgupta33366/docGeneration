@@ -6,7 +6,11 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.Table;
+
+import org.json.JSONObject;
 
 import com.nga.xtendhr.config.DBConfiguration;
 
@@ -21,6 +25,7 @@ import com.nga.xtendhr.config.DBConfiguration;
 
 @Entity
 @Table(name = DBConfiguration.TEMPLATE_FIELD_TAG, schema = DBConfiguration.SCHEMA_NAME)
+@NamedQueries({ @NamedQuery(name = "TemplateFieldTag.selectAll", query = "SELECT TFT FROM TemplateFieldTag TFT") })
 public class TemplateFieldTag {
 
 	@Id
@@ -78,5 +83,14 @@ public class TemplateFieldTag {
 
 	public void setField(Fields field) {
 		this.field = field;
+	}
+
+	public String toString() {// overriding the toString() method
+		JSONObject obj = new JSONObject();
+		obj.put("id", this.getId());
+		obj.put("fieldId", this.getFieldId());
+		obj.put("type", this.getType());
+		obj.put("placeFieldAtPath", this.getPlaceFieldAtPath());
+		return obj.toString();
 	}
 }

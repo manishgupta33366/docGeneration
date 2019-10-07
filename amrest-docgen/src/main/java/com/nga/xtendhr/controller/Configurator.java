@@ -26,14 +26,12 @@ import com.nga.xtendhr.model.Companies;
 import com.nga.xtendhr.model.ConfigurableColumns;
 import com.nga.xtendhr.model.ConfigurableTables;
 import com.nga.xtendhr.model.Countries;
-import com.nga.xtendhr.model.Criteria;
 import com.nga.xtendhr.model.Groups;
-import com.nga.xtendhr.model.MapCriteriaFields;
-import com.nga.xtendhr.model.MapFieldOperators;
 import com.nga.xtendhr.model.MapGroupTemplates;
 import com.nga.xtendhr.model.MapTemplateCriteriaValues;
 import com.nga.xtendhr.model.MapTemplateFields;
 import com.nga.xtendhr.model.Operators;
+import com.nga.xtendhr.model.TemplateFieldTag;
 import com.nga.xtendhr.model.Templates;
 import com.nga.xtendhr.service.CodelistService;
 import com.nga.xtendhr.service.CodelistTextService;
@@ -41,19 +39,17 @@ import com.nga.xtendhr.service.CompaniesService;
 import com.nga.xtendhr.service.ConfigurableColumnsService;
 import com.nga.xtendhr.service.ConfigurableTablesService;
 import com.nga.xtendhr.service.CountryService;
-import com.nga.xtendhr.service.CriteriaService;
 import com.nga.xtendhr.service.EntitiesService;
 import com.nga.xtendhr.service.FieldsService;
 import com.nga.xtendhr.service.GroupsService;
 import com.nga.xtendhr.service.MapCountryCompanyGroupService;
-import com.nga.xtendhr.service.MapCriteriaFieldsService;
-import com.nga.xtendhr.service.MapFieldOperatorsService;
 import com.nga.xtendhr.service.MapGroupTemplatesService;
 import com.nga.xtendhr.service.MapRuleFieldsService;
 import com.nga.xtendhr.service.MapTemplateCriteriaValuesService;
 import com.nga.xtendhr.service.MapTemplateFieldsService;
 import com.nga.xtendhr.service.OperatorsService;
 import com.nga.xtendhr.service.RulesService;
+import com.nga.xtendhr.service.TemplateFieldTagService;
 import com.nga.xtendhr.service.TemplateService;
 import com.nga.xtendhr.utility.WordFileProcessing;
 
@@ -108,19 +104,13 @@ public class Configurator {
 	CompaniesService companiesService;
 
 	@Autowired
-	CriteriaService criteriaService;
-
-	@Autowired
-	MapCriteriaFieldsService mapCriteriaFieldsService;
-
-	@Autowired
 	MapTemplateCriteriaValuesService mapTemplateCriteriaValuesService;
 
 	@Autowired
 	OperatorsService operatorsService;
 
 	@Autowired
-	MapFieldOperatorsService mapFieldOperatorsService;
+	TemplateFieldTagService templateFieldTagService;
 
 	@GetMapping(value = "/getConfigurableTables")
 	public ResponseEntity<?> getTableNames(HttpServletRequest request) {
@@ -183,15 +173,16 @@ public class Configurator {
 			JSONObject response = new JSONObject();
 			JSONArray responseDataArray = new JSONArray();
 			JSONObject tempObj = new JSONObject();
-			JSONObject tempCountryJsonObj = new JSONObject();
+			JSONObject tempJsonObj = new JSONObject();
+			String tempColumnName;
 			switch (tablePath) {
 			case DBConfiguration.COUNTRIES:
 				List<Countries> countries = countryService.findAll();
 				for (int i = 0; i < countries.size(); i++) {
 					tempObj = new JSONObject();
-					tempCountryJsonObj = new JSONObject(countries.get(i).toString());
+					tempJsonObj = new JSONObject(countries.get(i).toString());
 					for (int j = 0; j < columnNames.size(); j++) {
-						tempObj.put(columnNames.get(j), tempCountryJsonObj.get(columnNames.get(j)));
+						tempObj.put(columnNames.get(j), tempJsonObj.get(columnNames.get(j)));
 					}
 					responseDataArray.put(tempObj);
 				}
@@ -202,9 +193,11 @@ public class Configurator {
 				List<Groups> groups = groupsService.findAll();
 				for (int i = 0; i < groups.size(); i++) {
 					tempObj = new JSONObject();
-					tempCountryJsonObj = new JSONObject(groups.get(i).toString());
+					tempJsonObj = new JSONObject(groups.get(i).toString());
 					for (int j = 0; j < columnNames.size(); j++) {
-						tempObj.put(columnNames.get(j), tempCountryJsonObj.get(columnNames.get(j)));
+						tempColumnName = columnNames.get(j);
+						tempObj.put(tempColumnName,
+								tempJsonObj.has(tempColumnName) ? tempJsonObj.get(columnNames.get(j)) : "");
 					}
 					responseDataArray.put(tempObj);
 				}
@@ -215,9 +208,11 @@ public class Configurator {
 				List<Companies> companies = companiesService.findAll();
 				for (int i = 0; i < companies.size(); i++) {
 					tempObj = new JSONObject();
-					tempCountryJsonObj = new JSONObject(companies.get(i).toString());
+					tempJsonObj = new JSONObject(companies.get(i).toString());
 					for (int j = 0; j < columnNames.size(); j++) {
-						tempObj.put(columnNames.get(j), tempCountryJsonObj.get(columnNames.get(j)));
+						tempColumnName = columnNames.get(j);
+						tempObj.put(tempColumnName,
+								tempJsonObj.has(tempColumnName) ? tempJsonObj.get(columnNames.get(j)) : "");
 					}
 					responseDataArray.put(tempObj);
 				}
@@ -225,40 +220,15 @@ public class Configurator {
 				response.put("data", responseDataArray);
 				return ResponseEntity.ok().body(response.toString());
 
-			case DBConfiguration.CRITERIA:
-				List<Criteria> criteria = criteriaService.findAll();
-				for (int i = 0; i < criteria.size(); i++) {
-					tempObj = new JSONObject();
-					tempCountryJsonObj = new JSONObject(criteria.get(i).toString());
-					for (int j = 0; j < columnNames.size(); j++) {
-						tempObj.put(columnNames.get(j), tempCountryJsonObj.get(columnNames.get(j)));
-					}
-					responseDataArray.put(tempObj);
-				}
-				response.put("columns", configurableColumns);
-				response.put("data", responseDataArray);
-				return ResponseEntity.ok().body(response.toString());
-
-			case DBConfiguration.MAP_CRITERIA_FIELDS:
-				List<MapCriteriaFields> mapCriteriaFields = mapCriteriaFieldsService.findAll();
-				for (int i = 0; i < mapCriteriaFields.size(); i++) {
-					tempObj = new JSONObject();
-					tempCountryJsonObj = new JSONObject(mapCriteriaFields.get(i).toString());
-					for (int j = 0; j < columnNames.size(); j++) {
-						tempObj.put(columnNames.get(j), tempCountryJsonObj.get(columnNames.get(j)));
-					}
-					responseDataArray.put(tempObj);
-				}
-				response.put("columns", configurableColumns);
-				response.put("data", responseDataArray);
-				return ResponseEntity.ok().body(response.toString());
 			case DBConfiguration.MAP_TEMPLATE_CRITERIA_VALUES:
 				List<MapTemplateCriteriaValues> mapTemplateCriteriaValues = mapTemplateCriteriaValuesService.findAll();
 				for (int i = 0; i < mapTemplateCriteriaValues.size(); i++) {
 					tempObj = new JSONObject();
-					tempCountryJsonObj = new JSONObject(mapTemplateCriteriaValues.get(i).toString());
+					tempJsonObj = new JSONObject(mapTemplateCriteriaValues.get(i).toString());
 					for (int j = 0; j < columnNames.size(); j++) {
-						tempObj.put(columnNames.get(j), tempCountryJsonObj.get(columnNames.get(j)));
+						tempColumnName = columnNames.get(j);
+						tempObj.put(tempColumnName,
+								tempJsonObj.has(tempColumnName) ? tempJsonObj.get(columnNames.get(j)) : "");
 					}
 					responseDataArray.put(tempObj);
 				}
@@ -269,34 +239,32 @@ public class Configurator {
 				List<Operators> operators = operatorsService.findAll();
 				for (int i = 0; i < operators.size(); i++) {
 					tempObj = new JSONObject();
-					tempCountryJsonObj = new JSONObject(operators.get(i).toString());
+					tempJsonObj = new JSONObject(operators.get(i).toString());
 					for (int j = 0; j < columnNames.size(); j++) {
-						tempObj.put(columnNames.get(j), tempCountryJsonObj.get(columnNames.get(j)));
+						tempColumnName = columnNames.get(j);
+						tempObj.put(tempColumnName,
+								tempJsonObj.has(tempColumnName) ? tempJsonObj.get(columnNames.get(j)) : "");
 					}
 					responseDataArray.put(tempObj);
 				}
 				response.put("columns", configurableColumns);
 				response.put("data", responseDataArray);
 				return ResponseEntity.ok().body(response.toString());
-			case DBConfiguration.MAP_FIELD_OPERATORS:
-				List<MapFieldOperators> mapFieldOperators;
-				if (tableId == null) {
-					mapFieldOperators = mapFieldOperatorsService.findAll();
-				} else {
-					mapFieldOperators = mapFieldOperatorsService.findByFieldId(tableId);
-				}
-				for (int i = 0; i < mapFieldOperators.size(); i++) {
+			case DBConfiguration.TEMPLATE_FIELD_TAG:
+				List<TemplateFieldTag> templateFieldTag = templateFieldTagService.findAll();
+				for (int i = 0; i < templateFieldTag.size(); i++) {
 					tempObj = new JSONObject();
-					tempCountryJsonObj = new JSONObject(mapFieldOperators.get(i).toString());
+					tempJsonObj = new JSONObject(templateFieldTag.get(i).toString());
 					for (int j = 0; j < columnNames.size(); j++) {
-						tempObj.put(columnNames.get(j), tempCountryJsonObj.get(columnNames.get(j)));
+						tempColumnName = columnNames.get(j);
+						tempObj.put(tempColumnName,
+								tempJsonObj.has(tempColumnName) ? tempJsonObj.get(columnNames.get(j)) : "");
 					}
 					responseDataArray.put(tempObj);
 				}
 				response.put("columns", configurableColumns);
 				response.put("data", responseDataArray);
 				return ResponseEntity.ok().body(response.toString());
-
 			default:
 				// code block
 				return ResponseEntity.ok().body(configurableTablesService.findAll());
@@ -383,7 +351,6 @@ public class Configurator {
 				tempObj = requestDataArr.getJSONObject(i);
 				MapTemplateCriteriaValues mapTemplateCriteriaValues = new MapTemplateCriteriaValues();
 				mapTemplateCriteriaValues.setTemplateId(templateId);
-				mapTemplateCriteriaValues.setCriteriaId(tempObj.getString("criteriaId"));
 				mapTemplateCriteriaValues.setFieldId(tempObj.getString("fieldId"));
 				mapTemplateCriteriaValues.setValue(tempObj.getString("value"));
 				mapTemplateCriteriaValues.setOperatorId(tempObj.getString("operatorId"));
